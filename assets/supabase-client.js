@@ -11,8 +11,8 @@
 //    - Bila project-nya berbeda, isi url & key project Tryout_guru.
 //      Aplikasi akan membuka koneksi kedua khusus untuk membaca siswa.
 // =====================================================================
-export const SUPABASE_URL = 'ISI_DI_SINI';
-export const SUPABASE_ANON_KEY = 'ISI_DI_SINI';
+export const SUPABASE_URL = 'https://jzxcnfetpjkltjjbglxz.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_9pl5IOJl-Vx0KEnHtCs3nA_ioZOkacq';
 
 export const SUMBER_SISWA = {
   url:   '',                 // kosongkan bila satu project dengan tabel ekskul
