@@ -14,8 +14,8 @@
 // =====================================================================
 
 // --- Project Tryout_guru ---------------------------------------------
-export const SUPABASE_URL = 'ISI_DI_SINI';
-export const SUPABASE_ANON_KEY = 'ISI_DI_SINI';
+export const SUPABASE_URL = 'https://jzxcnfetpjkltjjbglxz.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_9pl5IOJl-Vx0KEnHtCs3nA_ioZOkacq';
 
 // --- Sumber data siswa -----------------------------------------------
 export const SUMBER_SISWA = {
