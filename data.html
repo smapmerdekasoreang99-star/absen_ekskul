@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#241F17">
+<title>Data peserta · Absensi Ekstrakurikuler</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="assets/style.css?v=20260912c">
+</head>
+<body>
+
+<header class="topbar">
+  <img src="assets/logo.png" alt="Lambang SMA Plus Merdeka Soreang">
+  <div>
+    <div class="judul">Data peserta</div>
+    <div class="sub">SMA Plus Merdeka Soreang</div>
+  </div>
+  <div class="kanan">
+    <span class="pengguna" id="namaPengguna">&nbsp;</span>
+    <button id="tombolKeluar" class="tombol-kunci" type="button">Keluar</button>
+  </div>
+</header>
+
+<main class="wadah">
+  <div id="kotakPesan" class="pesan p-salah sembunyi"></div>
+  <div class="pesan p-info sembunyi" data-mode-contoh>
+    Mode contoh. Penambahan peserta hanya bertahan selama halaman belum dimuat ulang.
+  </div>
+
+  <section class="kartu">
+    <h2>Pilih ekstrakurikuler</h2>
+    <select id="pilihEkskul"><option>Memuat…</option></select>
+    <p class="ket" id="infoEkskul" style="margin:10px 0 0">&nbsp;</p>
+  </section>
+
+  <section class="kartu">
+    <h2>Peserta terdaftar</h2>
+    <p class="ket" id="jumlahPeserta">&nbsp;</p>
+    <div id="daftarPeserta"><p class="kosong">Memuat…</p></div>
+    <button class="tbl tbl-kecil" id="unduhPeserta" type="button" style="margin-top:12px">Unduh daftar peserta (CSV)</button>
+  </section>
+
+  <section class="kartu">
+    <h2>Tambah peserta</h2>
+    <p class="ket">Diambil dari data siswa sekolah yang sudah dipakai aplikasi Tryout &amp; Asesmen.
+      Tidak ada pengetikan nama ulang.</p>
+    <div class="baris dua">
+      <div>
+        <label for="filterKelas">Kelas</label>
+        <select id="filterKelas"><option value="">Semua kelas</option></select>
+      </div>
+      <div>
+        <label for="cariSiswa">Cari nama</label>
+        <input id="cariSiswa" type="search" placeholder="Ketik sebagian nama">
+      </div>
+    </div>
+    <div id="hasilCari"><p class="kosong">Pilih kelas atau ketik nama untuk mencari.</p></div>
+  </section>
+
+</main>
+
+<nav class="nav-bawah" aria-label="Navigasi utama">
+  <a href="index.html">
+    <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Beranda</a>
+  <a href="absensi.html">
+    <svg viewBox="0 0 24 24"><path d="M9 4h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3z"/><path d="M8.5 13l2 2 4.5-4.5"/></svg>Absensi</a>
+  <a href="rekap.html">
+    <svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>Rekap</a>
+  <a href="data.html" data-pengelola aria-current="page">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16.5 11.5a3 3 0 1 0-1.8-5.4"/><path d="M17 20a5.4 5.4 0 0 0-1.2-3.4"/></svg>Data</a>
+</nav>
+
+<script type="module" src="scripts/data.js?v=20260912c"></script>
+</body>
+</html>

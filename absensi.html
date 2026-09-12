@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#241F17">
+<title>Isi daftar hadir · Absensi Ekstrakurikuler</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="assets/style.css?v=20260912c">
+</head>
+<body class="ada-bar">
+
+<header class="topbar">
+  <img src="assets/logo.png" alt="Lambang SMA Plus Merdeka Soreang">
+  <div>
+    <div class="judul">Isi daftar hadir</div>
+    <div class="sub">SMA Plus Merdeka Soreang</div>
+  </div>
+  <div class="kanan">
+    <span class="pengguna" id="namaPengguna">&nbsp;</span>
+    <button id="tombolKeluar" class="tombol-kunci" type="button">Keluar</button>
+  </div>
+</header>
+
+<main class="wadah">
+  <div id="kotakPesan" class="pesan p-salah sembunyi"></div>
+  <div class="pesan p-info sembunyi" data-mode-contoh>
+    Mode contoh. Isian di halaman ini tidak akan tersimpan.
+  </div>
+
+  <section class="kartu">
+    <h2>Kegiatan</h2>
+    <div class="baris dua">
+      <div>
+        <label for="pilihEkskul">Ekstrakurikuler</label>
+        <select id="pilihEkskul"><option>Memuat…</option></select>
+      </div>
+      <div>
+        <label for="pilihTanggal">Tanggal latihan</label>
+        <input type="date" id="pilihTanggal">
+      </div>
+    </div>
+    <p class="ket" id="infoJadwal" style="margin-bottom:0">&nbsp;</p>
+  </section>
+
+  <section class="kartu">
+    <h2>Kehadiran pembina</h2>
+    <p class="ket">Pilih satu keadaan yang paling sesuai.</p>
+    <div class="segmen" id="statusPembina">
+      <button type="button" data-nilai="H"  aria-pressed="true" >Hadir</button>
+      <button type="button" data-nilai="DG" aria-pressed="false">Digantikan</button>
+      <button type="button" data-nilai="TH" aria-pressed="false">Tidak hadir</button>
+      <button type="button" data-nilai="KG" aria-pressed="false">Ditiadakan</button>
+    </div>
+    <div id="kotakPengganti" class="sembunyi" style="margin-top:12px">
+      <label for="namaPengganti">Nama pelatih yang menggantikan</label>
+      <input id="namaPengganti" type="text" placeholder="Tulis nama penggantinya">
+    </div>
+    <div class="baris" style="margin-top:12px;margin-bottom:0">
+      <div>
+        <label for="tempatLatihan">Tempat latihan</label>
+        <input id="tempatLatihan" type="text" placeholder="Lapangan sekolah, GOR, aula…">
+      </div>
+      <div>
+        <label for="materiLatihan">Materi latihan (opsional)</label>
+        <input id="materiLatihan" type="text" placeholder="Contoh: teknik dasar passing">
+      </div>
+    </div>
+  </section>
+
+  <section class="kartu" id="kartuSiswa">
+    <h2>Kehadiran siswa</h2>
+    <p class="ket">H hadir · S sakit · I izin · A alfa. Bawaannya alfa, jadi cukup tandai yang datang.</p>
+    <div class="baris" style="margin-bottom:8px">
+      <input class="cari-siswa" id="cariSiswa" type="search" placeholder="Cari nama atau kelas">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="tbl tbl-kecil" id="semuaHadir" type="button">Tandai semua hadir</button>
+      <button class="tbl tbl-kecil" id="semuaAlfa" type="button">Kosongkan tanda</button>
+    </div>
+    <div id="daftarSiswa"><p class="kosong">Pilih ekstrakurikuler dulu.</p></div>
+  </section>
+
+  <section class="kartu" id="kartuFoto">
+    <h2>Foto kegiatan</h2>
+    <p class="ket">Minimal satu foto pembina bersama siswa. Ukurannya diperkecil otomatis
+      sebelum dikirim, jadi tidak menghabiskan kuota.</p>
+    <div class="foto-kotak">
+      <label class="foto-slot" id="slotSebelum">
+        <svg viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>
+        <span>Foto sebelum latihan</span>
+        <input type="file" accept="image/*" capture="environment" id="berkasSebelum">
+      </label>
+      <label class="foto-slot" id="slotSesudah">
+        <svg viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>
+        <span>Foto sesudah latihan</span>
+        <input type="file" accept="image/*" capture="environment" id="berkasSesudah">
+      </label>
+    </div>
+  </section>
+
+  <section class="kartu">
+    <div class="baris" style="margin-bottom:0">
+      <div>
+        <label for="pencatat">Dicatat oleh</label>
+        <input id="pencatat" type="text" placeholder="Nama pembina / petugas kesiswaan">
+      </div>
+      <div>
+        <label for="catatanSesi">Catatan (opsional)</label>
+        <textarea id="catatanSesi" placeholder="Kendala, kejadian penting, rencana minggu depan…"></textarea>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="bar-simpan">
+  <div class="hitung">
+    <span id="hitungHadir">0 hadir</span>
+    <small id="hitungDari">dari 0 peserta</small>
+  </div>
+  <button class="tbl tbl-utama" id="tombolSimpan" type="button">Simpan daftar hadir</button>
+</div>
+
+<nav class="nav-bawah" aria-label="Navigasi utama">
+  <a href="index.html">
+    <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Beranda</a>
+  <a href="absensi.html" aria-current="page">
+    <svg viewBox="0 0 24 24"><path d="M9 4h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3z"/><path d="M8.5 13l2 2 4.5-4.5"/></svg>Absensi</a>
+  <a href="rekap.html">
+    <svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>Rekap</a>
+  <a href="data.html" data-pengelola>
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16.5 11.5a3 3 0 1 0-1.8-5.4"/><path d="M17 20a5.4 5.4 0 0 0-1.2-3.4"/></svg>Data</a>
+</nav>
+
+<script type="module" src="scripts/absensi.js?v=20260912c"></script>
+</body>
+</html>
