@@ -19,8 +19,8 @@ export const SUPABASE_ANON_KEY = 'sb_publishable_rjHVGT0ULc03TC2ljIytSA_2X54xzR1
 
 // --- Sumber data siswa -----------------------------------------------
 export const SUMBER_SISWA = {
-  url:   '',                 // kosong = satu project dengan tabel ekskul
-  key:   '',                 // isi hanya bila project-nya dipisah
+  url:   'https://jzxcnfetpjkltjjbglxz.supabase.co',                 // kosong = satu project dengan tabel ekskul
+  key:   'sb_publishable_9pl5IOJl-Vx0KEnHtCs3nA_ioZOkacq',                 // isi hanya bila project-nya dipisah
   tabel: 'siswa_ekskul',     // tampilan terbatas dari db/akses_siswa.sql
                              // ganti 'tka_siswa' bila ingin langsung ke tabelnya
   id:    'nisn',
