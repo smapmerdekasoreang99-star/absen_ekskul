@@ -1,6 +1,6 @@
-import { ambilMaster, muatPeriode } from '../assets/db.js?v=20260912c';
+import { ambilMaster, muatPeriode } from '../assets/db.js?v=20260912d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, hariIni, namaHari,
-         tanggalPanjang, persen, jam } from '../assets/ui.js?v=20260912c';
+         tanggalPanjang, persen, jam } from '../assets/ui.js?v=20260912d';
 
 const AKUN = wajibMasuk(false);
 try { tandaiMode(); } catch (e) { console.error(e); }
@@ -56,7 +56,7 @@ function baris(a, b) {
 
     const terlaksana = minggu.filter(s => s.status_pembina !== 'KG');
     const hadirSiswa = terlaksana.reduce((a, s) => a + s.H, 0);
-    const berfoto = minggu.filter(s => s.foto_sebelum || s.foto_sesudah).length;
+    const berfoto = minggu.filter(s => s.foto).length;
     const belum = ekskul.filter(e => !minggu.some(s => s.ekskul_id === e.id)).length;
 
     document.getElementById('ringkasMinggu').innerHTML =

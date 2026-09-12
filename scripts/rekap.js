@@ -1,6 +1,6 @@
-import { ambilMaster, muatPeriode, namaSiswa } from '../assets/db.js?v=20260912c';
+import { ambilMaster, muatPeriode, namaSiswa } from '../assets/db.js?v=20260912d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, bersihkanPesan, hariIni,
-         tanggalPanjang, tanggalPendek, persen, unduhCSV, jam } from '../assets/ui.js?v=20260912c';
+         tanggalPanjang, tanggalPendek, persen, unduhCSV, jam } from '../assets/ui.js?v=20260912d';
 
 const el = id => document.getElementById(id);
 const LABEL = { H: 'Hadir', DG: 'Digantikan', TH: 'Tidak hadir', KG: 'Ditiadakan' };
@@ -86,7 +86,7 @@ function barisEkskul() {
       hadirSiswa: hadir,
       rata: terlaksana.length ? Math.round(hadir / terlaksana.length) : 0,
       tingkat: persen(hadir, slot),
-      foto: s.filter(x => x.foto_sebelum || x.foto_sesudah).length
+      foto: s.filter(x => x.foto).length
     };
   }).filter(b => b.pertemuan > 0);
 }
@@ -193,9 +193,9 @@ function tabelPertemuan(t) {
         ${s.pengganti ? '<br><small>' + s.pengganti + '</small>' : ''}</td>
       <td class="angka">${s.H}</td><td class="angka">${s.S}</td>
       <td class="angka">${s.I}</td><td class="angka">${s.A}</td>
-      <td>${[s.foto_sebelum, s.foto_sesudah].filter(Boolean).map(u =>
-        `<a href="${u}" target="_blank" rel="noopener"><img class="foto-mini" src="${u}" alt="Foto latihan"></a>`).join(' ')
-        || '<small style="color:var(--tinta-2)">—</small>'}</td>
+      <td>${s.foto
+        ? `<a href="${s.foto}" target="_blank" rel="noopener"><img class="foto-mini" src="${s.foto}" alt="Foto latihan"></a>`
+        : '<small style="color:var(--tinta-2)">—</small>'}</td>
       <td>${s.materi || ''}</td></tr>`).join('')}</tbody>`;
 }
 
@@ -235,11 +235,11 @@ function unduh() {
   } else if (tab === 'pertemuan') {
     unduhCSV(`rincian_pertemuan_${dari}_sd_${sampai}.csv`, [
       ['Tanggal', 'Ekstrakurikuler', 'Status pembina', 'Pengganti', 'Hadir', 'Sakit', 'Izin', 'Alfa',
-       'Materi', 'Catatan', 'Foto sebelum', 'Foto sesudah', 'Dicatat oleh'],
+       'Materi', 'Catatan', 'Foto', 'Dicatat oleh'],
       ...SESI.map(s => [s.tanggal, nama[s.ekskul_id] || s.ekskul_id,
         LABEL[s.status_pembina] || s.status_pembina, s.pengganti || '',
         s.H, s.S, s.I, s.A, s.materi || '', s.catatan || '',
-        s.foto_sebelum || '', s.foto_sesudah || '', s.dicatat_oleh || ''])
+        s.foto || '', s.dicatat_oleh || ''])
     ]);
   } else {
     unduhCSV(`kehadiran_siswa_${dari}_sd_${sampai}.csv`, [

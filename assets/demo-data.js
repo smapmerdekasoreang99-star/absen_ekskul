@@ -86,7 +86,7 @@ let sesiId = 0;
         status_pembina: status,
         pengganti: status === 'DG' ? 'Pelatih pendamping' : '',
         tempat: '', materi: '', catatan: '',
-        foto_sebelum: '', foto_sesudah: '', dicatat_oleh: 'Contoh'
+        foto: '', dicatat_oleh: 'Contoh'
       });
       if (status === 'KG') return;
       const peserta = PESERTA.filter(p => p.ekskul_id === e.id);

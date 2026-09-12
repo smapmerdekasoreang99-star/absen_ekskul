@@ -215,9 +215,9 @@ tfoot td{font-weight:700;background:#FAF6EC}
 .pilih-peran button[aria-pressed="true"]{background:var(--tinta);border-color:var(--tinta);color:#F7F2E7}
 
 /* ---------- Foto latihan ---------- */
-.foto-kotak{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.foto-kotak{display:grid;grid-template-columns:1fr;gap:10px}
 .foto-slot{position:relative;border:1.5px dashed var(--garis);border-radius:12px;
-  background:#FDFBF6;min-height:132px;display:flex;flex-direction:column;
+  background:#FDFBF6;min-height:184px;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:6px;cursor:pointer;overflow:hidden;padding:10px}
 .foto-slot span{font-size:12.5px;font-weight:600;color:var(--tinta-2);text-align:center}
 .foto-slot svg{width:26px;height:26px;stroke:var(--emas);fill:none;stroke-width:1.6;

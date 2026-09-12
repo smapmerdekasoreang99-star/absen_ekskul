@@ -1,7 +1,7 @@
 // Lapisan akses data. Semua halaman memanggil fungsi di sini, sehingga
 // halaman tidak perlu tahu apakah datanya dari Supabase atau contoh.
-import { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } from './supabase-client.js?v=20260912c';
-import * as D from './demo-data.js?v=20260912c';
+import { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } from './supabase-client.js?v=20260912d';
+import * as D from './demo-data.js?v=20260912d';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 

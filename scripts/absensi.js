@@ -1,13 +1,13 @@
 import { ambilMaster, pesertaEkskul, ambilSesi, simpanSesi, unggahFoto }
-  from '../assets/db.js?v=20260912c';
+  from '../assets/db.js?v=20260912d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan,
          kompresGambar, hariIni, namaHari, tanggalPanjang, mingguKe, jam }
-  from '../assets/ui.js?v=20260912c';
+  from '../assets/ui.js?v=20260912d';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, SISWA = [], STATUS = {};
 let statusPembina = 'H';
-let foto = { sebelum: '', sesudah: '' };
+let foto = '';
 
 AKUN = wajibMasuk(false);
 try { tandaiMode(); } catch (e) { console.error(e); }
@@ -44,8 +44,7 @@ try { tandaiMode(); } catch (e) { console.error(e); }
     el('semuaHadir').addEventListener('click', () => ubahSemua('H'));
     el('semuaAlfa').addEventListener('click', () => ubahSemua('A'));
     el('tombolSimpan').addEventListener('click', simpan);
-    el('berkasSebelum').addEventListener('change', ev => pilihFoto(ev, 'sebelum'));
-    el('berkasSesudah').addEventListener('change', ev => pilihFoto(ev, 'sesudah'));
+    el('berkasFoto').addEventListener('change', pilihFoto);
 
     el('statusPembina').addEventListener('click', ev => {
       const b = ev.target.closest('button');
@@ -82,7 +81,7 @@ async function muatSesi() {
     SISWA = await pesertaEkskul(id);
     STATUS = {};
     SISWA.forEach(s => { STATUS[s.id] = 'A'; });
-    foto = { sebelum: '', sesudah: '' };
+    foto = '';
 
     const lama = await ambilSesi(id, tgl);
     if (lama) {
@@ -92,7 +91,7 @@ async function muatSesi() {
       el('materiLatihan').value = lama.sesi.materi || '';
       el('catatanSesi').value = lama.sesi.catatan || '';
       el('pencatat').value = lama.sesi.dicatat_oleh || el('pencatat').value;
-      foto = { sebelum: lama.sesi.foto_sebelum || '', sesudah: lama.sesi.foto_sesudah || '' };
+      foto = lama.sesi.foto || '';
       Object.entries(lama.kehadiran).forEach(([sid, st]) => {
         if (STATUS[sid] !== undefined) STATUS[sid] = st;
       });
@@ -109,58 +108,54 @@ async function muatSesi() {
     el('kartuSiswa').classList.toggle('sembunyi', statusPembina === 'KG');
     el('kartuFoto').classList.toggle('sembunyi', statusPembina === 'KG');
 
-    gambarFoto('sebelum');
-    gambarFoto('sesudah');
+    gambarFoto();
     gambarSiswa();
   } catch (err) { laporError(err); }
 }
 
 // ------------------------------------------------------------------ foto
-async function pilihFoto(ev, jenis) {
+async function pilihFoto(ev) {
   const berkas = ev.target.files && ev.target.files[0];
   if (!berkas) return;
   bersihkanPesan();
-  const slot = el(jenis === 'sebelum' ? 'slotSebelum' : 'slotSesudah');
+  const slot = el('slotFoto');
   const teks = slot.querySelector('span');
-  const semula = teks.textContent;
   teks.textContent = 'Memproses…';
   try {
     const kecil = await kompresGambar(berkas);
     teks.textContent = 'Mengunggah…';
-    const id = el('pilihEkskul').value, tgl = el('pilihTanggal').value;
-    foto[jenis] = await unggahFoto(kecil, id, tgl, jenis);
-    gambarFoto(jenis);
+    foto = await unggahFoto(kecil, el('pilihEkskul').value, el('pilihTanggal').value, 'kegiatan');
+    gambarFoto();
     sukses('Foto siap. Jangan lupa ketuk Simpan daftar hadir.');
   } catch (e) {
-    teks.textContent = semula;
+    gambarFoto();
     laporError(e);
   } finally {
     ev.target.value = '';
   }
 }
 
-function gambarFoto(jenis) {
-  const slot = el(jenis === 'sebelum' ? 'slotSebelum' : 'slotSesudah');
-  const label = jenis === 'sebelum' ? 'Foto sebelum latihan' : 'Foto sesudah latihan';
+function gambarFoto() {
+  const slot = el('slotFoto');
   slot.querySelectorAll('img,.hapus-foto').forEach(x => x.remove());
-  slot.querySelector('span').textContent = label;
-  slot.classList.toggle('terisi', !!foto[jenis]);
-  if (!foto[jenis]) return;
+  slot.querySelector('span').textContent = foto ? 'Foto kegiatan' : 'Ambil atau pilih foto';
+  slot.classList.toggle('terisi', !!foto);
+  if (!foto) return;
   const img = document.createElement('img');
-  img.src = foto[jenis];
-  img.alt = label;
+  img.src = foto;
+  img.alt = 'Foto kegiatan';
   slot.prepend(img);
-  const hapus = document.createElement('button');
-  hapus.type = 'button';
-  hapus.className = 'hapus-foto';
-  hapus.textContent = 'Ganti';
-  hapus.addEventListener('click', ev => {
+  const ganti = document.createElement('button');
+  ganti.type = 'button';
+  ganti.className = 'hapus-foto';
+  ganti.textContent = 'Ganti';
+  ganti.addEventListener('click', ev => {
     ev.preventDefault();
     ev.stopPropagation();
-    foto[jenis] = '';
-    gambarFoto(jenis);
+    foto = '';
+    gambarFoto();
   });
-  slot.appendChild(hapus);
+  slot.appendChild(ganti);
 }
 
 // -------------------------------------------------------------- tampilan
@@ -227,7 +222,7 @@ async function simpan() {
   if (statusPembina === 'DG' && !el('namaPengganti').value.trim()) {
     laporError('Tulis nama pelatih yang menggantikan.'); return;
   }
-  if (statusPembina !== 'KG' && !foto.sebelum && !foto.sesudah) {
+  if (statusPembina !== 'KG' && !foto) {
     if (!confirm('Belum ada foto kegiatan. Simpan tanpa foto?')) return;
   }
   const tombol = el('tombolSimpan');
@@ -243,8 +238,7 @@ async function simpan() {
       tempat: el('tempatLatihan').value.trim(),
       materi: el('materiLatihan').value.trim(),
       catatan: el('catatanSesi').value.trim(),
-      foto_sebelum: foto.sebelum || null,
-      foto_sesudah: foto.sesudah || null,
+      foto: foto || null,
       dicatat_oleh: el('pencatat').value.trim(),
       kehadiran: statusPembina === 'KG' ? {} : STATUS
     });
