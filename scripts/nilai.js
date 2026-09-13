@@ -1,12 +1,13 @@
 import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPeriode,
-         ambilNilai, simpanNilai, kehadiranPerSiswa } from '../assets/db.js?v=20260913b';
+         ambilNilai, simpanNilai, kehadiranPerSiswa, kehadiranSemua,
+         nilaiSeluruhPeriode } from '../assets/db.js?v=20260913c';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
-         bersihkanPesan, tanggalPanjang, persen, unduhCSV } from '../assets/ui.js?v=20260913b';
+         bersihkanPesan, tanggalPanjang, persen, unduhCSV } from '../assets/ui.js?v=20260913c';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };
 
-let AKUN = null, EKSKUL = [], PERIODE = [], aktif = null;
+let AKUN = null, EKSKUL = [], PEMBINA_NAMA = {}, PERIODE = [], aktif = null;
 let SISWA = [], HADIR = {}, NILAI = {};
 
 AKUN = wajibMasuk(false);
@@ -16,6 +17,7 @@ try { tandaiMode(); } catch (e) { console.error(e); }
   if (!AKUN) return;
   try {
     const m = await ambilMaster();
+    PEMBINA_NAMA = Object.fromEntries(m.pembina.map(p => [p.id, p.nama]));
     EKSKUL = ekskulBoleh(AKUN, m.ekskul.filter(e => e.aktif !== false));
     if (!EKSKUL.length) {
       laporError('Belum ada ekstrakurikuler atas nama Anda.');
@@ -27,6 +29,7 @@ try { tandaiMode(); } catch (e) { console.error(e); }
     el('tombolSimpan').addEventListener('click', simpan);
     el('terapkan').addEventListener('click', terapkanMassal);
     el('unduhNilai').addEventListener('click', unduh);
+    if (adalahPengelola()) el('unduhSemua').addEventListener('click', unduhSemua);
 
     if (adalahPengelola()) {
       el('pilihPeriode').addEventListener('change', isiFormPeriode);
@@ -81,7 +84,7 @@ function gambarInfoPeriode() {
   const bisa = !!aktif && aktif.dibuka;
   el('barSimpan').style.display = bisa ? 'flex' : 'none';
   el('alatMassal').querySelectorAll('select,button').forEach(x => {
-    if (x.id !== 'unduhNilai') x.disabled = !bisa;
+    if (x.id !== 'unduhNilai' && x.id !== 'unduhSemua') x.disabled = !bisa;
   });
   document.body.classList.toggle('ada-bar', bisa);
 }
@@ -236,4 +239,44 @@ function unduh() {
               n.predikat || '', PREDIKAT[n.predikat] || '', n.deskripsi || ''];
     })
   ]);
+}
+
+// Rekap nilai seluruh ekstrakurikuler dalam satu berkas, untuk kesiswaan.
+async function unduhSemua() {
+  bersihkanPesan();
+  if (!aktif) { laporError('Belum ada periode penilaian.'); return; }
+  const tombol = el('unduhSemua');
+  tombol.disabled = true;
+  tombol.textContent = 'Menyiapkan…';
+  try {
+    const [hadirSemua, nilaiSemua] = await Promise.all([
+      kehadiranSemua(aktif.tanggal_mulai, aktif.tanggal_selesai),
+      nilaiSeluruhPeriode(aktif.id)
+    ]);
+    const baris = [];
+    for (const e of EKSKUL) {
+      const peserta = await pesertaEkskul(e.id);
+      const hadir = hadirSemua[e.id] || {};
+      const nilai = nilaiSemua[e.id] || {};
+      peserta.forEach(s => {
+        const h = hadir[s.id] || { H: 0, total: 0 };
+        const n = nilai[s.id] || {};
+        baris.push([e.nama, PEMBINA_NAMA[e.pembina_id] || '', s.nis || '', s.nama, s.kelas || '',
+                    h.total, h.H, persen(h.H, h.total), n.predikat || '',
+                    PREDIKAT[n.predikat] || '', n.deskripsi || '']);
+      });
+    }
+    if (!baris.length) { laporError('Belum ada peserta yang terdaftar.'); return; }
+    unduhCSV(`nilai_semua_ekskul_${aktif.tahun_ajaran.replace('/', '-')}_${aktif.semester}.csv`, [
+      ['Ekstrakurikuler', 'Pembina', 'NIS', 'Nama siswa', 'Kelas', 'Pertemuan', 'Hadir',
+       '% Kehadiran', 'Predikat', 'Keterangan', 'Deskripsi'],
+      ...baris
+    ]);
+    sukses(`${baris.length} baris nilai diunduh.`);
+  } catch (e) {
+    laporError(e);
+  } finally {
+    tombol.disabled = false;
+    tombol.textContent = 'Unduh semua ekskul (CSV)';
+  }
 }

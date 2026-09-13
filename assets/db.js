@@ -3,10 +3,10 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260913b';
+import * as CFG from './supabase-client.js?v=20260913c';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
-import * as D from './demo-data.js?v=20260913b';
+import * as D from './demo-data.js?v=20260913c';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -381,4 +381,41 @@ export async function kehadiranPerSiswa(ekskulId, dari, sampai) {
     h.total++;
   });
   return hitung;
+}
+
+// Kehadiran seluruh ekstrakurikuler pada satu rentang, sekali ambil.
+// Bentuk hasil: { ekskul_id: { siswa_id: {H,S,I,A,total} } }
+export async function kehadiranSemua(dari, sampai) {
+  const { sesi, kehadiran } = await muatPeriode(dari, sampai);
+  const milikEkskul = {};
+  sesi.forEach(s => { milikEkskul[s.id] = s.ekskul_id; });
+  const hasil = {};
+  kehadiran.forEach(k => {
+    const ek = milikEkskul[k.sesi_id];
+    if (!ek) return;
+    const per = hasil[ek] || (hasil[ek] = {});
+    const h = per[k.siswa_id] || (per[k.siswa_id] = { H: 0, S: 0, I: 0, A: 0, total: 0 });
+    if (h[k.status] !== undefined) h[k.status]++;
+    h.total++;
+  });
+  return hasil;
+}
+
+// Seluruh nilai pada satu periode: { ekskul_id: { siswa_id: {predikat,deskripsi} } }
+export async function nilaiSeluruhPeriode(periodeId) {
+  const hasil = {};
+  const masukkan = n => {
+    const per = hasil[n.ekskul_id] || (hasil[n.ekskul_id] = {});
+    per[n.siswa_id] = { predikat: n.predikat, deskripsi: n.deskripsi };
+  };
+  if (MODE === 'contoh') {
+    D.NILAI.filter(n => n.periode_id === periodeId).forEach(masukkan);
+    return hasil;
+  }
+  const c = await sb();
+  periksa(
+    await c.from(T.nilai).select('ekskul_id,siswa_id,predikat,deskripsi').eq('periode_id', periodeId),
+    'Gagal memuat nilai seluruh ekstrakurikuler'
+  ).forEach(masukkan);
+  return hasil;
 }

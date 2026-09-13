@@ -1,7 +1,7 @@
 import { ambilMaster, pesertaEkskul, cariSiswaSekolah, daftarKelas,
-         daftarkanPeserta, hapusPeserta } from '../assets/db.js?v=20260913b';
+         daftarkanPeserta, hapusPeserta } from '../assets/db.js?v=20260913c';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan, unduhCSV, jam }
-  from '../assets/ui.js?v=20260913b';
+  from '../assets/ui.js?v=20260913c';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, PESERTA = [], HASIL = [], jeda = null;
