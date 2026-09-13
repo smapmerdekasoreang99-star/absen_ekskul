@@ -1,5 +1,5 @@
 // Fungsi bersama untuk semua halaman: sesi masuk, format, pesan, foto.
-import { MODE } from './db.js?v=20260912e';
+import { MODE } from './db.js?v=20260912g';
 
 export const PIN_PENGELOLA = 'merdeka2026';
 

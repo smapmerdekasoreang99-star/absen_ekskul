@@ -1,6 +1,6 @@
-import { ambilMaster, cekPembina } from '../assets/db.js?v=20260912e';
+import { ambilMaster, cekPembina } from '../assets/db.js?v=20260912g';
 import { masukSebagai, tandaiMode, laporError, bersihkanPesan, PIN_PENGELOLA }
-  from '../assets/ui.js?v=20260912e';
+  from '../assets/ui.js?v=20260912g';
 
 const el = id => document.getElementById(id);
 let peran = 'pembina';

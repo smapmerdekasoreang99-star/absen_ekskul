@@ -1,6 +1,6 @@
-import { ambilMaster, muatPeriode, namaSiswa } from '../assets/db.js?v=20260912e';
+import { ambilMaster, muatPeriode, namaSiswa } from '../assets/db.js?v=20260912g';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, bersihkanPesan, hariIni,
-         tanggalPanjang, tanggalPendek, persen, unduhCSV, jam } from '../assets/ui.js?v=20260912e';
+         tanggalPanjang, tanggalPendek, persen, unduhCSV, jam } from '../assets/ui.js?v=20260912g';
 
 const el = id => document.getElementById(id);
 const LABEL = { H: 'Hadir', DG: 'Digantikan', TH: 'Tidak hadir', KG: 'Ditiadakan' };
@@ -113,6 +113,44 @@ function barisSiswa() {
   }).sort((a, b) => a.persen - b.persen || String(a.nama).localeCompare(String(b.nama), 'id'));
 }
 
+// Satu baris satu pertemuan yang berjalan, dikelompokkan per ekstrakurikuler.
+// Pertemuan berstatus ditiadakan (KG) dan pembina tidak hadir (TH) dibuang,
+// karena tidak menimbulkan hak transport.
+function barisPembina() {
+  const hasil = [];
+  let no = 0;
+  // Diurutkan menurut nama pembina, supaya ekstrakurikuler yang dipegang
+  // pembina yang sama berdekatan.
+  const urut = [...EKSKUL].sort((a, b) =>
+    String(PEMBINA[a.pembina_id] || '').localeCompare(String(PEMBINA[b.pembina_id] || ''), 'id') ||
+    a.nama.localeCompare(b.nama, 'id'));
+  urut.forEach(e => {
+    const s = SESI.filter(x => x.ekskul_id === e.id &&
+                               (x.status_pembina === 'H' || x.status_pembina === 'DG'))
+                  .sort((a, b) => a.tanggal.localeCompare(b.tanggal));
+    if (!s.length) return;
+    no++;
+    s.forEach((x, i) => {
+      const total = x.H + x.S + x.I + x.A;
+      hasil.push({
+        no: i === 0 ? no : '',
+        ekskul: i === 0 ? e.nama : '',
+        pembina: i === 0 ? (PEMBINA[e.pembina_id] || '—') : '',
+        ekskulPenuh: e.nama,
+        pembinaPenuh: PEMBINA[e.pembina_id] || '—',
+        awal: i === 0,
+        tanggal: x.tanggal,
+        pertemuan: tanggalPanjang(x.tanggal),
+        pengganti: x.status_pembina === 'DG' ? (x.pengganti || 'pelatih pengganti') : '',
+        hadir: x.H,
+        peserta: total,
+        persen: persen(x.H, total)
+      });
+    });
+  });
+  return hasil;
+}
+
 // --------------------------------------------------------------- tampilan
 function gambarRingkasan(dari, sampai) {
   const b = barisEkskul();
@@ -137,11 +175,15 @@ function baris(a, b) {
 
 function gambarTabel() {
   const t = el('tabel');
-  const judul = { ekskul: 'Rekap per ekstrakurikuler', pertemuan: 'Rincian tiap pertemuan', siswa: 'Kehadiran tiap siswa' };
+  const judul = { ekskul: 'Rekap per ekstrakurikuler', pertemuan: 'Rincian tiap pertemuan',
+                  siswa: 'Kehadiran tiap siswa', pembina: 'Rekap pertemuan per pembina' };
   const ket = {
     ekskul: 'Jumlah pertemuan, kehadiran pembina, dan kehadiran siswa pada rentang tanggal yang dipilih.',
     pertemuan: 'Urut menurut tanggal, lengkap dengan foto kegiatan yang dilampirkan pembina.',
-    siswa: 'Diurutkan dari persentase kehadiran terendah, supaya siswa yang jarang datang langsung terlihat.'
+    siswa: 'Diurutkan dari persentase kehadiran terendah, supaya siswa yang jarang datang langsung terlihat.',
+    pembina: 'Satu baris satu pertemuan yang benar-benar berjalan, diurutkan menurut nama pembina. ' +
+             'Pertemuan yang ditiadakan dan yang pembinanya tidak hadir tidak ikut dihitung. ' +
+             'Bentuk inilah yang dipakai untuk perhitungan transport.'
   };
   el('judulTabel').textContent = judul[tab];
   el('ketTabel').textContent = ket[tab];
@@ -152,6 +194,7 @@ function gambarTabel() {
   }
   if (tab === 'ekskul') return tabelEkskul(t);
   if (tab === 'pertemuan') return tabelPertemuan(t);
+  if (tab === 'pembina') return tabelPembina(t);
   return tabelSiswa(t);
 }
 
@@ -199,6 +242,28 @@ function tabelPertemuan(t) {
       <td>${s.materi || ''}</td></tr>`).join('')}</tbody>`;
 }
 
+function tabelPembina(t) {
+  const b = barisPembina();
+  if (!b.length) {
+    t.innerHTML = '<tbody><tr><td class="kosong">Tidak ada pertemuan yang berjalan pada rentang ini.</td></tr></tbody>';
+    return;
+  }
+  t.innerHTML = `
+    <thead><tr><th class="angka">No.</th><th>Ekstrakurikuler</th><th>Pembina</th>
+      <th>Pertemuan</th><th class="angka">Kehadiran Siswa</th><th class="angka">% Kehadiran</th></tr></thead>
+    <tbody>${b.map(x => `<tr${x.awal ? ' class="awal-kelompok"' : ''}>
+      <td class="angka">${x.no}</td>
+      <td${x.ekskul ? ' class="kelompok"' : ''}>${x.ekskul}</td>
+      <td>${x.pembina}</td>
+      <td>${x.pertemuan}${x.pengganti ? '<br><small>digantikan ' + x.pengganti + '</small>' : ''}</td>
+      <td class="angka">${x.hadir}</td>
+      <td class="angka">${x.persen}%</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="3">Jumlah</td>
+      <td>${b.length} pertemuan</td>
+      <td class="angka">${b.reduce((a, x) => a + x.hadir, 0)}</td>
+      <td class="angka">—</td></tr></tfoot>`;
+}
+
 function tabelSiswa(t) {
   const b = barisSiswa();
   if (!b.length) {
@@ -240,6 +305,13 @@ function unduh() {
         LABEL[s.status_pembina] || s.status_pembina, s.pengganti || '',
         s.H, s.S, s.I, s.A, s.materi || '', s.catatan || '',
         s.foto || '', s.dicatat_oleh || ''])
+    ]);
+  } else if (tab === 'pembina') {
+    unduhCSV(`rekap_per_pembina_${dari}_sd_${sampai}.csv`, [
+      ['No.', 'Ekstrakurikuler', 'Pembina', 'Pertemuan', 'Tanggal', 'Digantikan oleh',
+       'Kehadiran Siswa', 'Peserta terdaftar', '% Kehadiran'],
+      ...barisPembina().map((x, i) => [i + 1, x.ekskulPenuh, x.pembinaPenuh, x.pertemuan,
+        x.tanggal, x.pengganti, x.hadir, x.peserta, x.persen])
     ]);
   } else {
     unduhCSV(`kehadiran_siswa_${dari}_sd_${sampai}.csv`, [

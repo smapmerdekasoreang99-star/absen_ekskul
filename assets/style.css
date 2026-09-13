@@ -151,6 +151,10 @@ body.ada-bar{padding-bottom:156px}
 .nav-bawah a svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .nav-bawah a[aria-current="page"]{color:var(--emas)}
 
+/* Baris pertama tiap kelompok pada tabel transport */
+tr.awal-kelompok td{border-top:1.5px solid var(--garis)}
+td.kelompok{background:#FAF6EC;font-weight:600}
+
 /* ---------- Tabel ---------- */
 .gulir{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
@@ -231,7 +235,8 @@ tfoot td{font-weight:700;background:#FAF6EC}
 .foto-mini{width:46px;height:46px;border-radius:8px;object-fit:cover;border:1px solid var(--garis)}
 
 /* ---------- Tab rekap ---------- */
-.tab-rekap{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.tab-rekap{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:14px}
+@media(min-width:640px){ .tab-rekap{grid-template-columns:repeat(4,1fr)} }
 .tab-rekap button{font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;
   border:1px solid var(--garis);background:#fff;color:var(--tinta-2);border-radius:10px;
   padding:10px 6px;min-height:44px}
