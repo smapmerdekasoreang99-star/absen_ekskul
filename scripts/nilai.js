@@ -1,7 +1,7 @@
 import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPeriode,
-         ambilNilai, simpanNilai, kehadiranPerSiswa } from '../assets/db.js?v=20260913a';
+         ambilNilai, simpanNilai, kehadiranPerSiswa } from '../assets/db.js?v=20260913b';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
-         bersihkanPesan, tanggalPanjang, persen, unduhCSV } from '../assets/ui.js?v=20260913a';
+         bersihkanPesan, tanggalPanjang, persen, unduhCSV } from '../assets/ui.js?v=20260913b';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };

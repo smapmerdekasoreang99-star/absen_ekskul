@@ -13,13 +13,13 @@
 // =====================================================================
 
 // --- Project Kehadiran_Guru (tempat tabel ekskul) --------------------
-export const SUPABASE_URL = 'https://xgtoneyvzfvfbidicotq.supabase.co';
-export const SUPABASE_ANON_KEY = 'sb_publishable_rjHVGT0ULc03TC2ljIytSA_2X54xzR1';
+export const SUPABASE_URL = 'ISI_URL_KEHADIRAN_GURU';
+export const SUPABASE_ANON_KEY = 'ISI_ANON_KEHADIRAN_GURU';
 
 // --- Project Tryout_guru (sumber data siswa) -------------------------
 export const SUMBER_SISWA = {
-  url:   'https://jzxcnfetpjkltjjbglxz.supabase.co',   // kosongkan '' bila satu project dengan ekskul
-  key:   'sb_publishable_9pl5IOJl-Vx0KEnHtCs3nA_ioZOkacq',
+  url:   'ISI_URL_TRYOUT',   // kosongkan '' bila satu project dengan ekskul
+  key:   'ISI_ANON_TRYOUT',
   tabel: 'tka_siswa_ekskul', // tampilan terbatas dari db/akses_siswa.sql
                              // ganti 'tka_siswa' bila ingin langsung ke tabelnya
   id:    'nisn',
@@ -38,7 +38,9 @@ export const TABEL = {
   ekskul:    'ae_ekskul',
   peserta:   'ae_peserta',
   sesi:      'ae_sesi',
-  kehadiran: 'ae_kehadiran'
+  kehadiran: 'ae_kehadiran',
+  periode:   'ae_periode',
+  nilai:     'ae_nilai'
 };
 
 export const BUCKET_FOTO = 'foto-ekskul';

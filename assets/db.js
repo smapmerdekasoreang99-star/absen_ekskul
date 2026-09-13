@@ -1,7 +1,12 @@
 // Lapisan akses data. Semua halaman memanggil fungsi di sini, sehingga
 // halaman tidak perlu tahu apakah datanya dari Supabase atau contoh.
-import { klien, klienSiswa, terhubung, SUMBER_SISWA, TABEL, BUCKET_FOTO } from './supabase-client.js?v=20260913a';
-import * as D from './demo-data.js?v=20260913a';
+// Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
+// berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
+// bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
+import * as CFG from './supabase-client.js?v=20260913b';
+
+const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
+import * as D from './demo-data.js?v=20260913b';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -16,6 +21,21 @@ function periksa(res, apa) {
   if (res.error) throw new Error(apa + ': ' + res.error.message);
   return res.data;
 }
+
+// Nama tabel bawaan. Nilai dari TABEL menimpanya, tetapi bila ada kunci
+// yang belum tercantum di supabase-client.js, bawaan inilah yang dipakai.
+// Ini mencegah galat "relation must be a non-empty string" ketika berkas
+// konfigurasi lama masih terpakai.
+const T = {
+  pembina:   'ae_pembina',
+  ekskul:    'ae_ekskul',
+  peserta:   'ae_peserta',
+  sesi:      'ae_sesi',
+  kehadiran: 'ae_kehadiran',
+  periode:   'ae_periode',
+  nilai:     'ae_nilai',
+  ...(CFG.TABEL || {})
+};
 
 const K = SUMBER_SISWA;
 const kolomSiswa = () => [K.id, K.nis, K.nama, K.kelas].filter(Boolean).join(',');
@@ -36,8 +56,8 @@ export async function ambilMaster() {
   if (MODE === 'contoh') return { ekskul: salin(D.EKSKUL), pembina: salin(D.PEMBINA) };
   const c = await sb();
   const [e, p] = await Promise.all([
-    c.from(TABEL.ekskul).select('*').order('id'),
-    c.from(TABEL.pembina).select('*').order('nama')
+    c.from(T.ekskul).select('*').order('id'),
+    c.from(T.pembina).select('*').order('nama')
   ]);
   return {
     ekskul: periksa(e, 'Gagal memuat ekstrakurikuler'),
@@ -70,7 +90,7 @@ export async function pesertaEkskul(ekskulId) {
   }
   const c = await sb();
   const baris = periksa(
-    await c.from(TABEL.peserta).select('siswa_id,nama_siswa,kelas')
+    await c.from(T.peserta).select('siswa_id,nama_siswa,kelas')
       .eq('ekskul_id', ekskulId).eq('aktif', true),
     'Gagal memuat peserta'
   );
@@ -130,7 +150,7 @@ export async function daftarkanPeserta(ekskulId, siswa) {
     return;
   }
   const c = await sb();
-  periksa(await c.from(TABEL.peserta).upsert({
+  periksa(await c.from(T.peserta).upsert({
     ekskul_id: ekskulId, siswa_id: siswa.id, nama_siswa: siswa.nama,
     kelas: siswa.kelas, aktif: true
   }, { onConflict: 'ekskul_id,siswa_id' }), 'Gagal mendaftarkan peserta');
@@ -143,7 +163,7 @@ export async function hapusPeserta(ekskulId, siswaId) {
     return;
   }
   const c = await sb();
-  periksa(await c.from(TABEL.peserta).delete().eq('ekskul_id', ekskulId).eq('siswa_id', siswaId),
+  periksa(await c.from(T.peserta).delete().eq('ekskul_id', ekskulId).eq('siswa_id', siswaId),
           'Gagal mengeluarkan peserta');
 }
 
@@ -176,13 +196,13 @@ export async function ambilSesi(ekskulId, tanggal) {
   }
   const c = await sb();
   const baris = periksa(
-    await c.from(TABEL.sesi).select('*').eq('ekskul_id', ekskulId).eq('tanggal', tanggal).limit(1),
+    await c.from(T.sesi).select('*').eq('ekskul_id', ekskulId).eq('tanggal', tanggal).limit(1),
     'Gagal memeriksa catatan'
   );
   if (!baris.length) return null;
   const s = baris[0];
   const kh = periksa(
-    await c.from(TABEL.kehadiran).select('siswa_id,status').eq('sesi_id', s.id),
+    await c.from(T.kehadiran).select('siswa_id,status').eq('sesi_id', s.id),
     'Gagal memuat kehadiran siswa'
   );
   const k = {};
@@ -204,13 +224,13 @@ export async function simpanSesi(data) {
   }
   const c = await sb();
   const baris = periksa(
-    await c.from(TABEL.sesi).upsert(sesi, { onConflict: 'ekskul_id,tanggal' }).select().single(),
+    await c.from(T.sesi).upsert(sesi, { onConflict: 'ekskul_id,tanggal' }).select().single(),
     'Gagal menyimpan sesi'
   );
   const isi = Object.entries(kehadiran || {}).map(([siswa_id, status]) =>
     ({ sesi_id: baris.id, siswa_id, status }));
   if (isi.length)
-    periksa(await c.from(TABEL.kehadiran).upsert(isi, { onConflict: 'sesi_id,siswa_id' }),
+    periksa(await c.from(T.kehadiran).upsert(isi, { onConflict: 'sesi_id,siswa_id' }),
             'Gagal menyimpan kehadiran siswa');
   return baris.id;
 }
@@ -226,12 +246,12 @@ export async function muatPeriode(dari, sampai) {
   } else {
     const c = await sb();
     sesi = periksa(
-      await c.from(TABEL.sesi).select('*').gte('tanggal', dari).lte('tanggal', sampai).order('tanggal'),
+      await c.from(T.sesi).select('*').gte('tanggal', dari).lte('tanggal', sampai).order('tanggal'),
       'Gagal memuat sesi'
     );
     const ids = sesi.map(s => s.id);
     kehadiran = ids.length
-      ? periksa(await c.from(TABEL.kehadiran).select('sesi_id,siswa_id,status').in('sesi_id', ids),
+      ? periksa(await c.from(T.kehadiran).select('sesi_id,siswa_id,status').in('sesi_id', ids),
                 'Gagal memuat kehadiran')
       : [];
   }
@@ -265,7 +285,7 @@ export async function namaSiswa(ids) {
   const kurang = ids.filter(i => !hasil[i]);
   if (kurang.length) {
     const cad = periksa(
-      await c.from(TABEL.peserta).select('siswa_id,nama_siswa,kelas').in('siswa_id', kurang),
+      await c.from(T.peserta).select('siswa_id,nama_siswa,kelas').in('siswa_id', kurang),
       'Gagal membaca salinan nama'
     );
     cad.forEach(b => {
@@ -281,7 +301,7 @@ export async function daftarPeriode() {
   if (MODE === 'contoh') return salin(D.PERIODE);
   const c = await sb();
   return periksa(
-    await c.from(TABEL.periode).select('*').order('tanggal_mulai', { ascending: false }),
+    await c.from(T.periode).select('*').order('tanggal_mulai', { ascending: false }),
     'Gagal memuat periode penilaian'
   );
 }
@@ -296,7 +316,7 @@ export async function simpanPeriode(baris) {
   }
   const c = await sb();
   periksa(
-    await c.from(TABEL.periode).upsert(baris, { onConflict: 'tahun_ajaran,semester' }),
+    await c.from(T.periode).upsert(baris, { onConflict: 'tahun_ajaran,semester' }),
     'Gagal menyimpan periode penilaian'
   );
 }
@@ -308,7 +328,7 @@ export async function ubahStatusPeriode(id, dibuka) {
     return;
   }
   const c = await sb();
-  periksa(await c.from(TABEL.periode).update({ dibuka }).eq('id', id),
+  periksa(await c.from(T.periode).update({ dibuka }).eq('id', id),
           'Gagal mengubah status periode');
 }
 
@@ -321,7 +341,7 @@ export async function ambilNilai(periodeId, ekskulId) {
   }
   const c = await sb();
   const data = periksa(
-    await c.from(TABEL.nilai).select('siswa_id,predikat,deskripsi')
+    await c.from(T.nilai).select('siswa_id,predikat,deskripsi')
       .eq('periode_id', periodeId).eq('ekskul_id', ekskulId),
     'Gagal memuat nilai'
   );
@@ -345,7 +365,7 @@ export async function simpanNilai(periodeId, ekskulId, daftar, diisiOleh) {
   if (!baris.length) return;
   const c = await sb();
   periksa(
-    await c.from(TABEL.nilai).upsert(baris, { onConflict: 'periode_id,ekskul_id,siswa_id' }),
+    await c.from(T.nilai).upsert(baris, { onConflict: 'periode_id,ekskul_id,siswa_id' }),
     'Gagal menyimpan nilai'
   );
 }
