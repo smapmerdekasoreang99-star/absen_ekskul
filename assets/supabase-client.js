@@ -1,33 +1,44 @@
 // =====================================================================
 // Koneksi ke Supabase.
 //
-// Susunan saat ini: SATU project, yaitu Tryout_guru. Tabel ekskul
-// dipasang di sana, berdampingan dengan tka_siswa.
+// Susunan saat ini: DUA project yang sudah ada.
+//   - Kehadiran_Guru -> tabel ekskul, peserta, sesi, dan bucket foto
+//   - Tryout_guru    -> public.tka_siswa, hanya dibaca
 //
-// Bila suatu saat tabel ekskul dipindahkan ke project tersendiri, isi
-// url & key pada SUMBER_SISWA dengan project Tryout_guru; aplikasi akan
-// membuka koneksi kedua khusus untuk membaca siswa. Tidak ada perubahan
-// lain yang diperlukan.
+// Bila suatu saat keduanya digabung ke satu project, cukup kosongkan
+// url & key pada SUMBER_SISWA. Tidak ada perubahan kode lain.
 //
-// Selama SUPABASE_URL masih "ISI_DI_SINI", aplikasi berjalan dalam
+// Selama SUPABASE_URL belum diisi alamat sungguhan, aplikasi berjalan dalam
 // MODE CONTOH: data palsu dan tidak tersimpan.
 // =====================================================================
 
-// --- Project Tryout_guru ---------------------------------------------
-export const SUPABASE_URL = 'https://xgtoneyvzfvfbidicotq.supabase.co';
-export const SUPABASE_ANON_KEY = 'sb_publishable_rjHVGT0ULc03TC2ljIytSA_2X54xzR1';
+// --- Project Kehadiran_Guru (tempat tabel ekskul) --------------------
+export const SUPABASE_URL = 'ISI_URL_KEHADIRAN_GURU';
+export const SUPABASE_ANON_KEY = 'ISI_ANON_KEHADIRAN_GURU';
 
-// --- Sumber data siswa -----------------------------------------------
+// --- Project Tryout_guru (sumber data siswa) -------------------------
 export const SUMBER_SISWA = {
-  url:   'https://jzxcnfetpjkltjjbglxz.supabase.co',                 // kosong = satu project dengan tabel ekskul
-  key:   'sb_publishable_9pl5IOJl-Vx0KEnHtCs3nA_ioZOkacq',                 // isi hanya bila project-nya dipisah
-  tabel: 'siswa_ekskul',     // tampilan terbatas dari db/akses_siswa.sql
+  url:   'ISI_URL_TRYOUT',   // kosongkan '' bila satu project dengan ekskul
+  key:   'ISI_ANON_TRYOUT',
+  tabel: 'tka_siswa_ekskul', // tampilan terbatas dari db/akses_siswa.sql
                              // ganti 'tka_siswa' bila ingin langsung ke tabelnya
   id:    'nisn',
   nis:   'nis',
   nama:  'nama',
   kelas: 'kelas',
   kolomAktif: 'aktif'        // hanya siswa aktif; kosongkan '' bila tidak dipakai
+};
+
+// --- Nama tabel di project Kehadiran_Guru ----------------------------
+// Awalan ae_ (absensi ekstrakurikuler) dipakai supaya tidak bertabrakan
+// dengan tabel milik aplikasi lain di project yang sama. Bila suatu saat
+// awalannya diubah, cukup berkas ini yang disunting.
+export const TABEL = {
+  pembina:   'ae_pembina',
+  ekskul:    'ae_ekskul',
+  peserta:   'ae_peserta',
+  sesi:      'ae_sesi',
+  kehadiran: 'ae_kehadiran'
 };
 
 export const BUCKET_FOTO = 'foto-ekskul';
