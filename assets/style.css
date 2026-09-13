@@ -241,3 +241,13 @@ tfoot td{font-weight:700;background:#FAF6EC}
   border:1px solid var(--garis);background:#fff;color:var(--tinta-2);border-radius:10px;
   padding:10px 6px;min-height:44px}
 .tab-rekap button[aria-pressed="true"]{background:var(--emas);border-color:#B2861F;color:#2A2114}
+
+/* ---------- Baris pengisian nilai ---------- */
+.nilai-siswa{padding:12px 0;border-bottom:1px solid var(--garis)}
+.nilai-siswa:last-child{border-bottom:0}
+.nilai-kepala{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.nilai-kepala .nama{flex:1;min-width:0;font-size:15px;font-weight:500}
+.nilai-kepala .nama small{display:block;font-weight:400;color:var(--tinta-2);font-size:12.5px}
+.nilai-isian{display:grid;gap:8px}
+@media(min-width:620px){ .nilai-isian{grid-template-columns:220px 1fr} }
+.nilai-isian select,.nilai-isian input{font-size:15px;padding:10px 11px}

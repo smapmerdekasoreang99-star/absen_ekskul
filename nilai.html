@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#241F17">
+<title>Nilai akhir · Absensi Ekstrakurikuler</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="assets/style.css?v=20260913a">
+</head>
+<body class="ada-bar">
+
+<header class="topbar">
+  <img src="assets/logo.png" alt="Lambang SMA Plus Merdeka Soreang">
+  <div>
+    <div class="judul">Nilai akhir</div>
+    <div class="sub">SMA Plus Merdeka Soreang</div>
+  </div>
+  <div class="kanan">
+    <span class="pengguna" id="namaPengguna">&nbsp;</span>
+    <button id="tombolKeluar" class="tombol-kunci" type="button">Keluar</button>
+  </div>
+</header>
+
+<main class="wadah">
+  <div id="kotakPesan" class="pesan p-salah sembunyi"></div>
+  <div class="pesan p-info sembunyi" data-mode-contoh>
+    Mode contoh. Nilai yang diisi di sini tidak tersimpan.
+  </div>
+
+  <section class="kartu" data-pengelola>
+    <h2>Periode penilaian</h2>
+    <p class="ket">Hanya kesiswaan yang dapat membuka dan menutup pengisian nilai.
+      Selama tertutup, pembina hanya bisa melihat.</p>
+    <div class="baris dua">
+      <div>
+        <label for="pilihPeriode">Periode tersimpan</label>
+        <select id="pilihPeriode"><option value="">— periode baru —</option></select>
+      </div>
+      <div>
+        <label for="tahunAjaran">Tahun ajaran</label>
+        <input id="tahunAjaran" type="text" placeholder="2026/2027">
+      </div>
+    </div>
+    <div class="baris tiga">
+      <div>
+        <label for="semester">Semester</label>
+        <select id="semester"><option>Ganjil</option><option>Genap</option></select>
+      </div>
+      <div><label for="mulai">Mulai</label><input id="mulai" type="date"></div>
+      <div><label for="selesai">Selesai</label><input id="selesai" type="date"></div>
+    </div>
+    <div>
+      <label for="catatanPeriode">Catatan untuk pembina (opsional)</label>
+      <input id="catatanPeriode" type="text" placeholder="Contoh: pengisian ditutup 20 Desember">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="tbl tbl-utama" id="simpanPeriode" type="button">Simpan periode</button>
+      <button class="tbl" id="tombolBuka" type="button">Buka pengisian</button>
+    </div>
+  </section>
+
+  <section class="kartu">
+    <h2>Kegiatan</h2>
+    <div class="baris">
+      <div>
+        <label for="pilihEkskul">Ekstrakurikuler</label>
+        <select id="pilihEkskul"><option>Memuat…</option></select>
+      </div>
+    </div>
+    <p class="ket" id="infoPeriode" style="margin-bottom:0">Memuat periode…</p>
+  </section>
+
+  <section class="kartu" id="kartuNilai">
+    <h2>Daftar siswa</h2>
+    <p class="ket">Persentase kehadiran dihitung otomatis dari laporan latihan
+      sepanjang semester. Predikat: A sangat baik, B baik, C cukup, D perlu bimbingan.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="alatMassal">
+      <select id="predikatMassal" style="width:auto;min-width:170px">
+        <option value="">Terapkan ke yang kosong…</option>
+        <option value="A">Semua A — Sangat Baik</option>
+        <option value="B">Semua B — Baik</option>
+        <option value="C">Semua C — Cukup</option>
+      </select>
+      <button class="tbl tbl-kecil" id="terapkan" type="button">Terapkan</button>
+      <button class="tbl tbl-kecil" id="unduhNilai" type="button">Unduh (CSV)</button>
+    </div>
+    <div id="daftarNilai"><p class="kosong">Memuat…</p></div>
+  </section>
+</main>
+
+<div class="bar-simpan" id="barSimpan">
+  <div class="hitung">
+    <span id="hitungTerisi">0 terisi</span>
+    <small id="hitungDari">dari 0 siswa</small>
+  </div>
+  <button class="tbl tbl-utama" id="tombolSimpan" type="button">Simpan nilai</button>
+</div>
+
+<nav class="nav-bawah" aria-label="Navigasi utama">
+  <a href="index.html">
+    <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Beranda</a>
+  <a href="absensi.html">
+    <svg viewBox="0 0 24 24"><path d="M9 4h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3z"/><path d="M8.5 13l2 2 4.5-4.5"/></svg>Absensi</a>
+  <a href="rekap.html">
+    <svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>Rekap</a>
+  <a href="nilai.html" aria-current="page">
+    <svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>Nilai</a>
+  <a href="data.html" data-pengelola>
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16.5 11.5a3 3 0 1 0-1.8-5.4"/><path d="M17 20a5.4 5.4 0 0 0-1.2-3.4"/></svg>Data</a>
+</nav>
+
+<script type="module" src="scripts/nilai.js?v=20260913a"></script>
+</body>
+</html>

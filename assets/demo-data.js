@@ -103,3 +103,12 @@ let sesiId = 0;
 // Penghitung id sesi dibungkus objek supaya nilainya bisa dinaikkan
 // dari modul lain (binding impor bersifat hanya-baca).
 export const SESI_ID_TERAKHIR_REF = { v: sesiId };
+
+// ---- Periode penilaian contoh ----------------------------------------
+export const PERIODE = [
+  { id: 1, tahun_ajaran: '2026/2027', semester: 'Ganjil',
+    tanggal_mulai: '2026-07-13', tanggal_selesai: '2026-12-18',
+    dibuka: true, catatan: 'Pengisian nilai dibuka sampai 20 Desember.' }
+];
+export const NILAI = [];
+export const PERIODE_ID_TERAKHIR_REF = { v: 1 };

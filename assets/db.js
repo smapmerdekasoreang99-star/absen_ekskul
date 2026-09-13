@@ -1,7 +1,7 @@
 // Lapisan akses data. Semua halaman memanggil fungsi di sini, sehingga
 // halaman tidak perlu tahu apakah datanya dari Supabase atau contoh.
-import { klien, klienSiswa, terhubung, SUMBER_SISWA, TABEL, BUCKET_FOTO } from './supabase-client.js?v=20260912g';
-import * as D from './demo-data.js?v=20260912g';
+import { klien, klienSiswa, terhubung, SUMBER_SISWA, TABEL, BUCKET_FOTO } from './supabase-client.js?v=20260913a';
+import * as D from './demo-data.js?v=20260913a';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -274,4 +274,91 @@ export async function namaSiswa(ids) {
     });
   }
   return hasil;
+}
+
+// ------------------------------------------------------- periode & nilai
+export async function daftarPeriode() {
+  if (MODE === 'contoh') return salin(D.PERIODE);
+  const c = await sb();
+  return periksa(
+    await c.from(TABEL.periode).select('*').order('tanggal_mulai', { ascending: false }),
+    'Gagal memuat periode penilaian'
+  );
+}
+
+export async function simpanPeriode(baris) {
+  if (MODE === 'contoh') {
+    const lama = D.PERIODE.find(p =>
+      p.tahun_ajaran === baris.tahun_ajaran && p.semester === baris.semester);
+    if (lama) Object.assign(lama, baris);
+    else D.PERIODE.push({ id: ++D.PERIODE_ID_TERAKHIR_REF.v, ...baris });
+    return;
+  }
+  const c = await sb();
+  periksa(
+    await c.from(TABEL.periode).upsert(baris, { onConflict: 'tahun_ajaran,semester' }),
+    'Gagal menyimpan periode penilaian'
+  );
+}
+
+export async function ubahStatusPeriode(id, dibuka) {
+  if (MODE === 'contoh') {
+    const p = D.PERIODE.find(x => x.id === id);
+    if (p) p.dibuka = dibuka;
+    return;
+  }
+  const c = await sb();
+  periksa(await c.from(TABEL.periode).update({ dibuka }).eq('id', id),
+          'Gagal mengubah status periode');
+}
+
+export async function ambilNilai(periodeId, ekskulId) {
+  const hasil = {};
+  if (MODE === 'contoh') {
+    D.NILAI.filter(n => n.periode_id === periodeId && n.ekskul_id === ekskulId)
+      .forEach(n => { hasil[n.siswa_id] = { predikat: n.predikat, deskripsi: n.deskripsi }; });
+    return hasil;
+  }
+  const c = await sb();
+  const data = periksa(
+    await c.from(TABEL.nilai).select('siswa_id,predikat,deskripsi')
+      .eq('periode_id', periodeId).eq('ekskul_id', ekskulId),
+    'Gagal memuat nilai'
+  );
+  data.forEach(n => { hasil[n.siswa_id] = { predikat: n.predikat, deskripsi: n.deskripsi }; });
+  return hasil;
+}
+
+export async function simpanNilai(periodeId, ekskulId, daftar, diisiOleh) {
+  const baris = daftar.map(n => ({
+    periode_id: periodeId, ekskul_id: ekskulId, siswa_id: n.siswa_id,
+    predikat: n.predikat || null, deskripsi: n.deskripsi || null, diisi_oleh: diisiOleh
+  }));
+  if (MODE === 'contoh') {
+    baris.forEach(b => {
+      const lama = D.NILAI.find(n => n.periode_id === b.periode_id &&
+        n.ekskul_id === b.ekskul_id && n.siswa_id === b.siswa_id);
+      if (lama) Object.assign(lama, b); else D.NILAI.push({ ...b });
+    });
+    return;
+  }
+  if (!baris.length) return;
+  const c = await sb();
+  periksa(
+    await c.from(TABEL.nilai).upsert(baris, { onConflict: 'periode_id,ekskul_id,siswa_id' }),
+    'Gagal menyimpan nilai'
+  );
+}
+
+// Rekap kehadiran satu ekskul pada rentang tanggal, dihitung per siswa.
+export async function kehadiranPerSiswa(ekskulId, dari, sampai) {
+  const { sesi, kehadiran } = await muatPeriode(dari, sampai);
+  const milik = new Set(sesi.filter(s => s.ekskul_id === ekskulId).map(s => s.id));
+  const hitung = {};
+  kehadiran.filter(k => milik.has(k.sesi_id)).forEach(k => {
+    const h = hitung[k.siswa_id] || (hitung[k.siswa_id] = { H: 0, S: 0, I: 0, A: 0, total: 0 });
+    if (h[k.status] !== undefined) h[k.status]++;
+    h.total++;
+  });
+  return hitung;
 }
