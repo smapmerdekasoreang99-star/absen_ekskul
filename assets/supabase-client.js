@@ -18,8 +18,8 @@ export const SUPABASE_ANON_KEY = 'sb_publishable_rjHVGT0ULc03TC2ljIytSA_2X54xzR1
 
 // --- Project Tryout_guru (sumber data siswa) -------------------------
 export const SUMBER_SISWA = {
-  url:   'ISI_URL_TRYOUT',   // kosongkan '' bila satu project dengan ekskul
-  key:   'ISI_ANON_TRYOUT',
+  url:   'https://jzxcnfetpjkltjjbglxz.supabase.co',   // kosongkan '' bila satu project dengan ekskul
+  key:   'sb_publishable_9pl5IOJl-Vx0KEnHtCs3nA_ioZOkacq',
   tabel: 'tka_siswa_ekskul', // tampilan terbatas dari db/akses_siswa.sql
                              // ganti 'tka_siswa' bila ingin langsung ke tabelnya
   id:    'nisn',
