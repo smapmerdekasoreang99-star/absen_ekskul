@@ -25,7 +25,7 @@ export const SUMBER_SISWA = {
   nis:   'nis',
   nama:  'nama',
   kelas: 'kelas',
-  kolomAktif: ''             // lihat catatan di bawah
+ // --- kolomAktif: ''             // lihat catatan di bawah
 };
 
 // --- Nama tabel di project Kehadiran_Guru ----------------------------
