@@ -1,8 +1,9 @@
 import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPeriode,
          ambilNilai, simpanNilai, kehadiranPerSiswa, kehadiranSemua,
-         nilaiSeluruhPeriode } from '../assets/db.js?v=20260913c';
+         nilaiSeluruhPeriode } from '../assets/db.js?v=20260913e';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
-         bersihkanPesan, tanggalPanjang, persen, unduhCSV } from '../assets/ui.js?v=20260913c';
+         bersihkanPesan, tanggalPanjang, persen, unduhCSV } from '../assets/ui.js?v=20260913e';
+import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG } from '../assets/dokumen.js?v=20260913e';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };
@@ -29,7 +30,15 @@ try { tandaiMode(); } catch (e) { console.error(e); }
     el('tombolSimpan').addEventListener('click', simpan);
     el('terapkan').addEventListener('click', terapkanMassal);
     el('unduhNilai').addEventListener('click', unduh);
-    if (adalahPengelola()) el('unduhSemua').addEventListener('click', unduhSemua);
+    if (adalahPengelola()) {
+      el('unduhSemua').addEventListener('click', unduhSemua);
+      el('tabNilai').classList.remove('sembunyi');
+      el('tabNilai').addEventListener('click', gantiTab);
+      el('pilihKelas').addEventListener('change', gambarKelas);
+      el('unduhKelasXlsx').addEventListener('click', () => unduhKelas('xlsx'));
+      el('unduhKelasPng').addEventListener('click', () => unduhKelas('png'));
+      el('unduhSemuaKelas').addEventListener('click', unduhSemuaKelas);
+    }
 
     if (adalahPengelola()) {
       el('pilihPeriode').addEventListener('change', isiFormPeriode);
@@ -278,5 +287,131 @@ async function unduhSemua() {
   } finally {
     tombol.disabled = false;
     tombol.textContent = 'Unduh semua ekskul (CSV)';
+  }
+}
+
+
+// ================================================= REKAP NILAI PER KELAS
+let KELAS = {};          // { kelas: [ {nis,nama,ekskul,predikat,keterangan,deskripsi} ] }
+let kelasSiap = false;
+
+function gantiTab(ev) {
+  const b = ev.target.closest('button');
+  if (!b) return;
+  [...el('tabNilai').children].forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  const keKelas = b.dataset.tab === 'kelas';
+  el('layarIsi').classList.toggle('sembunyi', keKelas);
+  el('layarKelas').classList.toggle('sembunyi', !keKelas);
+  el('barSimpan').style.display = keKelas ? 'none' : (aktif && aktif.dibuka ? 'flex' : 'none');
+  document.body.classList.toggle('ada-bar', !keKelas && !!aktif && aktif.dibuka);
+  if (keKelas && !kelasSiap) susunKelas();
+}
+
+async function susunKelas() {
+  bersihkanPesan();
+  if (!aktif) { laporError('Belum ada periode penilaian.'); return; }
+  el('tabelKelas').innerHTML = '<tbody><tr><td class="kosong">Menyusun data…</td></tr></tbody>';
+  try {
+    const nilaiSemua = await nilaiSeluruhPeriode(aktif.id);
+    KELAS = {};
+    for (const e of EKSKUL) {
+      const peserta = await pesertaEkskul(e.id);
+      const nilai = nilaiSemua[e.id] || {};
+      peserta.forEach(s => {
+        const k = s.kelas || 'Tanpa kelas';
+        const n = nilai[s.id] || {};
+        (KELAS[k] || (KELAS[k] = [])).push({
+          nis: s.nis || '', nama: s.nama, ekskul: e.nama,
+          predikat: n.predikat || '', keterangan: PREDIKAT[n.predikat] || '',
+          deskripsi: n.deskripsi || ''
+        });
+      });
+    }
+    Object.values(KELAS).forEach(d => d.sort((a, b) =>
+      String(a.nama).localeCompare(String(b.nama), 'id') || a.ekskul.localeCompare(b.ekskul, 'id')));
+    const daftar = Object.keys(KELAS).sort((a, b) => a.localeCompare(b, 'id', { numeric: true }));
+    el('pilihKelas').innerHTML = daftar.length
+      ? daftar.map(k => `<option value="${k}">${k} — ${KELAS[k].length} baris</option>`).join('')
+      : '<option value="">Belum ada peserta</option>';
+    kelasSiap = true;
+    gambarKelas();
+  } catch (e) { laporError(e); }
+}
+
+function gambarKelas() {
+  const k = el('pilihKelas').value;
+  const isi = KELAS[k] || [];
+  el('judulKelas').textContent = k ? `Kelas ${k}` : 'Daftar';
+  const belum = isi.filter(x => !x.predikat).length;
+  el('ketKelas').textContent = isi.length
+    ? `${isi.length} baris nilai${belum ? ` · ${belum} belum diisi pembina` : ' · seluruhnya sudah diisi'}`
+    : 'Belum ada peserta pada kelas ini.';
+  const t = el('tabelKelas');
+  if (!isi.length) {
+    t.innerHTML = '<tbody><tr><td class="kosong">Belum ada data.</td></tr></tbody>';
+    return;
+  }
+  t.innerHTML = `
+    <thead><tr><th class="angka">No.</th><th>NIS</th><th>Nama Siswa</th>
+      <th>Ekstrakurikuler</th><th class="angka">Predikat</th><th>Keterangan</th><th>Deskripsi</th></tr></thead>
+    <tbody>${isi.map((x, i) => `<tr>
+      <td class="angka">${i + 1}</td><td>${x.nis}</td><td>${x.nama}</td>
+      <td>${x.ekskul}</td>
+      <td class="angka">${x.predikat
+        ? '<span class="lencana l-hadir">' + x.predikat + '</span>'
+        : '<span class="lencana l-tidak">—</span>'}</td>
+      <td>${x.keterangan}</td><td>${x.deskripsi}</td></tr>`).join('')}</tbody>`;
+}
+
+function labelPeriode() {
+  return `${aktif.tahun_ajaran} · Semester ${aktif.semester}`;
+}
+
+async function unduhKelas(bentuk) {
+  bersihkanPesan();
+  const k = el('pilihKelas').value;
+  const isi = KELAS[k] || [];
+  if (!isi.length) { laporError('Belum ada data pada kelas ini.'); return; }
+  const tombol = el(bentuk === 'png' ? 'unduhKelasPng' : 'unduhKelasXlsx');
+  const semula = tombol.textContent;
+  tombol.disabled = true;
+  tombol.textContent = 'Menyiapkan…';
+  try {
+    const arg = { kelas: k, periode: labelPeriode(), baris: isi };
+    if (bentuk === 'png') {
+      await unduhNilaiKelasPNG({ ...arg, namaBerkas: `nilai_ekskul_${k}.png` });
+    } else {
+      await unduhNilaiKelasXLSX({ ...arg, namaBerkas: `nilai_ekskul_${k}.xlsx` });
+    }
+    sukses('Berkas diunduh.');
+  } catch (e) {
+    laporError(e);
+  } finally {
+    tombol.disabled = false;
+    tombol.textContent = semula;
+  }
+}
+
+async function unduhSemuaKelas() {
+  bersihkanPesan();
+  const daftar = Object.keys(KELAS);
+  if (!daftar.length) { laporError('Belum ada data.'); return; }
+  const tombol = el('unduhSemuaKelas');
+  tombol.disabled = true;
+  tombol.textContent = 'Menyiapkan…';
+  try {
+    for (const k of daftar) {
+      await unduhNilaiKelasXLSX({
+        kelas: k, periode: labelPeriode(), baris: KELAS[k],
+        namaBerkas: `nilai_ekskul_${k}.xlsx`
+      });
+      await new Promise(r => setTimeout(r, 400));   // jeda agar unduhan tidak diblokir
+    }
+    sukses(`${daftar.length} berkas kelas diunduh.`);
+  } catch (e) {
+    laporError(e);
+  } finally {
+    tombol.disabled = false;
+    tombol.textContent = 'Unduh semua kelas (XLSX)';
   }
 }

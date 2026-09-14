@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#241F17">
+<title>Kesiswaan · Absensi Ekstrakurikuler</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="assets/style.css?v=20260913e">
+</head>
+<body>
+
+<header class="topbar">
+  <img src="assets/logo.png" alt="Lambang SMA Plus Merdeka Soreang">
+  <div>
+    <div class="judul">Kesiswaan</div>
+    <div class="sub">SMA Plus Merdeka Soreang</div>
+  </div>
+  <div class="kanan">
+    <span class="pengguna" id="namaPengguna">&nbsp;</span>
+    <button id="tombolKeluar" class="tombol-kunci" type="button">Keluar</button>
+  </div>
+</header>
+
+<main class="wadah">
+  <div id="kotakPesan" class="pesan p-salah sembunyi"></div>
+  <div class="pesan p-info sembunyi" data-mode-contoh>
+    Mode contoh. Perubahan di halaman ini tidak tersimpan.
+  </div>
+
+  <div class="tab-rekap" id="tabKesiswaan">
+    <button type="button" data-tab="pembina" aria-pressed="true">Data pembina</button>
+    <button type="button" data-tab="ekskul" aria-pressed="false">Data ekskul</button>
+    <button type="button" data-tab="tarif" aria-pressed="false">Aturan transport</button>
+    <button type="button" data-tab="laporan" aria-pressed="false">Daftar transport</button>
+  </div>
+
+  <!-- ============ DATA PEMBINA ============ -->
+  <div id="layarPembina">
+    <section class="kartu">
+      <h2>Data induk pembina</h2>
+      <p class="ket">Status Internal untuk PTK sekolah, Eksternal untuk pelatih dari luar.
+        Status ini menentukan tabel tarif transport yang dipakai.</p>
+      <div id="daftarPembina"><p class="kosong">Memuat…</p></div>
+    </section>
+
+    <section class="kartu">
+      <h2 id="judulFormPembina">Tambah pembina</h2>
+      <div class="baris dua">
+        <div><label for="pNama">Nama lengkap</label><input id="pNama" type="text" placeholder="Nama beserta gelar"></div>
+        <div><label for="pStatus">Status</label>
+          <select id="pStatus"><option>Internal</option><option>Eksternal</option></select></div>
+      </div>
+      <div class="baris tiga">
+        <div><label for="pHp">Nomor HP</label><input id="pHp" type="tel" placeholder="08…"></div>
+        <div><label for="pPin">PIN pelaporan</label><input id="pPin" type="text" inputmode="numeric" placeholder="4 angka"></div>
+        <div><label for="pAktif">Keaktifan</label>
+          <select id="pAktif"><option>Aktif</option><option>Nonaktif</option></select></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="tbl tbl-utama" id="simpanPembina" type="button">Simpan</button>
+        <button class="tbl" id="batalPembina" type="button">Batal</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ DATA EKSTRAKURIKULER ============ -->
+  <div id="layarEkskul" class="sembunyi">
+    <section class="kartu">
+      <h2>Data induk ekstrakurikuler</h2>
+      <p class="ket">Nama, pembina, hari, dan jam latihan. Ekstrakurikuler yang
+        dinonaktifkan tidak lagi muncul di menu Absensi, tetapi seluruh riwayatnya tetap utuh.</p>
+      <div id="daftarEkskul"><p class="kosong">Memuat…</p></div>
+    </section>
+
+    <section class="kartu">
+      <h2 id="judulFormEkskul">Tambah ekstrakurikuler</h2>
+      <div class="baris dua">
+        <div><label for="eNama">Nama kegiatan</label><input id="eNama" type="text" placeholder="Contoh: Paduan Suara"></div>
+        <div><label for="ePembina">Pembina</label><select id="ePembina"></select></div>
+      </div>
+      <div class="baris tiga">
+        <div><label for="eHari">Hari latihan</label>
+          <select id="eHari">
+            <option>Senin</option><option>Selasa</option><option>Rabu</option>
+            <option>Kamis</option><option>Jumat</option><option>Sabtu</option>
+          </select></div>
+        <div><label for="eMulai">Jam mulai</label><input id="eMulai" type="time"></div>
+        <div><label for="eSelesai">Jam selesai</label><input id="eSelesai" type="time"></div>
+      </div>
+      <div class="baris dua">
+        <div><label for="eTempat">Tempat latihan</label><input id="eTempat" type="text" placeholder="Lapangan sekolah, aula, GOR…"></div>
+        <div><label for="eAktif">Keaktifan</label>
+          <select id="eAktif"><option>Aktif</option><option>Nonaktif</option></select></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="tbl tbl-utama" id="simpanEkskul" type="button">Simpan</button>
+        <button class="tbl" id="batalEkskul" type="button">Batal</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ ATURAN TRANSPORT ============ -->
+  <div id="layarTarif" class="sembunyi">
+    <section class="kartu">
+      <h2>Aturan pemberian transport</h2>
+      <p class="ket">Besaran per pertemuan ditentukan oleh jumlah siswa yang hadir
+        pada pertemuan itu, sehingga nilainya bisa berbeda tiap minggu.
+        Baris dapat ditambah, diubah, dan dihapus.</p>
+      <div class="gulir"><table id="tabelTarif"><tbody><tr><td class="kosong">Memuat…</td></tr></tbody></table></div>
+    </section>
+
+    <section class="kartu">
+      <h2>Tambah atau ubah lapisan tarif</h2>
+      <div class="baris dua">
+        <div><label for="tJenis">Untuk pembina</label>
+          <select id="tJenis"><option>Internal</option><option>Eksternal</option></select></div>
+        <div><label for="tBesaran">Besaran per pertemuan (Rp)</label>
+          <input id="tBesaran" type="number" min="0" step="5000"></div>
+      </div>
+      <div class="baris dua">
+        <div><label for="tMin">Peserta hadir minimal</label><input id="tMin" type="number" min="1"></div>
+        <div><label for="tMaks">Peserta hadir maksimal</label>
+          <input id="tMaks" type="number" min="1" placeholder="kosongkan bila tanpa batas"></div>
+      </div>
+      <button class="tbl tbl-utama" id="simpanTarif" type="button">Simpan lapisan</button>
+    </section>
+  </div>
+
+  <!-- ============ DAFTAR TRANSPORT ============ -->
+  <div id="layarLaporan" class="sembunyi">
+    <section class="kartu">
+      <h2>Periode pembayaran</h2>
+      <div class="baris dua">
+        <div><label for="dari">Dari tanggal</label><input type="date" id="dari"></div>
+        <div><label for="sampai">Sampai tanggal</label><input type="date" id="sampai"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="tbl tbl-kecil" data-cepat="bulan-ini" type="button">Bulan ini</button>
+        <button class="tbl tbl-kecil" data-cepat="bulan-lalu" type="button">Bulan lalu</button>
+        <button class="tbl tbl-kecil tbl-gelap" id="hitung" type="button">Hitung transport</button>
+      </div>
+    </section>
+
+    <section class="kartu">
+      <h2>Rekapitulasi</h2>
+      <div id="ringkasTransport"><p class="kosong">Pilih periode lalu ketuk Hitung transport.</p></div>
+    </section>
+
+    <section class="kartu">
+      <h2>Rincian per pembina</h2>
+      <p class="ket">Besaran tiap pertemuan mengikuti jumlah siswa yang hadir saat itu.</p>
+      <div class="gulir"><table id="tabelTransport"><tbody><tr><td class="kosong">Belum ada data.</td></tr></tbody></table></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="tbl tbl-utama" id="unduhXlsx" type="button">Unduh daftar transport (XLSX)</button>
+        <button class="tbl tbl-kecil" id="unduhCsvTransport" type="button">Unduh mentah (CSV)</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<nav class="nav-bawah" aria-label="Navigasi utama">
+  <a href="index.html">
+    <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Beranda</a>
+  <a href="absensi.html">
+    <svg viewBox="0 0 24 24"><path d="M9 4h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3z"/><path d="M8.5 13l2 2 4.5-4.5"/></svg>Absensi</a>
+  <a href="rekap.html">
+    <svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>Rekap</a>
+  <a href="nilai.html">
+    <svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>Nilai</a>
+  <a href="data.html" data-pengelola>
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16.5 11.5a3 3 0 1 0-1.8-5.4"/><path d="M17 20a5.4 5.4 0 0 0-1.2-3.4"/></svg>Data</a>
+  <a href="kesiswaan.html" data-pengelola aria-current="page">
+    <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
+</nav>
+
+<script type="module" src="scripts/kesiswaan.js?v=20260913e"></script>
+</body>
+</html>

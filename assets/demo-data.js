@@ -3,19 +3,19 @@
 // Nama siswa di bawah ini BUKAN data asli - hanya untuk melihat tampilan.
 
 export const PEMBINA = [
-  { id: 'P01', nama: 'Dedi Sopandi, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234' },
-  { id: 'P02', nama: 'Ade Ervint', no_hp: '', status: 'Aktif', kode_akses: '1234' },
-  { id: 'P03', nama: 'Neng Rina, S.Sn', no_hp: '', status: 'Aktif', kode_akses: '1234' },
-  { id: 'P04', nama: 'Piki Permana, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234' },
-  { id: 'P05', nama: 'Rian Herdiansah, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234' },
-  { id: 'P06', nama: 'Divia Zhawa Pixtiresa, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234' },
-  { id: 'P07', nama: 'Farista Finishari, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234' },
-  { id: 'P08', nama: 'Cecep Saepulman', no_hp: '', status: 'Aktif', kode_akses: '1234' },
-  { id: 'P09', nama: 'Jajang Sutisna', no_hp: '', status: 'Aktif', kode_akses: '1234' },
-  { id: 'P10', nama: 'Moh. Ilham', no_hp: '', status: 'Aktif', kode_akses: '1234' },
-  { id: 'P11', nama: 'Silvi Lestari', no_hp: '', status: 'Aktif', kode_akses: '1234' },
-  { id: 'P12', nama: 'Linda Melyansari, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234' },
-  { id: 'P13', nama: 'Arya Wiranata, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234' }
+  { id: 'P01', nama: 'Dedi Sopandi, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' },
+  { id: 'P02', nama: 'Ade Ervint', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' },
+  { id: 'P03', nama: 'Neng Rina, S.Sn', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' },
+  { id: 'P04', nama: 'Piki Permana, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' },
+  { id: 'P05', nama: 'Rian Herdiansah, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' },
+  { id: 'P06', nama: 'Divia Zhawa Pixtiresa, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' },
+  { id: 'P07', nama: 'Farista Finishari, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' },
+  { id: 'P08', nama: 'Cecep Saepulman', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' },
+  { id: 'P09', nama: 'Jajang Sutisna', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' },
+  { id: 'P10', nama: 'Moh. Ilham', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' },
+  { id: 'P11', nama: 'Silvi Lestari', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' },
+  { id: 'P12', nama: 'Linda Melyansari, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' },
+  { id: 'P13', nama: 'Arya Wiranata, S.Pd', no_hp: '', status: 'Aktif', kode_akses: '1234', jenis: 'Internal' }
 ];
 
 export const EKSKUL = [
@@ -112,3 +112,21 @@ export const PERIODE = [
 ];
 export const NILAI = [];
 export const PERIODE_ID_TERAKHIR_REF = { v: 1 };
+
+// Sebagian pembina contoh ditandai eksternal supaya perbedaan tarif terlihat.
+['P02', 'P08', 'P09', 'P10', 'P11'].forEach(id => {
+  const p = PEMBINA.find(x => x.id === id);
+  if (p) p.jenis = 'Eksternal';
+});
+
+// ---- Tarif transport contoh ------------------------------------------
+export const TARIF = [
+  { id: 1, jenis: 'Internal',  min_peserta: 10, maks_peserta: 20,   besaran: 60000 },
+  { id: 2, jenis: 'Internal',  min_peserta: 21, maks_peserta: 30,   besaran: 80000 },
+  { id: 3, jenis: 'Internal',  min_peserta: 31, maks_peserta: null, besaran: 100000 },
+  { id: 4, jenis: 'Eksternal', min_peserta: 5,  maks_peserta: 9,    besaran: 70000 },
+  { id: 5, jenis: 'Eksternal', min_peserta: 10, maks_peserta: 20,   besaran: 100000 },
+  { id: 6, jenis: 'Eksternal', min_peserta: 21, maks_peserta: 30,   besaran: 125000 },
+  { id: 7, jenis: 'Eksternal', min_peserta: 31, maks_peserta: null, besaran: 150000 }
+];
+export const TARIF_ID_TERAKHIR_REF = { v: 7 };

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#241F17">
 <title>Nilai akhir · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo.png">
-<link rel="stylesheet" href="assets/style.css?v=20260913c">
+<link rel="stylesheet" href="assets/style.css?v=20260913e">
 </head>
 <body class="ada-bar">
 
@@ -28,6 +28,12 @@
     Mode contoh. Nilai yang diisi di sini tidak tersimpan.
   </div>
 
+  <div class="tab-rekap sembunyi" id="tabNilai" data-pengelola style="grid-template-columns:repeat(2,1fr)">
+    <button type="button" data-tab="isi" aria-pressed="true">Pengisian nilai</button>
+    <button type="button" data-tab="kelas" aria-pressed="false">Rekap per kelas</button>
+  </div>
+
+  <div id="layarIsi">
   <section class="kartu" data-pengelola>
     <h2>Periode penilaian</h2>
     <p class="ket">Hanya kesiswaan yang dapat membuka dan menutup pengisian nilai.
@@ -88,6 +94,32 @@
     </div>
     <div id="daftarNilai"><p class="kosong">Memuat…</p></div>
   </section>
+  </div>
+
+  <div id="layarKelas" class="sembunyi">
+    <section class="kartu">
+      <h2>Rekap nilai per kelas</h2>
+      <p class="ket">Untuk dikirim ke wali kelas saat pengisian rapor. Berisi seluruh
+        ekstrakurikuler yang diikuti tiap siswa di kelas tersebut.</p>
+      <div class="baris">
+        <div>
+          <label for="pilihKelas">Kelas</label>
+          <select id="pilihKelas"><option value="">Memuat…</option></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="tbl tbl-utama" id="unduhKelasXlsx" type="button">Unduh XLSX</button>
+        <button class="tbl" id="unduhKelasPng" type="button">Unduh gambar PNG</button>
+        <button class="tbl tbl-kecil" id="unduhSemuaKelas" type="button">Unduh semua kelas (XLSX)</button>
+      </div>
+    </section>
+
+    <section class="kartu">
+      <h2 id="judulKelas">Daftar</h2>
+      <p class="ket" id="ketKelas">&nbsp;</p>
+      <div class="gulir"><table id="tabelKelas"><tbody><tr><td class="kosong">Memuat…</td></tr></tbody></table></div>
+    </section>
+  </div>
 </main>
 
 <div class="bar-simpan" id="barSimpan">
@@ -109,8 +141,10 @@
     <svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>Nilai</a>
   <a href="data.html" data-pengelola>
     <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16.5 11.5a3 3 0 1 0-1.8-5.4"/><path d="M17 20a5.4 5.4 0 0 0-1.2-3.4"/></svg>Data</a>
+  <a href="kesiswaan.html" data-pengelola>
+    <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
 </nav>
 
-<script type="module" src="scripts/nilai.js?v=20260913c"></script>
+<script type="module" src="scripts/nilai.js?v=20260913e"></script>
 </body>
 </html>

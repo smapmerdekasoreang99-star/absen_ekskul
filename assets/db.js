@@ -3,10 +3,10 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260913c';
+import * as CFG from './supabase-client.js?v=20260913e';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
-import * as D from './demo-data.js?v=20260913c';
+import * as D from './demo-data.js?v=20260913e';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -34,6 +34,7 @@ const T = {
   kehadiran: 'ae_kehadiran',
   periode:   'ae_periode',
   nilai:     'ae_nilai',
+  tarif:     'ae_tarif',
   ...(CFG.TABEL || {})
 };
 
@@ -418,4 +419,111 @@ export async function nilaiSeluruhPeriode(periodeId) {
     'Gagal memuat nilai seluruh ekstrakurikuler'
   ).forEach(masukkan);
   return hasil;
+}
+
+// --------------------------------------------------- data induk pembina
+export async function simpanPembina(baris) {
+  if (MODE === 'contoh') {
+    const lama = D.PEMBINA.find(p => p.id === baris.id);
+    if (lama) Object.assign(lama, baris); else D.PEMBINA.push({ ...baris });
+    return;
+  }
+  const c = await sb();
+  periksa(await c.from(T.pembina).upsert(baris, { onConflict: 'id' }),
+          'Gagal menyimpan data pembina');
+}
+
+export async function hapusPembina(id) {
+  if (MODE === 'contoh') {
+    const i = D.PEMBINA.findIndex(p => p.id === id);
+    if (i >= 0) D.PEMBINA.splice(i, 1);
+    return;
+  }
+  const c = await sb();
+  const dipakai = periksa(
+    await c.from(T.ekskul).select('id').eq('pembina_id', id).limit(1),
+    'Gagal memeriksa keterkaitan pembina'
+  );
+  if (dipakai.length)
+    throw new Error('Pembina ini masih memegang ekstrakurikuler. Pindahkan dulu pembinanya.');
+  periksa(await c.from(T.pembina).delete().eq('id', id), 'Gagal menghapus pembina');
+}
+
+// Nomor pembina berikutnya: P01, P02, ...
+export function nomorPembinaBaru(daftar) {
+  const angka = daftar.map(p => parseInt(String(p.id).replace(/\D/g, ''), 10) || 0);
+  return 'P' + String(Math.max(0, ...angka) + 1).padStart(2, '0');
+}
+
+// -------------------------------------------------------- tarif transport
+export async function daftarTarif() {
+  if (MODE === 'contoh') return salin(D.TARIF);
+  const c = await sb();
+  return periksa(
+    await c.from(T.tarif).select('*').order('jenis').order('min_peserta'),
+    'Gagal memuat tarif transport'
+  );
+}
+
+export async function simpanTarif(baris) {
+  if (MODE === 'contoh') {
+    const lama = D.TARIF.find(t => t.id === baris.id);
+    if (lama) Object.assign(lama, baris);
+    else D.TARIF.push({ id: ++D.TARIF_ID_TERAKHIR_REF.v, ...baris });
+    return;
+  }
+  const c = await sb();
+  periksa(await c.from(T.tarif).upsert(baris, { onConflict: 'jenis,min_peserta' }),
+          'Gagal menyimpan tarif');
+}
+
+export async function hapusTarif(id) {
+  if (MODE === 'contoh') {
+    const i = D.TARIF.findIndex(t => t.id === id);
+    if (i >= 0) D.TARIF.splice(i, 1);
+    return;
+  }
+  const c = await sb();
+  periksa(await c.from(T.tarif).delete().eq('id', id), 'Gagal menghapus tarif');
+}
+
+// ------------------------------------------------ data induk ekstrakurikuler
+export async function simpanEkskul(baris) {
+  if (MODE === 'contoh') {
+    const lama = D.EKSKUL.find(e => e.id === baris.id);
+    if (lama) Object.assign(lama, baris); else D.EKSKUL.push({ ...baris });
+    return;
+  }
+  const c = await sb();
+  periksa(await c.from(T.ekskul).upsert(baris, { onConflict: 'id' }),
+          'Gagal menyimpan ekstrakurikuler');
+}
+
+// Menghapus ekskul ikut menghapus peserta dan seluruh riwayat kehadirannya,
+// jadi penghapusan ditolak bila jejaknya sudah ada.
+export async function hapusEkskul(id) {
+  if (MODE === 'contoh') {
+    if (D.SESI.some(s => s.ekskul_id === id) || D.PESERTA.some(p => p.ekskul_id === id))
+      throw new Error('Ekstrakurikuler ini sudah punya peserta atau riwayat laporan. ' +
+                      'Ubah keaktifannya menjadi Nonaktif saja.');
+    const i = D.EKSKUL.findIndex(e => e.id === id);
+    if (i >= 0) D.EKSKUL.splice(i, 1);
+    return;
+  }
+  const c = await sb();
+  const [sesi, peserta] = await Promise.all([
+    c.from(T.sesi).select('id').eq('ekskul_id', id).limit(1),
+    c.from(T.peserta).select('id').eq('ekskul_id', id).limit(1)
+  ]);
+  const adaSesi = periksa(sesi, 'Gagal memeriksa riwayat laporan');
+  const adaPeserta = periksa(peserta, 'Gagal memeriksa peserta');
+  if (adaSesi.length || adaPeserta.length)
+    throw new Error('Ekstrakurikuler ini sudah punya peserta atau riwayat laporan. ' +
+                    'Ubah keaktifannya menjadi Nonaktif saja supaya datanya tetap utuh.');
+  periksa(await c.from(T.ekskul).delete().eq('id', id), 'Gagal menghapus ekstrakurikuler');
+}
+
+export function nomorEkskulBaru(daftar) {
+  const angka = daftar.map(e => parseInt(String(e.id).replace(/\D/g, ''), 10) || 0);
+  return 'E' + String(Math.max(0, ...angka) + 1).padStart(2, '0');
 }
