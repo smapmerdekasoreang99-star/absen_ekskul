@@ -3,12 +3,19 @@
 // Prinsip tampilan: hemat tinta printer. Latar putih, garis tipis abu-abu,
 // tanpa blok warna lebar. Hanya baris judul tabel yang diberi abu sangat
 // muda, dan aksen emas dipakai tipis sebagai garis, bukan bidang.
-import { SEKOLAH } from './sekolah.js?v=20260913e';
+import { SEKOLAH } from './sekolah.js?v=20260913f';
 
 const EMAS = 'FFB2861F';
 const TINTA = 'FF241F17';
 const GARIS = 'FFBFB8A8';
 const ABU_MUDA = 'FFF5F2EA';
+
+const BULAN = ['Januari','Februari','Maret','April','Mei','Juni',
+               'Juli','Agustus','September','Oktober','November','Desember'];
+export function tanggalCetak() {
+  const t = new Date();
+  return `${t.getDate()} ${BULAN[t.getMonth()]} ${t.getFullYear()}`;
+}
 
 let _ExcelJS = null;
 async function excel() {
@@ -54,10 +61,13 @@ const semuaTepi = { top: tepi, left: tepi, bottom: tepi, right: tepi };
 
 // Kop surat: logo di kiri, nama sekolah, lalu garis emas tipis.
 async function kop(ws, wb, judul, subjudul, lebarKolom) {
+  // Kolom pertama dilebarkan supaya logo tidak menimpa tulisan di kolom B.
+  const k1 = ws.getColumn(1);
+  k1.width = Math.max(Number(k1.width) || 0, 9);
   const logo = await logoBase64();
   if (logo) {
     const id = wb.addImage({ base64: logo, extension: 'png' });
-    ws.addImage(id, { tl: { col: 0.15, row: 0.15 }, ext: { width: 54, height: 54 } });
+    ws.addImage(id, { tl: { col: 0.12, row: 0.25 }, ext: { width: 52, height: 52 } });
   }
   ws.mergeCells(1, 2, 1, lebarKolom);
   const a = ws.getCell(1, 2);
@@ -114,7 +124,7 @@ function selIsi(ws, r, k, nilai, opsi = {}) {
 // A. DAFTAR TRANSPORT PEMBINA
 // baris: [{ pembina, jenis, ekskul, tanggal, hadir, besaran }]
 // =====================================================================
-export async function unduhTransportXLSX({ baris, tarif, dari, sampai, namaBerkas }) {
+export async function unduhTransportXLSX({ baris, tarif, dari, sampai, jenis, namaBerkas }) {
   const ExcelJS = await excel();
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('Transport', {
@@ -126,11 +136,11 @@ export async function unduhTransportXLSX({ baris, tarif, dari, sampai, namaBerka
     { width: 22 }, { width: 10 }, { width: 14 }
   ];
   await kop(ws, wb,
-    'DAFTAR TRANSPORT PEMBINA EKSTRAKURIKULER',
+    `DAFTAR TRANSPORT PEMBINA EKSTRAKURIKULER ${String(jenis || '').toUpperCase()}`.trim(),
     `Periode ${dari} sampai ${sampai}`, 7);
 
   let r = 7;
-  barisJudulTabel(ws, r, ['No.', 'Nama Pembina', 'Status', 'Ekstrakurikuler',
+  barisJudulTabel(ws, r, ['No.', 'Nama Pembina', jenis ? 'Jenis' : 'Status', 'Ekstrakurikuler',
                           'Pertemuan', 'Hadir', 'Transport (Rp)']);
   r++;
 
@@ -177,7 +187,7 @@ export async function unduhTransportXLSX({ baris, tarif, dari, sampai, namaBerka
   ws.getCell(kiri + 5, 2).font = { name: 'Calibri', size: 10, bold: true, underline: true };
 
   ws.getCell(kanan, 5).value = 'Lunas dibayar,';
-  ws.getCell(kanan + 1, 5).value = `${SEKOLAH.kota}, .................................`;
+  ws.getCell(kanan + 1, 5).value = `${SEKOLAH.kota}, ${tanggalCetak()}`;
   ws.getCell(kanan + 2, 5).value = 'Bendahara,';
   ws.getCell(kanan + 5, 5).value = SEKOLAH.bendahara;
   ws.getCell(kanan + 5, 5).font = { name: 'Calibri', size: 10, bold: true, underline: true };
@@ -193,11 +203,12 @@ export async function unduhTransportXLSX({ baris, tarif, dari, sampai, namaBerka
   ws.getCell(r, 2).value = 'Sistem pembayaran transport';
   ws.getCell(r, 2).font = { name: 'Calibri', size: 10, bold: true, color: { argb: TINTA } };
   r++;
-  ['Internal', 'Eksternal'].forEach(jenis => {
-    const isi = tarif.filter(x => x.jenis === jenis)
+  const jenisDitampilkan = jenis ? [jenis] : ['Internal', 'Eksternal'];
+  jenisDitampilkan.forEach(j => {
+    const isi = tarif.filter(x => x.jenis === j)
                      .sort((a, b) => a.min_peserta - b.min_peserta);
     if (!isi.length) return;
-    barisJudulTabel(ws, r, ['', `Pembina ${jenis} — Jumlah peserta`, '', '',
+    barisJudulTabel(ws, r, ['', `Pembina ${j} — Jumlah peserta`, '', '',
                             'Besaran transport per pertemuan', '', '']);
     ws.mergeCells(r, 2, r, 4);
     ws.mergeCells(r, 5, r, 7);
@@ -223,7 +234,7 @@ export async function unduhTransportXLSX({ baris, tarif, dari, sampai, namaBerka
 // B. NILAI EKSTRAKURIKULER PER KELAS
 // baris: [{ nis, nama, ekskul, predikat, keterangan, deskripsi }]
 // =====================================================================
-export async function unduhNilaiKelasXLSX({ kelas, periode, baris, namaBerkas }) {
+export async function unduhNilaiKelasXLSX({ kelas, periode, baris, pembina, namaBerkas }) {
   const ExcelJS = await excel();
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(kelas.replace(/[\\/*?:[\]]/g, '-'), {
@@ -249,12 +260,20 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, namaBerkas })
     r++;
   });
   r += 2;
-  ws.getCell(r, 5).value = `${SEKOLAH.kota}, .................................`;
-  ws.getCell(r + 1, 5).value = 'Wali Kelas,';
-  ws.getCell(r + 5, 5).value = '(.............................................)';
-  [r, r + 1, r + 5].forEach(x => {
-    ws.getCell(x, 5).font = { name: 'Calibri', size: 10, color: { argb: TINTA } };
-  });
+  const biasa = { name: 'Calibri', size: 10, color: { argb: TINTA } };
+  const tebalGaris = { name: 'Calibri', size: 10, bold: true, color: { argb: TINTA } };
+
+  ws.getCell(r, 2).value = 'Mengetahui;';
+  ws.getCell(r + 1, 2).value = 'Kesiswaan,';
+  ws.getCell(r + 5, 2).value = SEKOLAH.kesiswaan;
+  [r, r + 1].forEach(x => { ws.getCell(x, 2).font = biasa; });
+  ws.getCell(r + 5, 2).font = tebalGaris;
+
+  ws.getCell(r, 6).value = `${SEKOLAH.kota}, ${tanggalCetak()}`;
+  ws.getCell(r + 1, 6).value = 'Pembina Ekstra Kurikuler,';
+  ws.getCell(r + 5, 6).value = pembina || '..................................................';
+  [r, r + 1].forEach(x => { ws.getCell(x, 6).font = biasa; });
+  ws.getCell(r + 5, 6).font = pembina ? tebalGaris : biasa;
 
   const buf = await wb.xlsx.writeBuffer();
   simpan(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
@@ -262,14 +281,14 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, namaBerkas })
 }
 
 // ---- PNG: digambar langsung di canvas, tanpa pustaka luar ------------
-export async function unduhNilaiKelasPNG({ kelas, periode, baris, namaBerkas }) {
+export async function unduhNilaiKelasPNG({ kelas, periode, baris, pembina, namaBerkas }) {
   const skala = 2;                    // supaya tajam di layar HP
   const lebar = 1000;
   const padding = 40;
   const tinggiKop = 130;
   const tinggiJudul = 44;
   const tinggiBaris = 40;
-  const tinggi = tinggiKop + tinggiJudul + baris.length * tinggiBaris + 120;
+  const tinggi = tinggiKop + tinggiJudul + baris.length * tinggiBaris + 230;
 
   const kanvas = document.createElement('canvas');
   kanvas.width = lebar * skala;
@@ -354,11 +373,24 @@ export async function unduhNilaiKelasPNG({ kelas, periode, baris, namaBerkas }) 
     y += tinggiBaris;
   });
 
+  // Blok tanda tangan
   g.textAlign = 'left';
+  const yTtd = y + 44;
+  const xKanan = lebar - padding - 300;
+  g.fillStyle = '#241F17';
+  g.font = '14px Arial, sans-serif';
+  g.fillText('Mengetahui;', padding, yTtd);
+  g.fillText('Kesiswaan,', padding, yTtd + 22);
+  g.fillText(`${SEKOLAH.kota}, ${tanggalCetak()}`, xKanan, yTtd);
+  g.fillText('Pembina Ekstra Kurikuler,', xKanan, yTtd + 22);
+  g.font = 'bold 14px Arial, sans-serif';
+  g.fillText(SEKOLAH.kesiswaan, padding, yTtd + 118);
+  g.fillText(pembina || '..................................................', xKanan, yTtd + 118);
+
   g.fillStyle = '#6B6252';
-  g.font = '12px Arial, sans-serif';
-  g.fillText(`Dicetak dari Aplikasi Absensi Ekstrakurikuler · ${new Date().toLocaleDateString('id-ID')}`,
-             padding, y + 34);
+  g.font = '11px Arial, sans-serif';
+  g.fillText('Dicetak dari Aplikasi Absensi Ekstrakurikuler SMA Plus Merdeka Soreang',
+             padding, yTtd + 152);
 
   const blob = await new Promise(r => kanvas.toBlob(r, 'image/png'));
   simpan(blob, namaBerkas);

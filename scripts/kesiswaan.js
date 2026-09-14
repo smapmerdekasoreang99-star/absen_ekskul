@@ -1,10 +1,10 @@
 import { ambilMaster, muatPeriode, simpanPembina, hapusPembina, nomorPembinaBaru,
          simpanEkskul, hapusEkskul, nomorEkskulBaru,
-         daftarTarif, simpanTarif, hapusTarif } from '../assets/db.js?v=20260913e';
+         daftarTarif, simpanTarif, hapusTarif } from '../assets/db.js?v=20260913f';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan, hariIni,
          tanggalPanjang, tanggalPendek, rupiah, tarifUntuk, rentangTarif,
-         unduhCSV, jam } from '../assets/ui.js?v=20260913e';
-import { unduhTransportXLSX } from '../assets/dokumen.js?v=20260913e';
+         unduhCSV, jam } from '../assets/ui.js?v=20260913f';
+import { unduhTransportXLSX } from '../assets/dokumen.js?v=20260913f';
 
 const el = id => document.getElementById(id);
 let AKUN = null, PEMBINA = [], EKSKUL = [], TARIF = [], BARIS = [];
@@ -44,7 +44,8 @@ el('tabKesiswaan').addEventListener('click', ev => {
     el('batalEkskul').addEventListener('click', kosongkanFormEkskul);
     el('simpanTarif').addEventListener('click', simpanFormTarif);
     el('hitung').addEventListener('click', hitungTransport);
-    el('unduhXlsx').addEventListener('click', unduhXlsx);
+    el('unduhInternal').addEventListener('click', () => unduhXlsx('Internal'));
+    el('unduhEksternal').addEventListener('click', () => unduhXlsx('Eksternal'));
     el('unduhCsvTransport').addEventListener('click', unduhCsv);
     document.querySelectorAll('[data-cepat]').forEach(b =>
       b.addEventListener('click', () => { pasangPeriode(b.dataset.cepat); hitungTransport(); }));
@@ -279,24 +280,28 @@ function bar(a, b) {
   return `<div class="jadwal-hari"><span class="isi"><strong>${a}</strong><small>${b}</small></span></div>`;
 }
 
-async function unduhXlsx() {
+async function unduhXlsx(jenis) {
+  bersihkanPesan();
   if (!BARIS.length) { laporError('Hitung dulu transportnya.'); return; }
-  const tombol = el('unduhXlsx');
+  const isi = BARIS.filter(b => b.jenis === jenis);
+  if (!isi.length) { laporError(`Tidak ada pertemuan pembina ${jenis} pada periode ini.`); return; }
+  const tombol = el(jenis === 'Internal' ? 'unduhInternal' : 'unduhEksternal');
+  const semula = tombol.textContent;
   tombol.disabled = true;
   tombol.textContent = 'Menyiapkan berkas…';
   try {
     await unduhTransportXLSX({
-      baris: BARIS, tarif: TARIF,
+      baris: isi, tarif: TARIF, jenis,
       dari: tanggalPanjang(el('dari').value),
       sampai: tanggalPanjang(el('sampai').value),
-      namaBerkas: `transport_pembina_${el('dari').value}_sd_${el('sampai').value}.xlsx`
+      namaBerkas: `transport_${jenis.toLowerCase()}_${el('dari').value}_sd_${el('sampai').value}.xlsx`
     });
-    sukses('Berkas XLSX diunduh.');
+    sukses(`Daftar transport ${jenis} diunduh.`);
   } catch (e) {
     laporError(e);
   } finally {
     tombol.disabled = false;
-    tombol.textContent = 'Unduh daftar transport (XLSX)';
+    tombol.textContent = semula;
   }
 }
 

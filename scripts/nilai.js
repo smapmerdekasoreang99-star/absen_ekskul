@@ -1,9 +1,9 @@
 import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPeriode,
          ambilNilai, simpanNilai, kehadiranPerSiswa, kehadiranSemua,
-         nilaiSeluruhPeriode } from '../assets/db.js?v=20260913e';
+         nilaiSeluruhPeriode } from '../assets/db.js?v=20260913f';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
-         bersihkanPesan, tanggalPanjang, persen, unduhCSV } from '../assets/ui.js?v=20260913e';
-import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG } from '../assets/dokumen.js?v=20260913e';
+         bersihkanPesan, tanggalPanjang, persen, unduhCSV } from '../assets/ui.js?v=20260913f';
+import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG } from '../assets/dokumen.js?v=20260913f';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };
@@ -321,7 +321,10 @@ async function susunKelas() {
         const k = s.kelas || 'Tanpa kelas';
         const n = nilai[s.id] || {};
         (KELAS[k] || (KELAS[k] = [])).push({
-          nis: s.nis || '', nama: s.nama, ekskul: e.nama,
+          // Bila kolom NIS kosong di data sekolah, NISN yang dipakai.
+          nis: s.nis || s.id || '',
+          pembina: PEMBINA_NAMA[e.pembina_id] || '',
+          nama: s.nama, ekskul: e.nama,
           predikat: n.predikat || '', keterangan: PREDIKAT[n.predikat] || '',
           deskripsi: n.deskripsi || ''
         });
@@ -377,7 +380,9 @@ async function unduhKelas(bentuk) {
   tombol.disabled = true;
   tombol.textContent = 'Menyiapkan…';
   try {
-    const arg = { kelas: k, periode: labelPeriode(), baris: isi };
+    const pembina = [...new Set(isi.map(x => x.pembina).filter(Boolean))];
+    const arg = { kelas: k, periode: labelPeriode(), baris: isi,
+                  pembina: pembina.length === 1 ? pembina[0] : '' };
     if (bentuk === 'png') {
       await unduhNilaiKelasPNG({ ...arg, namaBerkas: `nilai_ekskul_${k}.png` });
     } else {
@@ -401,8 +406,10 @@ async function unduhSemuaKelas() {
   tombol.textContent = 'Menyiapkan…';
   try {
     for (const k of daftar) {
+      const p = [...new Set(KELAS[k].map(x => x.pembina).filter(Boolean))];
       await unduhNilaiKelasXLSX({
         kelas: k, periode: labelPeriode(), baris: KELAS[k],
+        pembina: p.length === 1 ? p[0] : '',
         namaBerkas: `nilai_ekskul_${k}.xlsx`
       });
       await new Promise(r => setTimeout(r, 400));   // jeda agar unduhan tidak diblokir

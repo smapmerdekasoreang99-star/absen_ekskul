@@ -6,6 +6,7 @@ export const SEKOLAH = {
   alamat: 'Soreang, Kabupaten Bandung',
   kota: 'Soreang',
   kepalaSekolah: 'Mohamad Gunawan, S.Si.',
+  kesiswaan: 'Devy Resmisari, S.Pd.',
   bendahara: 'Dra. Ida Susana',
   logo: 'assets/logo.png'
 };

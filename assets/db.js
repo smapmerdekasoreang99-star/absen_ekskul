@@ -3,10 +3,10 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260913e';
+import * as CFG from './supabase-client.js?v=20260913f';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
-import * as D from './demo-data.js?v=20260913e';
+import * as D from './demo-data.js?v=20260913f';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
