@@ -1,9 +1,10 @@
 import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPeriode,
          ambilNilai, simpanNilai, kehadiranPerSiswa, kehadiranSemua,
-         nilaiSeluruhPeriode } from '../assets/db.js?v=20260913f';
+         nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260913g';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
-         bersihkanPesan, tanggalPanjang, persen, unduhCSV } from '../assets/ui.js?v=20260913f';
-import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG } from '../assets/dokumen.js?v=20260913f';
+         bersihkanPesan, tanggalPanjang, persen, unduhCSV } from '../assets/ui.js?v=20260913g';
+import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG, pakaiIdentitas }
+  from '../assets/dokumen.js?v=20260913g';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };
@@ -45,6 +46,9 @@ try { tandaiMode(); } catch (e) { console.error(e); }
       el('simpanPeriode').addEventListener('click', simpanFormPeriode);
       el('tombolBuka').addEventListener('click', bukaTutup);
     }
+
+    try { pakaiIdentitas(await ambilPengaturan()); }
+    catch (e) { console.warn('Pengaturan dokumen belum terbaca:', e.message); }
 
     await muatPeriode();
     await muatSiswa();
@@ -117,6 +121,9 @@ async function simpanFormPeriode() {
     const lama = PERIODE.find(x => String(x.id) === el('pilihPeriode').value);
     if (lama) baris.dibuka = lama.dibuka;
     await simpanPeriode(baris);
+    try { pakaiIdentitas(await ambilPengaturan()); }
+    catch (e) { console.warn('Pengaturan dokumen belum terbaca:', e.message); }
+
     await muatPeriode();
     await muatSiswa();
     sukses('Periode penilaian tersimpan.');

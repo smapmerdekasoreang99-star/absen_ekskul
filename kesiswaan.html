@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#241F17">
 <title>Kesiswaan · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo.png">
-<link rel="stylesheet" href="assets/style.css?v=20260913f">
+<link rel="stylesheet" href="assets/style.css?v=20260913g">
 </head>
 <body>
 
@@ -111,6 +111,30 @@
     </section>
 
     <section class="kartu">
+      <h2>Identitas pada dokumen</h2>
+      <p class="ket">Dipakai pada kop dan blok tanda tangan berkas XLSX dan PNG
+        yang dihasilkan aplikasi ini.</p>
+      <div>
+        <label for="idNama">Nama sekolah</label>
+        <input id="idNama" type="text">
+      </div>
+      <div style="margin-top:12px">
+        <label for="idAlamat">Alamat</label>
+        <input id="idAlamat" type="text">
+      </div>
+      <div class="baris dua" style="margin-top:12px">
+        <div><label for="idTahun">Tahun ajaran</label><input id="idTahun" type="text" placeholder="2026/2027"></div>
+        <div><label for="idKota">Tempat tanda tangan</label><input id="idKota" type="text" placeholder="Soreang"></div>
+      </div>
+      <div class="baris tiga">
+        <div><label for="idKepala">Kepala Sekolah</label><input id="idKepala" type="text"></div>
+        <div><label for="idBendahara">Bendahara</label><input id="idBendahara" type="text"></div>
+        <div><label for="idKesiswaan">Kesiswaan</label><input id="idKesiswaan" type="text"></div>
+      </div>
+      <button class="tbl tbl-utama" id="simpanIdentitas" type="button">Simpan pengaturan</button>
+    </section>
+
+    <section class="kartu">
       <h2>Tambah atau ubah lapisan tarif</h2>
       <div class="baris dua">
         <div><label for="tJenis">Untuk pembina</label>
@@ -175,6 +199,6 @@
     <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
 </nav>
 
-<script type="module" src="scripts/kesiswaan.js?v=20260913f"></script>
+<script type="module" src="scripts/kesiswaan.js?v=20260913g"></script>
 </body>
 </html>

@@ -3,10 +3,10 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260913f';
+import * as CFG from './supabase-client.js?v=20260913g';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
-import * as D from './demo-data.js?v=20260913f';
+import * as D from './demo-data.js?v=20260913g';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -35,6 +35,7 @@ const T = {
   periode:   'ae_periode',
   nilai:     'ae_nilai',
   tarif:     'ae_tarif',
+  pengaturan: 'ae_pengaturan',
   ...(CFG.TABEL || {})
 };
 
@@ -526,4 +527,25 @@ export async function hapusEkskul(id) {
 export function nomorEkskulBaru(daftar) {
   const angka = daftar.map(e => parseInt(String(e.id).replace(/\D/g, ''), 10) || 0);
   return 'E' + String(Math.max(0, ...angka) + 1).padStart(2, '0');
+}
+
+// ----------------------------------------------------- pengaturan dokumen
+export async function ambilPengaturan() {
+  if (MODE === 'contoh') return { ...(D.PENGATURAN || {}) };
+  const c = await sb();
+  const data = periksa(await c.from(T.pengaturan).select('kunci,nilai'),
+                       'Gagal memuat pengaturan dokumen');
+  return Object.fromEntries(data.map(b => [b.kunci, b.nilai]));
+}
+
+export async function simpanPengaturan(obj) {
+  if (MODE === 'contoh') {
+    Object.assign(D.PENGATURAN, obj);
+    return;
+  }
+  const baris = Object.entries(obj).map(([kunci, nilai]) => ({ kunci, nilai }));
+  if (!baris.length) return;
+  const c = await sb();
+  periksa(await c.from(T.pengaturan).upsert(baris, { onConflict: 'kunci' }),
+          'Gagal menyimpan pengaturan dokumen');
 }

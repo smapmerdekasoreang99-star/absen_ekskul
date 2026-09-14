@@ -1,10 +1,11 @@
 import { ambilMaster, muatPeriode, simpanPembina, hapusPembina, nomorPembinaBaru,
          simpanEkskul, hapusEkskul, nomorEkskulBaru,
-         daftarTarif, simpanTarif, hapusTarif } from '../assets/db.js?v=20260913f';
+         daftarTarif, simpanTarif, hapusTarif,
+         ambilPengaturan, simpanPengaturan } from '../assets/db.js?v=20260913g';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan, hariIni,
          tanggalPanjang, tanggalPendek, rupiah, tarifUntuk, rentangTarif,
-         unduhCSV, jam } from '../assets/ui.js?v=20260913f';
-import { unduhTransportXLSX } from '../assets/dokumen.js?v=20260913f';
+         unduhCSV, jam } from '../assets/ui.js?v=20260913g';
+import { unduhTransportXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260913g';
 
 const el = id => document.getElementById(id);
 let AKUN = null, PEMBINA = [], EKSKUL = [], TARIF = [], BARIS = [];
@@ -34,6 +35,7 @@ el('tabKesiswaan').addEventListener('click', ev => {
     PEMBINA = m.pembina;
     EKSKUL = m.ekskul;
     TARIF = await daftarTarif();
+    await muatIdentitas();
     gambarPembina();
     gambarEkskul();
     gambarTarif();
@@ -43,6 +45,7 @@ el('tabKesiswaan').addEventListener('click', ev => {
     el('simpanEkskul').addEventListener('click', simpanFormEkskul);
     el('batalEkskul').addEventListener('click', kosongkanFormEkskul);
     el('simpanTarif').addEventListener('click', simpanFormTarif);
+    el('simpanIdentitas').addEventListener('click', simpanFormIdentitas);
     el('hitung').addEventListener('click', hitungTransport);
     el('unduhInternal').addEventListener('click', () => unduhXlsx('Internal'));
     el('unduhEksternal').addEventListener('click', () => unduhXlsx('Eksternal'));
@@ -417,4 +420,37 @@ async function buangEkskul(id) {
     gambarPembina();
     sukses('Ekstrakurikuler dihapus.');
   } catch (err) { laporError(err); }
+}
+
+
+// ====================================================== IDENTITAS DOKUMEN
+const PETA_IDENTITAS = {
+  idNama: 'nama', idAlamat: 'alamat', idTahun: 'tahunAjaran', idKota: 'kota',
+  idKepala: 'kepalaSekolah', idBendahara: 'bendahara', idKesiswaan: 'kesiswaan'
+};
+
+async function muatIdentitas() {
+  try {
+    const p = await ambilPengaturan();
+    pakaiIdentitas(p);
+    Object.entries(PETA_IDENTITAS).forEach(([kotak, kunci]) => {
+      if (p[kunci] !== undefined && p[kunci] !== null) el(kotak).value = p[kunci];
+    });
+  } catch (e) {
+    console.warn('Pengaturan dokumen belum terbaca:', e.message);
+  }
+}
+
+async function simpanFormIdentitas() {
+  bersihkanPesan();
+  const isi = {};
+  Object.entries(PETA_IDENTITAS).forEach(([kotak, kunci]) => {
+    isi[kunci] = el(kotak).value.trim();
+  });
+  if (!isi.nama) { laporError('Nama sekolah wajib diisi.'); return; }
+  try {
+    await simpanPengaturan(isi);
+    pakaiIdentitas(isi);
+    sukses('Pengaturan dokumen tersimpan. Berkas yang diunduh berikutnya memakai identitas ini.');
+  } catch (e) { laporError(e); }
 }

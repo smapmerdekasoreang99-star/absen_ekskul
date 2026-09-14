@@ -130,3 +130,13 @@ export const TARIF = [
   { id: 7, jenis: 'Eksternal', min_peserta: 31, maks_peserta: null, besaran: 150000 }
 ];
 export const TARIF_ID_TERAKHIR_REF = { v: 7 };
+
+export const PENGATURAN = {
+  nama: 'SMA Plus "Merdeka" Soreang',
+  alamat: 'Jl. Citaliktik-Sindang Wargi Soreang Kab. Bandung',
+  tahunAjaran: '2026/2027',
+  kota: 'Soreang',
+  kepalaSekolah: 'Mohamad Gunawan, S.Si',
+  bendahara: 'Dra. Ida Susana',
+  kesiswaan: 'Devy Resmisari, S.Pd.'
+};

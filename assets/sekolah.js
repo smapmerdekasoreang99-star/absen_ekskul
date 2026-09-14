@@ -1,12 +1,13 @@
-// Identitas sekolah dan pejabat penanda tangan, dipakai pada kop
-// dokumen XLSX dan gambar PNG yang dihasilkan aplikasi.
-// Sesuaikan bila ada pergantian pejabat.
+// Identitas bawaan untuk kop dokumen XLSX dan PNG.
+// Nilai ini hanya dipakai bila pengaturan di database belum terisi;
+// yang berlaku sehari-hari adalah isian di menu Kesiswaan > Aturan transport.
 export const SEKOLAH = {
-  nama: 'SMA PLUS MERDEKA SOREANG',
-  alamat: 'Soreang, Kabupaten Bandung',
+  nama: 'SMA Plus "Merdeka" Soreang',
+  alamat: 'Jl. Citaliktik-Sindang Wargi Soreang Kab. Bandung',
+  tahunAjaran: '2026/2027',
   kota: 'Soreang',
-  kepalaSekolah: 'Mohamad Gunawan, S.Si.',
-  kesiswaan: 'Devy Resmisari, S.Pd.',
+  kepalaSekolah: 'Mohamad Gunawan, S.Si',
   bendahara: 'Dra. Ida Susana',
+  kesiswaan: 'Devy Resmisari, S.Pd.',
   logo: 'assets/logo.png'
 };
