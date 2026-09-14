@@ -18,15 +18,14 @@ export const SUPABASE_ANON_KEY = 'sb_publishable_rjHVGT0ULc03TC2ljIytSA_2X54xzR1
 
 // --- Project Tryout_guru (sumber data siswa) -------------------------
 export const SUMBER_SISWA = {
-  url:   '',   // kosongkan '' bila satu project dengan ekskul
+  url:   '',                 // kosong karena satu project
   key:   '',
-  tabel: 'v_siswa_aktif', // tampilan terbatas dari db/akses_siswa.sql
-                             // ganti 'tka_siswa' bila ingin langsung ke tabelnya
-  id:    'nisn',
+  tabel: 'v_siswa_aktif',
+  id:    'nisn',             // sesuaikan dengan hasil query di atas
   nis:   'nis',
   nama:  'nama',
   kelas: 'kelas',
-  kolomAktif: 'aktif'        // hanya siswa aktif; kosongkan '' bila tidak dipakai
+  kolomAktif: ''             // lihat catatan di bawah
 };
 
 // --- Nama tabel di project Kehadiran_Guru ----------------------------
