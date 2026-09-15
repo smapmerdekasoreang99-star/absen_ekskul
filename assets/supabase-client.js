@@ -29,6 +29,12 @@ export const SUMBER_SISWA = {
   // -- karena sudah aktif maka kolomAktif: ''        // hanya siswa aktif; kosongkan '' bila tidak dipakai
 };
 
+export const SUMBER_GURU = {
+  tabel: 'v_guru_aktif',
+  id:    'id',
+  nama:  'nama'
+};
+
 // --- Nama tabel di project Kehadiran_Guru ----------------------------
 // Awalan ae_ (absensi ekstrakurikuler) dipakai supaya tidak bertabrakan
 // dengan tabel milik aplikasi lain di project yang sama. Bila suatu saat
