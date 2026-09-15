@@ -1,14 +1,14 @@
-import { ambilMaster, muatPeriode, simpanPembina, hapusPembina, nomorPembinaBaru,
+import { ambilMaster, muatPeriode, simpanPembina, hapusPembina, nomorPembinaBaru, daftarGuru,
          simpanEkskul, hapusEkskul, nomorEkskulBaru,
          daftarTarif, simpanTarif, hapusTarif,
-         ambilPengaturan, simpanPengaturan } from '../assets/db.js?v=20260913g';
+         ambilPengaturan, simpanPengaturan } from '../assets/db.js?v=20260913h';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan, hariIni,
          tanggalPanjang, tanggalPendek, rupiah, tarifUntuk, rentangTarif,
-         unduhCSV, jam } from '../assets/ui.js?v=20260913g';
-import { unduhTransportXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260913g';
+         unduhCSV, jam } from '../assets/ui.js?v=20260913h';
+import { unduhTransportXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260913h';
 
 const el = id => document.getElementById(id);
-let AKUN = null, PEMBINA = [], EKSKUL = [], TARIF = [], BARIS = [];
+let AKUN = null, PEMBINA = [], EKSKUL = [], TARIF = [], GURU = [], BARIS = [];
 let sedangUbah = null, sedangUbahEkskul = null, tab = 'pembina';
 
 AKUN = wajibMasuk(true);      // hanya pengelola
@@ -35,6 +35,16 @@ el('tabKesiswaan').addEventListener('click', ev => {
     PEMBINA = m.pembina;
     EKSKUL = m.ekskul;
     TARIF = await daftarTarif();
+    try {
+      GURU = await daftarGuru();
+    } catch (e) {
+      GURU = [];
+      console.warn('Data guru tidak terbaca:', e.message);
+      laporError('Data guru tidak terbaca, jadi pembina baru hanya bisa dicatat ' +
+                 'sebagai eksternal. Periksa SUMBER_GURU di supabase-client.js. (' + e.message + ')');
+    }
+    isiPilihanGuru('');
+    el('pGuru').addEventListener('change', saatPilihGuru);
     await muatIdentitas();
     gambarPembina();
     gambarEkskul();
@@ -71,7 +81,7 @@ function gambarPembina() {
         <span class="nama">${p.nama}
           <small>${p.id} · ${jumlahEkskul(p.id)} ekskul${p.no_hp ? ' · ' + p.no_hp : ''}
             ${p.status === 'Nonaktif' ? ' · nonaktif' : ''}</small></span>
-        <span class="lencana ${p.jenis === 'Eksternal' ? 'l-ganti' : 'l-hadir'}">${p.jenis || 'Internal'}</span>
+        <span class="lencana ${p.jenis === 'Eksternal' ? 'l-ganti' : 'l-hadir'}">${p.jenis}</span>
         <button class="tbl tbl-kecil" data-ubah="${p.id}" type="button">Ubah</button>
         <button class="tbl tbl-kecil tbl-hapus" data-hapus="${p.id}" type="button">Hapus</button>
       </div>`).join('');
@@ -81,16 +91,41 @@ function gambarPembina() {
     b.addEventListener('click', () => hapus(b.dataset.hapus)));
 }
 
+function isiPilihanGuru(terpilih) {
+  // Guru yang sudah dipakai pembina lain tidak ditawarkan lagi.
+  const dipakai = new Set(PEMBINA.filter(p => p.id !== sedangUbah && p.id_guru).map(p => p.id_guru));
+  el('pGuru').innerHTML = '<option value="">— Pelatih eksternal (bukan guru sekolah) —</option>' +
+    GURU.filter(g => !dipakai.has(g.id) || g.id === terpilih)
+        .map(g => `<option value="${g.id}"${g.id === terpilih ? ' selected' : ''}>${g.nama}</option>`)
+        .join('');
+}
+
+function saatPilihGuru() {
+  const g = GURU.find(x => x.id === el('pGuru').value);
+  el('ketStatus').innerHTML = g
+    ? 'Berstatus <strong>Internal</strong> karena tertaut ke data guru. ' +
+      'Namanya mengikuti data guru supaya penulisannya tidak berbeda.'
+    : 'Berstatus <strong>Eksternal</strong>. Nama diisi sendiri di bawah.';
+  if (g) {
+    el('pNama').value = g.nama;
+    el('pNama').readOnly = true;
+  } else {
+    el('pNama').readOnly = false;
+  }
+}
+
 function isiFormPembina(id) {
   const p = PEMBINA.find(x => x.id === id);
   if (!p) return;
   sedangUbah = id;
   el('judulFormPembina').textContent = 'Ubah data ' + p.nama;
+  isiPilihanGuru(p.id_guru || '');
+  el('pGuru').value = p.id_guru || '';
   el('pNama').value = p.nama;
-  el('pStatus').value = p.jenis || 'Internal';
   el('pHp').value = p.no_hp || '';
   el('pPin').value = p.kode_akses || '';
   el('pAktif').value = p.status || 'Aktif';
+  saatPilihGuru();
   el('judulFormPembina').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -98,8 +133,10 @@ function kosongkanFormPembina() {
   sedangUbah = null;
   el('judulFormPembina').textContent = 'Tambah pembina';
   ['pNama', 'pHp', 'pPin'].forEach(k => { el(k).value = ''; });
-  el('pStatus').value = 'Internal';
   el('pAktif').value = 'Aktif';
+  isiPilihanGuru('');
+  el('pGuru').value = '';
+  saatPilihGuru();
 }
 
 async function simpanFormPembina() {
@@ -108,10 +145,11 @@ async function simpanFormPembina() {
   if (!nama) { laporError('Nama pembina wajib diisi.'); return; }
   const pin = el('pPin').value.trim();
   if (pin && !/^\d{4,6}$/.test(pin)) { laporError('PIN diisi 4 sampai 6 angka.'); return; }
+  const idGuru = el('pGuru').value || null;
   const baris = {
     id: sedangUbah || nomorPembinaBaru(PEMBINA),
     nama,
-    jenis: el('pStatus').value,
+    id_guru: idGuru,
     no_hp: el('pHp').value.trim(),
     kode_akses: pin,
     status: el('pAktif').value
@@ -121,6 +159,7 @@ async function simpanFormPembina() {
     const m = await ambilMaster();
     PEMBINA = m.pembina;
     gambarPembina();
+    gambarEkskul();
     kosongkanFormPembina();
     sukses(`Data ${nama} tersimpan.`);
   } catch (e) { laporError(e); }

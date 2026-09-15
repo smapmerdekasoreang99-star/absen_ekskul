@@ -3,10 +3,14 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260913g';
+import * as CFG from './supabase-client.js?v=20260913h';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
-import * as D from './demo-data.js?v=20260913g';
+const G = CFG.SUMBER_GURU || { tabel: 'guru', id: 'id', nama: 'nama' };
+
+// Status pembina diturunkan dari keterkaitannya dengan data guru.
+const berjenis = p => ({ ...p, jenis: p.id_guru ? 'Internal' : 'Eksternal' });
+import * as D from './demo-data.js?v=20260913h';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -55,7 +59,8 @@ async function sbSiswa() {
 
 // ---------------------------------------------------------------- master
 export async function ambilMaster() {
-  if (MODE === 'contoh') return { ekskul: salin(D.EKSKUL), pembina: salin(D.PEMBINA) };
+  if (MODE === 'contoh')
+    return { ekskul: salin(D.EKSKUL), pembina: salin(D.PEMBINA).map(berjenis) };
   const c = await sb();
   const [e, p] = await Promise.all([
     c.from(T.ekskul).select('*').order('id'),
@@ -63,7 +68,7 @@ export async function ambilMaster() {
   ]);
   return {
     ekskul: periksa(e, 'Gagal memuat ekstrakurikuler'),
-    pembina: periksa(p, 'Gagal memuat pembina')
+    pembina: periksa(p, 'Gagal memuat pembina').map(berjenis)
   };
 }
 
@@ -548,4 +553,17 @@ export async function simpanPengaturan(obj) {
   const c = await sb();
   periksa(await c.from(T.pengaturan).upsert(baris, { onConflict: 'kunci' }),
           'Gagal menyimpan pengaturan dokumen');
+}
+
+// ------------------------------------------------------------ data guru
+// Dibaca dari tabel guru milik aplikasi Kehadiran Guru, hanya untuk
+// menautkan pembina internal supaya namanya tidak diketik ulang.
+export async function daftarGuru() {
+  if (MODE === 'contoh') return salin(D.GURU);
+  const c = await sb();
+  const data = periksa(
+    await c.from(G.tabel).select(`${G.id},${G.nama}`).order(G.nama),
+    'Gagal memuat data guru'
+  );
+  return data.map(g => ({ id: String(g[G.id]), nama: g[G.nama] }));
 }
