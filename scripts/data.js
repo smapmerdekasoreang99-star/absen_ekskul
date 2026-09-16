@@ -133,7 +133,7 @@ function unduh() {
   if (!PESERTA.length) { laporError('Belum ada peserta untuk diunduh.'); return; }
   const e = EKSKUL.find(x => x.id === el('pilihEkskul').value);
   unduhCSV(`peserta_${(e ? e.nama : 'ekskul').replace(/\s+/g, '_')}.csv`, [
-    ['NIS', 'Nama siswa', 'Kelas'],
-    ...PESERTA.map(s => [s.nis || '', s.nama, s.kelas || ''])
+    ['Nama siswa', 'Kelas'],
+    ...PESERTA.map(s => [s.nama, s.kelas || ''])
   ]);
 }
