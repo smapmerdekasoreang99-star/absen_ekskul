@@ -247,11 +247,11 @@ function unduh() {
   const e = EKSKUL.find(x => x.id === el('pilihEkskul').value);
   const isi = Object.fromEntries(kumpulkan().map(x => [x.siswa_id, x]));
   unduhCSV(`nilai_${(e ? e.nama : 'ekskul').replace(/\s+/g, '_')}.csv`, [
-    ['NIS', 'Nama siswa', 'Kelas', 'Pertemuan', 'Hadir', '% Kehadiran', 'Predikat', 'Keterangan', 'Deskripsi'],
+    ['Nama siswa', 'Kelas', 'Pertemuan', 'Hadir', '% Kehadiran', 'Predikat', 'Keterangan', 'Deskripsi'],
     ...SISWA.map(s => {
       const h = HADIR[s.id] || { H: 0, total: 0 };
       const n = isi[s.id] || {};
-      return [s.nis || '', s.nama, s.kelas || '', h.total, h.H, persen(h.H, h.total),
+      return [s.nama, s.kelas || '', h.total, h.H, persen(h.H, h.total),
               n.predikat || '', PREDIKAT[n.predikat] || '', n.deskripsi || ''];
     })
   ]);
@@ -277,14 +277,14 @@ async function unduhSemua() {
       peserta.forEach(s => {
         const h = hadir[s.id] || { H: 0, total: 0 };
         const n = nilai[s.id] || {};
-        baris.push([e.nama, PEMBINA_NAMA[e.pembina_id] || '', s.nis || '', s.nama, s.kelas || '',
+        baris.push([e.nama, PEMBINA_NAMA[e.pembina_id] || '', s.nama, s.kelas || '',
                     h.total, h.H, persen(h.H, h.total), n.predikat || '',
                     PREDIKAT[n.predikat] || '', n.deskripsi || '']);
       });
     }
     if (!baris.length) { laporError('Belum ada peserta yang terdaftar.'); return; }
     unduhCSV(`nilai_semua_ekskul_${aktif.tahun_ajaran.replace('/', '-')}_${aktif.semester}.csv`, [
-      ['Ekstrakurikuler', 'Pembina', 'NIS', 'Nama siswa', 'Kelas', 'Pertemuan', 'Hadir',
+      ['Ekstrakurikuler', 'Pembina', 'Nama siswa', 'Kelas', 'Pertemuan', 'Hadir',
        '% Kehadiran', 'Predikat', 'Keterangan', 'Deskripsi'],
       ...baris
     ]);
@@ -299,7 +299,7 @@ async function unduhSemua() {
 
 
 // ================================================= REKAP NILAI PER KELAS
-let KELAS = {};          // { kelas: [ {nis,nama,ekskul,predikat,keterangan,deskripsi} ] }
+let KELAS = {};          // { kelas: [ {nama,ekskul,predikat,keterangan,deskripsi} ] }
 let kelasSiap = false;
 
 function gantiTab(ev) {
@@ -328,8 +328,6 @@ async function susunKelas() {
         const k = s.kelas || 'Tanpa kelas';
         const n = nilai[s.id] || {};
         (KELAS[k] || (KELAS[k] = [])).push({
-          // Bila kolom NIS kosong di data sekolah, NISN yang dipakai.
-          nis: s.nis || s.id || '',
           pembina: PEMBINA_NAMA[e.pembina_id] || '',
           nama: s.nama, ekskul: e.nama,
           predikat: n.predikat || '', keterangan: PREDIKAT[n.predikat] || '',
@@ -362,10 +360,10 @@ function gambarKelas() {
     return;
   }
   t.innerHTML = `
-    <thead><tr><th class="angka">No.</th><th>NIS</th><th>Nama Siswa</th>
+    <thead><tr><th class="angka">No.</th><th>Nama Siswa</th>
       <th>Ekstrakurikuler</th><th class="angka">Predikat</th><th>Keterangan</th><th>Deskripsi</th></tr></thead>
     <tbody>${isi.map((x, i) => `<tr>
-      <td class="angka">${i + 1}</td><td>${x.nis}</td><td>${x.nama}</td>
+      <td class="angka">${i + 1}</td><td>${x.nama}</td>
       <td>${x.ekskul}</td>
       <td class="angka">${x.predikat
         ? '<span class="lencana l-hadir">' + x.predikat + '</span>'
