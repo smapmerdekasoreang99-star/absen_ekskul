@@ -242,7 +242,7 @@ export async function unduhTransportXLSX({ baris, tarif, dari, sampai, jenis, na
 
 // =====================================================================
 // B. NILAI EKSTRAKURIKULER PER KELAS
-// baris: [{ nis, nama, ekskul, predikat, keterangan, deskripsi }]
+// baris: [{ nama, ekskul, predikat, keterangan, deskripsi }]
 // =====================================================================
 export async function unduhNilaiKelasXLSX({ kelas, periode, baris, pembina, namaBerkas }) {
   const ExcelJS = await excel();
@@ -251,22 +251,21 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, pembina, nama
     pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1,
                  margins: { left: 0.5, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } }
   });
-  ws.columns = [{ width: 5 }, { width: 13 }, { width: 26 }, { width: 20 },
-                { width: 9 }, { width: 15 }, { width: 34 }];
-  await kop(ws, wb, `NILAI EKSTRAKURIKULER — KELAS ${kelas}`, periode, 7);
+  ws.columns = [{ width: 5 }, { width: 28 }, { width: 20 },
+                { width: 9 }, { width: 16 }, { width: 36 }];
+  await kop(ws, wb, `NILAI EKSTRAKURIKULER — KELAS ${kelas}`, periode, 6);
 
   let r = 7;
-  barisJudulTabel(ws, r, ['No.', 'NIS', 'Nama Siswa', 'Ekstrakurikuler',
+  barisJudulTabel(ws, r, ['No.', 'Nama Siswa', 'Ekstrakurikuler',
                           'Predikat', 'Keterangan', 'Deskripsi']);
   r++;
   baris.forEach((b, i) => {
     selIsi(ws, r, 1, i + 1, { rata: 'center' });
-    selIsi(ws, r, 2, b.nis || '');
-    selIsi(ws, r, 3, b.nama);
-    selIsi(ws, r, 4, b.ekskul);
-    selIsi(ws, r, 5, b.predikat || '', { rata: 'center', tebal: true });
-    selIsi(ws, r, 6, b.keterangan || '');
-    selIsi(ws, r, 7, b.deskripsi || '', { bungkus: true });
+    selIsi(ws, r, 2, b.nama);
+    selIsi(ws, r, 3, b.ekskul);
+    selIsi(ws, r, 4, b.predikat || '', { rata: 'center', tebal: true });
+    selIsi(ws, r, 5, b.keterangan || '');
+    selIsi(ws, r, 6, b.deskripsi || '', { bungkus: true });
     r++;
   });
   r += 2;
@@ -279,11 +278,11 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, pembina, nama
   [r, r + 1].forEach(x => { ws.getCell(x, 2).font = biasa; });
   ws.getCell(r + 5, 2).font = tebalGaris;
 
-  ws.getCell(r, 6).value = `${ID.kota}, ${tanggalCetak()}`;
-  ws.getCell(r + 1, 6).value = 'Pembina Ekstra Kurikuler,';
-  ws.getCell(r + 5, 6).value = pembina || '..................................................';
-  [r, r + 1].forEach(x => { ws.getCell(x, 6).font = biasa; });
-  ws.getCell(r + 5, 6).font = pembina ? tebalGaris : biasa;
+  ws.getCell(r, 5).value = `${ID.kota}, ${tanggalCetak()}`;
+  ws.getCell(r + 1, 5).value = 'Pembina Ekstra Kurikuler,';
+  ws.getCell(r + 5, 5).value = pembina || '..................................................';
+  [r, r + 1].forEach(x => { ws.getCell(x, 5).font = biasa; });
+  ws.getCell(r + 5, 5).font = pembina ? tebalGaris : biasa;
 
   const buf = await wb.xlsx.writeBuffer();
   simpan(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
