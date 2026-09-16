@@ -20,19 +20,17 @@ export const SUPABASE_ANON_KEY = 'sb_publishable_rjHVGT0ULc03TC2ljIytSA_2X54xzR1
 export const SUMBER_SISWA = {
   url:   '',   // kosongkan '' bila satu project dengan ekskul
   key:   '',
-  tabel: 'v_siswa_aktif', // tampilan terbatas dari db/akses_siswa.sql
-                             // ganti 'tka_siswa' bila ingin langsung ke tabelnya
-  id:    'nisn',
-  nis:   'nis',
+  tabel: 'v_siswa_aktif', // tampilan ringkas: id, nama, kelas, tingkat, tahun_ajaran
+
+  // Penanda peserta memakai id siswa, BUKAN NISN.
+  // Alasannya dua: NISN bisa berubah bila ada koreksi Dapodik sehingga
+  // rujukan peserta putus diam-diam, sedangkan id tidak pernah berubah;
+  // dan NISN termasuk data pribadi yang tidak dibuka ke halaman publik,
+  // jadi kolomnya memang tidak ada lagi pada v_siswa_aktif.
+  id:    'id',
+  nis:   '',    // dikosongkan: kolom NIS tidak dipakai halaman ekskul
   nama:  'nama',
   kelas: 'kelas',
-  // -- karena sudah aktif maka kolomAktif: ''        // hanya siswa aktif; kosongkan '' bila tidak dipakai
-};
-
-export const SUMBER_GURU = {
-  tabel: 'v_guru_aktif',
-  id:    'id',
-  nama:  'nama'
 };
 
 // --- Nama tabel di project Kehadiran_Guru ----------------------------
