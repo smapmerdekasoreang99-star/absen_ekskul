@@ -398,7 +398,7 @@ export async function unduhNilaiKelasPNG({ kelas, periode, baris, pembina, namaB
 
   g.fillStyle = '#6B6252';
   g.font = '11px Arial, sans-serif';
-  g.fillText('Dicetak dari Aplikasi Absensi Ekskul SMA Plus Merdeka Soreang',
+  g.fillText('Dicetak dari Aplikasi Absensi Ekstrakurikuler SMA Plus Merdeka Soreang',
              padding, yTtd + 152);
 
   const blob = await new Promise(r => kanvas.toBlob(r, 'image/png'));
