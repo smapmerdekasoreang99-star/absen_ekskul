@@ -7,7 +7,7 @@
 <title>Kesiswaan · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo.png">
 <link rel="stylesheet" href="assets/dasar.css?v=2">
-<link rel="stylesheet" href="assets/style.css?v=20260920x">
+<link rel="stylesheet" href="assets/style.css?v=20260920y">
 </head>
 <body class="aplikasi">
 
@@ -41,6 +41,7 @@
       <p class="ket">Pembina yang tertaut ke data guru sekolah berstatus Internal;
         selebihnya Eksternal. Status inilah yang menentukan tarif transport,
         dan tidak diisi terpisah supaya tidak mungkin keliru.</p>
+      <div id="peringatanPembina" class="pesan p-salah sembunyi"></div>
       <div id="daftarPembina"><p class="kosong">Memuat…</p></div>
     </section>
 
@@ -50,6 +51,9 @@
         <div>
           <label for="pGuru">Tautkan ke data guru</label>
           <select id="pGuru"><option value="">— Pelatih eksternal (bukan guru sekolah) —</option></select>
+          <p class="ket-pin">Hanya guru yang <b>berstatus Aktif</b> dan sudah diberi tugas
+            <b>Pembina Ekskul</b> di Data Induk yang muncul di sini. Bila nama yang dicari
+            tidak ada, lengkapi dulu di Data Induk → Tugas Guru.</p>
         </div>
       </div>
       <p class="ket" id="ketStatus" style="margin:-4px 0 12px">Memilih seorang guru membuat
@@ -140,6 +144,6 @@
     <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
 </nav>
 
-<script type="module" src="scripts/kesiswaan.js?v=20260920x"></script>
+<script type="module" src="scripts/kesiswaan.js?v=20260920y"></script>
 </body>
 </html>

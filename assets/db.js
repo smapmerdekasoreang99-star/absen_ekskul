@@ -3,14 +3,14 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260920x';
+import * as CFG from './supabase-client.js?v=20260920y';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
 const G = CFG.SUMBER_GURU || { tabel: 'guru', id: 'id', nama: 'nama', tmt: 'tmt_sekolah' };
 
 // Status pembina diturunkan dari keterkaitannya dengan data guru.
 const berjenis = p => ({ ...p, jenis: p.id_guru ? 'Internal' : 'Eksternal' });
-import * as D from './demo-data.js?v=20260920x';
+import * as D from './demo-data.js?v=20260920y';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -558,13 +558,22 @@ export async function ambilPengaturan() {
 // lebih dulu, dengan dasar TMT sekolah. Yang TMT-nya belum diisi jatuh ke
 // akhir, dan nama menjadi pemecah seri karena satu TMT bisa dipakai beberapa
 // guru. Urutan ini disamakan dengan Data Induk dan Kehadiran Guru.
+/* Guru yang boleh ditautkan sebagai pembina.
+
+   Bukan seluruh daftar guru, melainkan v_guru_pembina_ekskul: yang
+   berstatus Aktif DAN sudah diberi tugas "Pembina Ekskul" di Data Induk.
+   Dengan begitu yang belum memenuhi syarat tidak bisa dipilih sama sekali,
+   bukan dipilih dulu lalu ditolak saat menyimpan.
+
+   Database tetap menolaknya lewat pemicu, karena penyaringan di peramban
+   saja bukan aturan: kunci publik aplikasi ini memberi hak tulis kepada
+   siapa pun yang membuka kodenya. */
 export async function daftarGuru() {
   if (MODE === 'contoh') return salin(D.GURU);
   const c = await sb();
   const data = periksa(
-    await c.from(G.tabel).select(`${G.id},${G.nama},${G.tmt}`)
-      .order(G.tmt, { nullsFirst: false }).order(G.nama),
-    'Gagal memuat data guru'
+    await c.from('v_guru_pembina_ekskul').select('id,nama,tmt_sekolah'),
+    'Gagal memuat daftar guru yang boleh menjadi pembina'
   );
-  return data.map(g => ({ id: String(g[G.id]), nama: g[G.nama], tmt_sekolah: g[G.tmt] }));
+  return (data || []).map(g => ({ id: String(g.id), nama: g.nama, tmt_sekolah: g.tmt_sekolah }));
 }

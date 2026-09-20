@@ -1,7 +1,7 @@
 import { ambilMaster, simpanPembina, hapusPembina, nomorPembinaBaru, daftarGuru,
-         simpanEkskul, hapusEkskul, nomorEkskulBaru } from '../assets/db.js?v=20260920x';
+         simpanEkskul, hapusEkskul, nomorEkskulBaru } from '../assets/db.js?v=20260920y';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan,
-         jam, kategoriDari, perKategori, KATEGORI_BAWAAN } from '../assets/ui.js?v=20260920x';
+         jam, kategoriDari, perKategori, KATEGORI_BAWAAN } from '../assets/ui.js?v=20260920y';
 
 // Halaman ini mengelola DATA INDUK ekskul: pembina dan kegiatan. Aturan tarif
 // transport, daftar pembayarannya, dan identitas dokumen sudah pindah —
@@ -73,14 +73,29 @@ function gambarPembina() {
      diturunkan dari data guru; yang tersisa adalah dua keadaan yang tidak
      bisa diturunkan, jadi dikatakan saja apa adanya. */
   const peringatan = (p) => {
-    if (p.nonaktif_di_induk) return '<span class="lencana l-tidak" '
-      + 'title="Gurunya sudah tidak aktif di Data Induk, tetapi masih terdaftar sebagai pembina di sini.">'
-      + 'nonaktif di Data Induk</span>';
-    if (p.tanpa_tugas_induk) return '<span class="lencana l-ganti" '
-      + 'title="Belum tercatat memegang tugas Pembina Ekskul di Data Induk. Tambahkan di Data Induk → Tugas Guru agar penugasannya tercatat di kedua tempat.">'
-      + 'belum ada tugasnya di Data Induk</span>';
+    if (p.nonaktif_di_induk) return '<span class="lencana l-tidak">nonaktif di Data Induk</span>';
+    if (p.tanpa_tugas_induk) return '<span class="lencana l-tidak">tanpa tugas di Data Induk</span>';
     return '';
   };
+
+  /* Pesan merah di atas daftarnya, bukan sekadar lencana kecil di baris.
+
+     Keduanya berarti pembina itu tercatat di sini tetapi tidak di Data
+     Induk — dan akibatnya nyata: honornya bisa terhitung padahal tugasnya
+     tidak pernah tercatat, atau sebaliknya. Pembina baru sudah tidak
+     mungkin dibuat dalam keadaan begini; yang tersisa hanya baris lama
+     atau perubahan yang terjadi di Data Induk sesudahnya. */
+  const bermasalah = PEMBINA.filter(p => p.nonaktif_di_induk || p.tanpa_tugas_induk);
+  el('peringatanPembina').classList.toggle('sembunyi', !bermasalah.length);
+  if (bermasalah.length) {
+    el('peringatanPembina').innerHTML =
+      '<b>' + bermasalah.length + ' pembina tidak sejalan dengan Data Induk.</b> '
+      + bermasalah.map(p => esc(p.nama) + ' — '
+          + (p.nonaktif_di_induk
+              ? 'gurunya berstatus nonaktif di Data Induk'
+              : 'belum diberi tugas "Pembina Ekskul" di Data Induk')).join('; ')
+      + '. Perbaiki di <b>Data Induk → Data Guru / Tugas Guru</b>, atau nonaktifkan pembinanya di sini.';
+  }
 
   kotak.innerHTML = [...PEMBINA]
     .sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
@@ -196,6 +211,10 @@ async function simpanFormPembina() {
      lagi tanpa ada yang menyadari penyebabnya. */
   if (pin) baris.kode_akses = pin;
   try {
+    /* Bila gurunya belum aktif atau belum diberi tugas Pembina Ekskul,
+       database menolaknya dengan pesan yang sudah bisa dibaca langsung.
+       Pesan itu diteruskan apa adanya — jangan diganti kalimat umum yang
+       tidak memberitahu apa yang harus dikerjakan. */
     await simpanPembina(baris);
     const m = await ambilMaster();
     PEMBINA = m.pembina;

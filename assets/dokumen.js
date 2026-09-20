@@ -3,7 +3,7 @@
 // Prinsip tampilan: hemat tinta printer. Latar putih, garis tipis abu-abu,
 // tanpa blok warna lebar. Hanya baris judul tabel yang diberi abu sangat
 // muda, dan aksen emas dipakai tipis sebagai garis, bukan bidang.
-import { SEKOLAH } from './sekolah.js?v=20260920x';
+import { SEKOLAH } from './sekolah.js?v=20260920y';
 
 // Identitas yang dipakai pada kop dan blok tanda tangan. Nilai bawaan
 // berasal dari sekolah.js dan ditimpa oleh pengaturan dari database
