@@ -1,5 +1,5 @@
 // Fungsi bersama untuk semua halaman: sesi masuk, format, pesan, foto.
-import { MODE } from './db.js?v=20260920b';
+import { MODE } from './db.js?v=20260920f';
 
 export const PIN_PENGELOLA = 'merdeka2026';
 
@@ -168,19 +168,7 @@ export function rupiah(n) {
   return 'Rp' + Math.round(n).toLocaleString('id-ID');
 }
 
-// Mencari besaran transport satu pertemuan berdasarkan jenis pembina dan
-// jumlah siswa yang hadir. Mengembalikan { besaran, lapisan }.
-// Bila jumlah hadir di bawah ambang terendah, besarannya 0 dan lapisan null.
-export function tarifUntuk(daftarTarif, jenis, jumlahHadir) {
-  const cocok = (daftarTarif || [])
-    .filter(t => t.jenis === jenis)
-    .filter(t => jumlahHadir >= t.min_peserta &&
-                 (t.maks_peserta === null || t.maks_peserta === undefined || jumlahHadir <= t.maks_peserta))
-    .sort((a, b) => b.min_peserta - a.min_peserta)[0];
-  return { besaran: cocok ? Number(cocok.besaran) : 0, lapisan: cocok || null };
-}
-
-export function rentangTarif(t) {
-  return t.maks_peserta ? `${t.min_peserta} – ${t.maks_peserta} siswa`
-                        : `lebih dari ${t.min_peserta - 1} siswa`;
-}
+// Perhitungan tarif transport pembina pindah ke Induk Pembiayaan
+// (f_ip_transport_pembina), bersama besarannya yang kini berversi menurut
+// tanggal berlaku. Tidak ditinggalkan salinan di sini supaya tidak ada dua
+// rumus yang bisa menyimpang.

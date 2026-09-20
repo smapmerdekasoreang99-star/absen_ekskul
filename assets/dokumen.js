@@ -3,7 +3,7 @@
 // Prinsip tampilan: hemat tinta printer. Latar putih, garis tipis abu-abu,
 // tanpa blok warna lebar. Hanya baris judul tabel yang diberi abu sangat
 // muda, dan aksen emas dipakai tipis sebagai garis, bukan bidang.
-import { SEKOLAH } from './sekolah.js?v=20260920b';
+import { SEKOLAH } from './sekolah.js?v=20260920f';
 
 // Identitas yang dipakai pada kop dan blok tanda tangan. Nilai bawaan
 // berasal dari sekolah.js dan ditimpa oleh pengaturan dari database
@@ -69,43 +69,33 @@ function simpan(blob, namaBerkas) {
 const tepi = { style: 'thin', color: { argb: GARIS } };
 const semuaTepi = { top: tepi, left: tepi, bottom: tepi, right: tepi };
 
-// Kop surat: logo di kiri, nama sekolah, lalu garis emas tipis.
+/* Penjaga: bila assets/kop-dokumen.js tidak termuat, unduhan gagal dengan
+   pesan yang bisa ditindaklanjuti, bukan "undefined". */
+function kopBersama() {
+  if (!window.KopDokumen) throw new Error(
+    'Berkas assets/kop-dokumen.js belum termuat, sehingga kop dokumen tidak bisa dibuat. '
+    + 'Muat ulang halaman; bila tetap gagal, laporkan ke operator.');
+  return window.KopDokumen;
+}
+
+/* Identitas sekolah apa adanya dari v_penanda_tangan, termasuk tata letak
+   kopnya. Bila belum termuat — mode contoh, atau Data Induk tidak terbaca —
+   disusun seadanya dari nilai bawaan di sekolah.js supaya kop tetap jadi. */
+function profilKop() {
+  return ID.profil || { nama_sekolah: ID.nama, alamat: ID.alamat, kota: ID.kota };
+}
+
+/* Kop surat. Susunan dan letaknya tidak ditentukan di sini melainkan di
+   assets/kop-dokumen.js — berkas yang sama persis di keempat aplikasi dan
+   membaca tata letak yang diatur operator di Data Induk → Profil Dokumen.
+   Mengembalikan nomor baris kosong pertama sesudah kop. */
 async function kop(ws, wb, judul, subjudul, lebarKolom) {
-  // Kolom pertama dilebarkan supaya logo tidak menimpa tulisan di kolom B.
-  const k1 = ws.getColumn(1);
-  k1.width = Math.max(Number(k1.width) || 0, 9);
   const logo = await logoBase64();
-  if (logo) {
-    const id = wb.addImage({ base64: logo, extension: 'png' });
-    ws.addImage(id, { tl: { col: 0.12, row: 0.25 }, ext: { width: 52, height: 52 } });
-  }
-  ws.mergeCells(1, 2, 1, lebarKolom);
-  const a = ws.getCell(1, 2);
-  a.value = ID.nama;
-  a.font = { name: 'Calibri', size: 14, bold: true, color: { argb: TINTA } };
-  a.alignment = { vertical: 'middle' };
-
-  ws.mergeCells(2, 2, 2, lebarKolom);
-  const b = ws.getCell(2, 2);
-  b.value = ID.alamat;
-  b.font = { name: 'Calibri', size: 9, color: { argb: 'FF6B6252' } };
-
-  ws.mergeCells(3, 2, 3, lebarKolom);
-  const c = ws.getCell(3, 2);
-  c.value = judul;
-  c.font = { name: 'Calibri', size: 12, bold: true, color: { argb: TINTA } };
-
-  ws.mergeCells(4, 2, 4, lebarKolom);
-  const d = ws.getCell(4, 2);
-  d.value = subjudul;
-  d.font = { name: 'Calibri', size: 10, color: { argb: 'FF6B6252' } };
-
-  // Garis emas tipis sebagai pembatas kop
-  for (let k = 1; k <= lebarKolom; k++) {
-    ws.getCell(5, k).border = { bottom: { style: 'medium', color: { argb: EMAS } } };
-  }
-  ws.getRow(1).height = 20;
-  ws.getRow(5).height = 6;
+  return kopBersama().kopExcel(ws, {
+    wb, logo: logo ? { base64: logo } : null,
+    profil: profilKop(), judul, sub: subjudul,
+    kolomAkhir: lebarKolom, warnaGaris: EMAS
+  });
 }
 
 function barisJudulTabel(ws, baris, judulKolom) {
@@ -131,120 +121,10 @@ function selIsi(ws, r, k, nilai, opsi = {}) {
 }
 
 // =====================================================================
-// A. DAFTAR TRANSPORT PEMBINA
-// baris: [{ pembina, jenis, ekskul, tanggal, hadir, besaran }]
-// =====================================================================
-export async function unduhTransportXLSX({ baris, tarif, dari, sampai, jenis, namaBerkas }) {
-  const ExcelJS = await excel();
-  const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet('Transport', {
-    pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1,
-                 margins: { left: 0.5, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } }
-  });
-  ws.columns = [
-    { width: 5 }, { width: 26 }, { width: 12 }, { width: 20 },
-    { width: 22 }, { width: 10 }, { width: 14 }
-  ];
-  await kop(ws, wb,
-    `DAFTAR TRANSPORT PEMBINA EKSTRAKURIKULER ${String(jenis || '').toUpperCase()}`.trim(),
-    `Tahun Ajaran ${ID.tahunAjaran} · Periode ${dari} sampai ${sampai}`, 7);
-
-  let r = 7;
-  barisJudulTabel(ws, r, ['No.', 'Nama Pembina', jenis ? 'Jenis' : 'Status', 'Ekstrakurikuler',
-                          'Pertemuan', 'Hadir', 'Transport (Rp)']);
-  r++;
-
-  let no = 0, total = 0;
-  // Dikelompokkan per pembina; nama hanya ditulis pada baris pertama.
-  const perPembina = {};
-  baris.forEach(b => (perPembina[b.pembina] || (perPembina[b.pembina] = [])).push(b));
-
-  Object.entries(perPembina).forEach(([nama, daftar]) => {
-    no++;
-    const awal = r;
-    daftar.forEach((b, i) => {
-      selIsi(ws, r, 1, i === 0 ? no : '', { rata: 'center' });
-      selIsi(ws, r, 2, i === 0 ? nama : '', { tebal: i === 0 });
-      selIsi(ws, r, 3, i === 0 ? b.jenis : '', { rata: 'center' });
-      selIsi(ws, r, 4, b.ekskul);
-      selIsi(ws, r, 5, b.pertemuan);
-      selIsi(ws, r, 6, b.hadir, { rata: 'center' });
-      selIsi(ws, r, 7, b.besaran, { rata: 'right', rupiah: true });
-      total += b.besaran;
-      r++;
-    });
-    // Subtotal per pembina
-    ws.mergeCells(r, 1, r, 6);
-    selIsi(ws, r, 1, `Jumlah ${nama} (${daftar.length} pertemuan)`, { rata: 'right', tebal: true });
-    selIsi(ws, r, 7, daftar.reduce((a, b) => a + b.besaran, 0),
-           { rata: 'right', rupiah: true, tebal: true });
-    r++;
-    if (awal) { /* penanda kelompok */ }
-  });
-
-  ws.mergeCells(r, 1, r, 6);
-  const t = selIsi(ws, r, 1, 'JUMLAH SELURUHNYA', { rata: 'right', tebal: true });
-  t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ABU_MUDA } };
-  const tv = selIsi(ws, r, 7, total, { rata: 'right', rupiah: true, tebal: true });
-  tv.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ABU_MUDA } };
-  r += 3;
-
-  // ---- Blok tanda tangan ----
-  const kiri = r, kanan = r;
-  ws.getCell(kiri, 2).value = 'Setuju dibayar,';
-  ws.getCell(kiri + 1, 2).value = 'Kepala Sekolah,';
-  ws.getCell(kiri + 5, 2).value = ID.kepalaSekolah;
-  ws.getCell(kiri + 5, 2).font = { name: 'Calibri', size: 10, bold: true, underline: true };
-
-  ws.getCell(kanan, 5).value = 'Lunas dibayar,';
-  ws.getCell(kanan + 1, 5).value = `${ID.kota}, ${tanggalCetak()}`;
-  ws.getCell(kanan + 2, 5).value = 'Bendahara,';
-  ws.getCell(kanan + 5, 5).value = ID.bendahara;
-  ws.getCell(kanan + 5, 5).font = { name: 'Calibri', size: 10, bold: true, underline: true };
-  for (let i = 0; i <= 5; i++) {
-    [2, 5].forEach(k => {
-      const sel = ws.getCell(r + i, k);
-      if (!sel.font || !sel.font.bold) sel.font = { name: 'Calibri', size: 10, color: { argb: TINTA } };
-    });
-  }
-  r += 7;
-
-  // ---- Tabel sistem pembayaran ----
-  ws.getCell(r, 2).value = 'Sistem pembayaran transport';
-  ws.getCell(r, 2).font = { name: 'Calibri', size: 10, bold: true, color: { argb: TINTA } };
-  r++;
-  const jenisDitampilkan = jenis ? [jenis] : ['Internal', 'Eksternal'];
-  jenisDitampilkan.forEach(j => {
-    const isi = tarif.filter(x => x.jenis === j)
-                     .sort((a, b) => a.min_peserta - b.min_peserta);
-    if (!isi.length) return;
-    barisJudulTabel(ws, r, ['', `Pembina ${j} — Jumlah peserta`, '', '',
-                            'Besaran transport per pertemuan', '', '']);
-    ws.mergeCells(r, 2, r, 4);
-    ws.mergeCells(r, 5, r, 7);
-    r++;
-    isi.forEach(t2 => {
-      ws.mergeCells(r, 2, r, 4);
-      selIsi(ws, r, 2, t2.maks_peserta
-        ? `${t2.min_peserta} – ${t2.maks_peserta} siswa`
-        : `lebih dari ${t2.min_peserta - 1} siswa`);
-      ws.mergeCells(r, 5, r, 7);
-      selIsi(ws, r, 5, Number(t2.besaran), { rata: 'right', rupiah: true });
-      r++;
-    });
-    r++;
-  });
-
-  const buf = await wb.xlsx.writeBuffer();
-  simpan(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
-         namaBerkas);
-}
-
-// =====================================================================
 // B. NILAI EKSTRAKURIKULER PER KELAS
 // baris: [{ nama, ekskul, predikat, keterangan, deskripsi }]
 // =====================================================================
-export async function unduhNilaiKelasXLSX({ kelas, periode, baris, pembina, namaBerkas, judulKategori }) {
+export async function unduhNilaiKelasXLSX({ kelas, periode, baris, namaBerkas, judulKategori }) {
   const ExcelJS = await excel();
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(kelas.replace(/[\\/*?:[\]]/g, '-'), {
@@ -253,9 +133,10 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, pembina, nama
   });
   ws.columns = [{ width: 5 }, { width: 28 }, { width: 20 },
                 { width: 9 }, { width: 16 }, { width: 36 }];
-  await kop(ws, wb, `NILAI ${judulKategori || "EKSTRAKURIKULER"} — KELAS ${kelas}`, periode, 6);
-
-  let r = 7;
+  // Baris awal tabel mengikuti tinggi kop, yang berubah bila operator
+  // memperbesar logo atau tulisannya.
+  let r = await kop(ws, wb, `NILAI ${judulKategori || "EKSTRAKURIKULER"} — KELAS ${kelas}`,
+                    periode, 6);
   barisJudulTabel(ws, r, ['No.', 'Nama Siswa', 'Kegiatan',
                           'Predikat', 'Keterangan', 'Deskripsi']);
   r++;
@@ -272,17 +153,21 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, pembina, nama
   const biasa = { name: 'Calibri', size: 10, color: { argb: TINTA } };
   const tebalGaris = { name: 'Calibri', size: 10, bold: true, color: { argb: TINTA } };
 
-  ws.getCell(r, 2).value = 'Mengetahui;';
-  ws.getCell(r + 1, 2).value = 'Kesiswaan,';
-  ws.getCell(r + 5, 2).value = ID.kesiswaan;
+  // Yang menandatangani adalah pejabat yang berwenang atas isi dokumen —
+  // untuk ekstrakurikuler itu Wakasek Kesiswaan — dan Kepala Sekolah
+  // mengetahui. Nama pembina tidak lagi menjadi kolom tanda tangan karena
+  // satu berkas kelas memuat banyak kegiatan dengan pembina berbeda-beda.
+  ws.getCell(r, 2).value = 'Mengetahui,';
+  ws.getCell(r + 1, 2).value = 'Kepala Sekolah,';
+  ws.getCell(r + 5, 2).value = ID.kepalaSekolah || '..................................................';
   [r, r + 1].forEach(x => { ws.getCell(x, 2).font = biasa; });
   ws.getCell(r + 5, 2).font = tebalGaris;
 
   ws.getCell(r, 5).value = `${ID.kota}, ${tanggalCetak()}`;
-  ws.getCell(r + 1, 5).value = 'Pembina Ekstra Kurikuler,';
-  ws.getCell(r + 5, 5).value = pembina || '..................................................';
+  ws.getCell(r + 1, 5).value = 'Wakasek Kesiswaan,';
+  ws.getCell(r + 5, 5).value = ID.kesiswaan || '..................................................';
   [r, r + 1].forEach(x => { ws.getCell(x, 5).font = biasa; });
-  ws.getCell(r + 5, 5).font = pembina ? tebalGaris : biasa;
+  ws.getCell(r + 5, 5).font = tebalGaris;
 
   const buf = await wb.xlsx.writeBuffer();
   simpan(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
@@ -290,11 +175,13 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, pembina, nama
 }
 
 // ---- PNG: digambar langsung di canvas, tanpa pustaka luar ------------
-export async function unduhNilaiKelasPNG({ kelas, periode, baris, pembina, namaBerkas, judulKategori }) {
+export async function unduhNilaiKelasPNG({ kelas, periode, baris, namaBerkas, judulKategori }) {
   const skala = 2;                    // supaya tajam di layar HP
   const lebar = 1000;
   const padding = 40;
-  const tinggiKop = 130;
+  const judulKop = `NILAI ${judulKategori || "EKSTRAKURIKULER"} — KELAS ${kelas}`;
+  // Tinggi kop mengikuti tata letak yang diatur operator, bukan angka tetap.
+  const tinggiKop = kopBersama().tinggiKopKanvas(profilKop(), judulKop, periode);
   const tinggiJudul = 44;
   const tinggiBaris = 40;
   const tinggi = tinggiKop + tinggiJudul + baris.length * tinggiBaris + 230;
@@ -308,34 +195,18 @@ export async function unduhNilaiKelasPNG({ kelas, periode, baris, pembina, namaB
   g.fillStyle = '#FFFFFF';
   g.fillRect(0, 0, lebar, tinggi);
 
-  // Logo
   const logo = await new Promise(r => {
     const im = new Image();
     im.onload = () => r(im);
     im.onerror = () => r(null);
     im.src = ID.logo;
   });
-  if (logo) g.drawImage(logo, padding, 26, 72, 72);
 
-  g.fillStyle = '#241F17';
-  g.font = 'bold 24px Georgia, serif';
-  g.fillText(ID.nama, padding + 92, 50);
-  g.fillStyle = '#6B6252';
-  g.font = '14px Arial, sans-serif';
-  g.fillText(ID.alamat, padding + 92, 72);
-  g.fillStyle = '#241F17';
-  g.font = 'bold 17px Arial, sans-serif';
-  g.fillText(`NILAI ${judulKategori || "EKSTRAKURIKULER"} — KELAS ${kelas}`, padding + 92, 96);
-  g.fillStyle = '#6B6252';
-  g.font = '13px Arial, sans-serif';
-  g.fillText(periode, padding + 92, 114);
-
-  g.strokeStyle = '#C99A2E';
-  g.lineWidth = 2;
-  g.beginPath();
-  g.moveTo(padding, tinggiKop - 6);
-  g.lineTo(lebar - padding, tinggiKop - 6);
-  g.stroke();
+  // Kop digambar oleh modul yang sama dengan yang menulis berkas Excel,
+  // jadi gambar PNG dan xlsx tidak bisa berbeda tata letaknya.
+  kopBersama().kopKanvas(g, {
+    logo, profil: profilKop(), judul: judulKop, sub: periode, padding, lebar
+  });
 
   const kolom = [
     { t: 'No.', w: 44, rata: 'center' },
@@ -345,7 +216,8 @@ export async function unduhNilaiKelasPNG({ kelas, periode, baris, pembina, namaB
     { t: 'Keterangan', w: 156 },
     { t: 'Deskripsi', w: 200 }
   ];
-  let y = tinggiKop + 8;
+  // tinggiKop sudah memuat jarak renggang di bawah garis kop.
+  let y = tinggiKop;
   let x = padding;
 
   g.fillStyle = '#F5F2EA';
@@ -388,13 +260,13 @@ export async function unduhNilaiKelasPNG({ kelas, periode, baris, pembina, namaB
   const xKanan = lebar - padding - 300;
   g.fillStyle = '#241F17';
   g.font = '14px Arial, sans-serif';
-  g.fillText('Mengetahui;', padding, yTtd);
-  g.fillText('Kesiswaan,', padding, yTtd + 22);
+  g.fillText('Mengetahui,', padding, yTtd);
+  g.fillText('Kepala Sekolah,', padding, yTtd + 22);
   g.fillText(`${ID.kota}, ${tanggalCetak()}`, xKanan, yTtd);
-  g.fillText('Pembina Ekstra Kurikuler,', xKanan, yTtd + 22);
+  g.fillText('Wakasek Kesiswaan,', xKanan, yTtd + 22);
   g.font = 'bold 14px Arial, sans-serif';
-  g.fillText(ID.kesiswaan, padding, yTtd + 118);
-  g.fillText(pembina || '..................................................', xKanan, yTtd + 118);
+  g.fillText(ID.kepalaSekolah || '..................................................', padding, yTtd + 118);
+  g.fillText(ID.kesiswaan || '..................................................', xKanan, yTtd + 118);
 
   g.fillStyle = '#6B6252';
   g.font = '11px Arial, sans-serif';

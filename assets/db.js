@@ -3,14 +3,14 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260920b';
+import * as CFG from './supabase-client.js?v=20260920f';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
 const G = CFG.SUMBER_GURU || { tabel: 'guru', id: 'id', nama: 'nama', tmt: 'tmt_sekolah' };
 
 // Status pembina diturunkan dari keterkaitannya dengan data guru.
 const berjenis = p => ({ ...p, jenis: p.id_guru ? 'Internal' : 'Eksternal' });
-import * as D from './demo-data.js?v=20260920b';
+import * as D from './demo-data.js?v=20260920f';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -38,8 +38,6 @@ const T = {
   kehadiran: 'ae_kehadiran',
   periode:   'ae_periode',
   nilai:     'ae_nilai',
-  tarif:     'ae_tarif',
-  pengaturan: 'ae_pengaturan',
   ...(CFG.TABEL || {})
 };
 
@@ -461,37 +459,10 @@ export function nomorPembinaBaru(daftar) {
   return 'P' + String(Math.max(0, ...angka) + 1).padStart(2, '0');
 }
 
-// -------------------------------------------------------- tarif transport
-export async function daftarTarif() {
-  if (MODE === 'contoh') return salin(D.TARIF);
-  const c = await sb();
-  return periksa(
-    await c.from(T.tarif).select('*').order('jenis').order('min_peserta'),
-    'Gagal memuat tarif transport'
-  );
-}
+// Aturan tarif transport dan penyimpanan identitas dokumen pernah ada di
+// sini. Tarifnya kini di Induk Pembiayaan (ip_tarif, berversi menurut
+// tanggal berlaku), identitasnya di profil_dokumen milik Data Induk.
 
-export async function simpanTarif(baris) {
-  if (MODE === 'contoh') {
-    const lama = D.TARIF.find(t => t.id === baris.id);
-    if (lama) Object.assign(lama, baris);
-    else D.TARIF.push({ id: ++D.TARIF_ID_TERAKHIR_REF.v, ...baris });
-    return;
-  }
-  const c = await sb();
-  periksa(await c.from(T.tarif).upsert(baris, { onConflict: 'jenis,min_peserta' }),
-          'Gagal menyimpan tarif');
-}
-
-export async function hapusTarif(id) {
-  if (MODE === 'contoh') {
-    const i = D.TARIF.findIndex(t => t.id === id);
-    if (i >= 0) D.TARIF.splice(i, 1);
-    return;
-  }
-  const c = await sb();
-  periksa(await c.from(T.tarif).delete().eq('id', id), 'Gagal menghapus tarif');
-}
 
 // ------------------------------------------------ data induk ekstrakurikuler
 export async function simpanEkskul(baris) {
@@ -535,24 +506,32 @@ export function nomorEkskulBaru(daftar) {
 }
 
 // ----------------------------------------------------- pengaturan dokumen
+// Identitas kop dokumen dibaca dari profil_dokumen milik Data Induk — satu
+// sumber untuk seluruh aplikasi. Sebelumnya disalin ke ae_pengaturan, dan
+// salinan itu diam-diam bisa berbeda dari aplikasi lain tanpa ada yang tahu.
+// Nama kuncinya dipetakan ke bentuk yang sudah dipakai dokumen.js supaya
+// berkas yang dihasilkan tidak berubah.
 export async function ambilPengaturan() {
   if (MODE === 'contoh') return { ...(D.PENGATURAN || {}) };
   const c = await sb();
-  const data = periksa(await c.from(T.pengaturan).select('kunci,nilai'),
-                       'Gagal memuat pengaturan dokumen');
-  return Object.fromEntries(data.map(b => [b.kunci, b.nilai]));
-}
-
-export async function simpanPengaturan(obj) {
-  if (MODE === 'contoh') {
-    Object.assign(D.PENGATURAN, obj);
-    return;
-  }
-  const baris = Object.entries(obj).map(([kunci, nilai]) => ({ kunci, nilai }));
-  if (!baris.length) return;
-  const c = await sb();
-  periksa(await c.from(T.pengaturan).upsert(baris, { onConflict: 'kunci' }),
-          'Gagal menyimpan pengaturan dokumen');
+  const [prof, ta] = await Promise.all([
+    // Seluruh kolom diambil karena kop juga memerlukan npsn, catatan kaki,
+    // dan tata letaknya: satu sumber untuk seluruh identitas dokumen.
+    c.from('v_penanda_tangan').select('*').limit(1),
+    c.from('tahun_ajaran').select('kode,aktif').eq('aktif', true).limit(1)
+  ]);
+  const p = (periksa(prof, 'Gagal memuat identitas dokumen dari Data Induk') || [])[0];
+  if (!p) return {};
+  const tahun = ((ta.data || [])[0] || {}).kode;
+  const isi = {
+    nama: p.nama_sekolah, alamat: p.alamat, kota: p.kota,
+    kepalaSekolah: p.kepala_sekolah, kesiswaan: p.kesiswaan,
+    tahunAjaran: tahun,
+    // Baris apa adanya, dipakai penulis dokumen untuk kop dan tata letaknya.
+    profil: p
+  };
+  // Yang kosong dibuang supaya pakaiIdentitas() tidak menimpa nilai bawaan.
+  return Object.fromEntries(Object.entries(isi).filter(([, v]) => v));
 }
 
 // ------------------------------------------------------------ data guru

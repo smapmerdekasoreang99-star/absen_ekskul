@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#241F17">
 <title>Kesiswaan · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo.png">
-<link rel="stylesheet" href="assets/style.css?v=20260920b">
+<link rel="stylesheet" href="assets/style.css?v=20260920f">
 </head>
 <body>
 
@@ -31,8 +31,6 @@
   <div class="tab-rekap" id="tabKesiswaan">
     <button type="button" data-tab="pembina" aria-pressed="true">Data pembina</button>
     <button type="button" data-tab="ekskul" aria-pressed="false">Data ekskul</button>
-    <button type="button" data-tab="tarif" aria-pressed="false">Aturan transport</button>
-    <button type="button" data-tab="laporan" aria-pressed="false">Daftar transport</button>
   </div>
 
   <!-- ============ DATA PEMBINA ============ -->
@@ -120,89 +118,6 @@
     </section>
   </div>
 
-  <!-- ============ ATURAN TRANSPORT ============ -->
-  <div id="layarTarif" class="sembunyi">
-    <section class="kartu">
-      <h2>Aturan pemberian transport</h2>
-      <p class="ket">Besaran per pertemuan ditentukan oleh jumlah siswa yang hadir
-        pada pertemuan itu, sehingga nilainya bisa berbeda tiap minggu.
-        Baris dapat ditambah, diubah, dan dihapus.</p>
-      <div class="gulir"><table id="tabelTarif"><tbody><tr><td class="kosong">Memuat…</td></tr></tbody></table></div>
-    </section>
-
-    <section class="kartu">
-      <h2>Identitas pada dokumen</h2>
-      <p class="ket">Dipakai pada kop dan blok tanda tangan berkas XLSX dan PNG
-        yang dihasilkan aplikasi ini.</p>
-      <div>
-        <label for="idNama">Nama sekolah</label>
-        <input id="idNama" type="text">
-      </div>
-      <div style="margin-top:12px">
-        <label for="idAlamat">Alamat</label>
-        <input id="idAlamat" type="text">
-      </div>
-      <div class="baris dua" style="margin-top:12px">
-        <div><label for="idTahun">Tahun ajaran</label><input id="idTahun" type="text" placeholder="2026/2027"></div>
-        <div><label for="idKota">Tempat tanda tangan</label><input id="idKota" type="text" placeholder="Soreang"></div>
-      </div>
-      <div class="baris tiga">
-        <div><label for="idKepala">Kepala Sekolah</label><input id="idKepala" type="text"></div>
-        <div><label for="idBendahara">Bendahara</label><input id="idBendahara" type="text"></div>
-        <div><label for="idKesiswaan">Kesiswaan</label><input id="idKesiswaan" type="text"></div>
-      </div>
-      <button class="tbl tbl-utama" id="simpanIdentitas" type="button">Simpan pengaturan</button>
-    </section>
-
-    <section class="kartu">
-      <h2>Tambah atau ubah lapisan tarif</h2>
-      <div class="baris dua">
-        <div><label for="tJenis">Untuk pembina</label>
-          <select id="tJenis"><option>Internal</option><option>Eksternal</option></select></div>
-        <div><label for="tBesaran">Besaran per pertemuan (Rp)</label>
-          <input id="tBesaran" type="number" min="0" step="5000"></div>
-      </div>
-      <div class="baris dua">
-        <div><label for="tMin">Peserta hadir minimal</label><input id="tMin" type="number" min="1"></div>
-        <div><label for="tMaks">Peserta hadir maksimal</label>
-          <input id="tMaks" type="number" min="1" placeholder="kosongkan bila tanpa batas"></div>
-      </div>
-      <button class="tbl tbl-utama" id="simpanTarif" type="button">Simpan lapisan</button>
-    </section>
-  </div>
-
-  <!-- ============ DAFTAR TRANSPORT ============ -->
-  <div id="layarLaporan" class="sembunyi">
-    <section class="kartu">
-      <h2>Periode pembayaran</h2>
-      <div class="baris dua">
-        <div><label for="dari">Dari tanggal</label><input type="date" id="dari"></div>
-        <div><label for="sampai">Sampai tanggal</label><input type="date" id="sampai"></div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="tbl tbl-kecil" data-cepat="bulan-ini" type="button">Bulan ini</button>
-        <button class="tbl tbl-kecil" data-cepat="bulan-lalu" type="button">Bulan lalu</button>
-        <button class="tbl tbl-kecil tbl-gelap" id="hitung" type="button">Hitung transport</button>
-      </div>
-    </section>
-
-    <section class="kartu">
-      <h2>Rekapitulasi</h2>
-      <div id="ringkasTransport"><p class="kosong">Pilih periode lalu ketuk Hitung transport.</p></div>
-    </section>
-
-    <section class="kartu">
-      <h2>Rincian per pembina</h2>
-      <p class="ket">Besaran tiap pertemuan mengikuti jumlah siswa yang hadir saat itu.</p>
-      <div class="gulir"><table id="tabelTransport"><tbody><tr><td class="kosong">Belum ada data.</td></tr></tbody></table></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-        <button class="tbl tbl-utama" id="unduhInternal" type="button">Unduh daftar Internal (XLSX)</button>
-        <button class="tbl tbl-utama" id="unduhEksternal" type="button">Unduh daftar Eksternal (XLSX)</button>
-        <button class="tbl tbl-kecil" id="unduhCsvTransport" type="button">Unduh mentah (CSV)</button>
-      </div>
-    </section>
-  </div>
-</main>
 
 <nav class="nav-bawah" aria-label="Navigasi utama">
   <a href="index.html">
@@ -219,6 +134,6 @@
     <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
 </nav>
 
-<script type="module" src="scripts/kesiswaan.js?v=20260920b"></script>
+<script type="module" src="scripts/kesiswaan.js?v=20260920f"></script>
 </body>
 </html>
