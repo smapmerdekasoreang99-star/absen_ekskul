@@ -1,11 +1,11 @@
 import { ambilMaster, muatPeriode, simpanPembina, hapusPembina, nomorPembinaBaru, daftarGuru,
          simpanEkskul, hapusEkskul, nomorEkskulBaru,
          daftarTarif, simpanTarif, hapusTarif,
-         ambilPengaturan, simpanPengaturan } from '../assets/db.js?v=20260920a';
+         ambilPengaturan, simpanPengaturan } from '../assets/db.js?v=20260920b';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan, hariIni,
          tanggalPanjang, tanggalPendek, rupiah, tarifUntuk, rentangTarif,
-         unduhCSV, jam, kategoriDari, perKategori, KATEGORI_BAWAAN } from '../assets/ui.js?v=20260920a';
-import { unduhTransportXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260920a';
+         unduhCSV, jam, kategoriDari, perKategori, KATEGORI_BAWAAN } from '../assets/ui.js?v=20260920b';
+import { unduhTransportXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260920b';
 
 const el = id => document.getElementById(id);
 let AKUN = null, PEMBINA = [], EKSKUL = [], TARIF = [], GURU = [], BARIS = [];

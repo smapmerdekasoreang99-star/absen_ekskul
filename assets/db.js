@@ -3,14 +3,14 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260920a';
+import * as CFG from './supabase-client.js?v=20260920b';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
-const G = CFG.SUMBER_GURU || { tabel: 'guru', id: 'id', nama: 'nama' };
+const G = CFG.SUMBER_GURU || { tabel: 'guru', id: 'id', nama: 'nama', tmt: 'tmt_sekolah' };
 
 // Status pembina diturunkan dari keterkaitannya dengan data guru.
 const berjenis = p => ({ ...p, jenis: p.id_guru ? 'Internal' : 'Eksternal' });
-import * as D from './demo-data.js?v=20260920a';
+import * as D from './demo-data.js?v=20260920b';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -558,12 +558,17 @@ export async function simpanPengaturan(obj) {
 // ------------------------------------------------------------ data guru
 // Dibaca dari tabel guru milik aplikasi Kehadiran Guru, hanya untuk
 // menautkan pembina internal supaya namanya tidak diketik ulang.
+// Kebiasaan sekolah: daftar guru disusun menurut masa kerja, yang paling lama
+// lebih dulu, dengan dasar TMT sekolah. Yang TMT-nya belum diisi jatuh ke
+// akhir, dan nama menjadi pemecah seri karena satu TMT bisa dipakai beberapa
+// guru. Urutan ini disamakan dengan Data Induk dan Kehadiran Guru.
 export async function daftarGuru() {
   if (MODE === 'contoh') return salin(D.GURU);
   const c = await sb();
   const data = periksa(
-    await c.from(G.tabel).select(`${G.id},${G.nama}`).order(G.nama),
+    await c.from(G.tabel).select(`${G.id},${G.nama},${G.tmt}`)
+      .order(G.tmt, { nullsFirst: false }).order(G.nama),
     'Gagal memuat data guru'
   );
-  return data.map(g => ({ id: String(g[G.id]), nama: g[G.nama] }));
+  return data.map(g => ({ id: String(g[G.id]), nama: g[G.nama], tmt_sekolah: g[G.tmt] }));
 }

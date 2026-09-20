@@ -118,9 +118,15 @@ export const PERIODE_ID_TERAKHIR_REF = { v: 1 };
 
 // Daftar guru contoh, berdiri sendiri seperti tabel guru milik aplikasi
 // Kehadiran Guru. Pembina yang tertaut ke salah satunya dianggap internal.
+// TMT dibuat berbeda-beda supaya urutan menurut masa kerja terlihat di mode
+// contoh, lalu daftarnya langsung disusun seperti di aplikasi sungguhan:
+// masa kerja terlama lebih dulu.
 export const GURU = PEMBINA
   .filter(p => !['P02', 'P08', 'P09', 'P10', 'P11'].includes(p.id))
-  .map((p, i) => ({ id: 'G' + String(i + 1).padStart(2, '0'), nama: p.nama }));
+  .map((p, i) => ({ id: 'G' + String(i + 1).padStart(2, '0'), nama: p.nama,
+                    tmt_sekolah: `${2004 + ((i * 5) % 19)}-07-13` }))
+  .sort((a, b) => (a.tmt_sekolah < b.tmt_sekolah ? -1 : a.tmt_sekolah > b.tmt_sekolah ? 1
+                   : a.nama.localeCompare(b.nama, 'id')));
 
 // Pembina yang namanya ada di daftar guru ditautkan; sisanya eksternal.
 PEMBINA.forEach(p => {
