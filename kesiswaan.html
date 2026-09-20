@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#241F17">
 <title>Kesiswaan · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo.png">
-<link rel="stylesheet" href="assets/style.css?v=20260913h">
+<link rel="stylesheet" href="assets/style.css?v=20260920a">
 </head>
 <body>
 
@@ -75,9 +75,12 @@
   <!-- ============ DATA EKSTRAKURIKULER ============ -->
   <div id="layarEkskul" class="sembunyi">
     <section class="kartu">
-      <h2>Data induk ekstrakurikuler</h2>
-      <p class="ket">Nama, pembina, hari, dan jam latihan. Ekstrakurikuler yang
-        dinonaktifkan tidak lagi muncul di menu Absensi, tetapi seluruh riwayatnya tetap utuh.</p>
+      <h2>Data induk kegiatan</h2>
+      <p class="ket">Nama, pembina, hari, dan jam latihan. Kegiatan yang
+        dinonaktifkan tidak lagi muncul di menu Absensi, tetapi seluruh riwayatnya tetap utuh.
+        <b>Kategori</b> hanya memisahkan pelaporan — semua kategori memakai pendaftaran peserta,
+        laporan pertemuan, dan aturan transport yang sama. Hanya kategori Ekstrakurikuler yang
+        masuk nilai ekskul di rapor.</p>
       <div id="daftarEkskul"><p class="kosong">Memuat…</p></div>
     </section>
 
@@ -86,6 +89,15 @@
       <div class="baris dua">
         <div><label for="eNama">Nama kegiatan</label><input id="eNama" type="text" placeholder="Contoh: Paduan Suara"></div>
         <div><label for="ePembina">Pembina</label><select id="ePembina"></select></div>
+      </div>
+      <div class="baris dua">
+        <div><label for="eKategori">Kategori</label>
+          <select id="eKategori">
+            <option>Ekstrakurikuler</option>
+            <option>Pembinaan Imtaq</option>
+            <option>Pembinaan Kesiswaan</option>
+          </select></div>
+        <div></div>
       </div>
       <div class="baris tiga">
         <div><label for="eHari">Hari latihan</label>
@@ -207,6 +219,6 @@
     <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
 </nav>
 
-<script type="module" src="scripts/kesiswaan.js?v=20260913h"></script>
+<script type="module" src="scripts/kesiswaan.js?v=20260920a"></script>
 </body>
 </html>

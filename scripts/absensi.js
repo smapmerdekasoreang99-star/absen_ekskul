@@ -1,8 +1,8 @@
 import { ambilMaster, pesertaEkskul, ambilSesi, simpanSesi, unggahFoto }
-  from '../assets/db.js?v=20260913h';
+  from '../assets/db.js?v=20260920a';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan,
-         kompresGambar, hariIni, namaHari, tanggalPanjang, mingguKe, jam }
-  from '../assets/ui.js?v=20260913h';
+         kompresGambar, hariIni, namaHari, tanggalPanjang, mingguKe, jam, kategoriDari }
+  from '../assets/ui.js?v=20260920a';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, SISWA = [], STATUS = {};
@@ -19,7 +19,7 @@ try { tandaiMode(); } catch (e) { console.error(e); }
     PEMBINA = Object.fromEntries(m.pembina.map(p => [p.id, p.nama]));
     EKSKUL = ekskulBoleh(AKUN, m.ekskul.filter(e => e.aktif !== false));
     if (!EKSKUL.length) {
-      laporError('Belum ada ekstrakurikuler yang terdaftar atas nama Anda. Hubungi Wakasek Kesiswaan.');
+      laporError('Belum ada kegiatan yang terdaftar atas nama Anda. Hubungi Wakasek Kesiswaan.');
       return;
     }
 
@@ -30,8 +30,11 @@ try { tandaiMode(); } catch (e) { console.error(e); }
     const hariNama = namaHari(tgl);
     const urut = [...EKSKUL].sort((a, b) =>
       (b.hari === hariNama) - (a.hari === hariNama) || a.nama.localeCompare(b.nama, 'id'));
+    // Tetap diurutkan "hari ini dulu" — itu yang menolong saat melapor. Kategori
+    // cukup ditempelkan pada kegiatan yang bukan ekstrakurikuler.
     el('pilihEkskul').innerHTML = urut.map(e =>
-      `<option value="${e.id}">${e.nama} — ${e.hari}</option>`).join('');
+      `<option value="${e.id}">${e.nama} — ${e.hari}${
+        kategoriDari(e) !== 'Ekstrakurikuler' ? ` · ${kategoriDari(e)}` : ''}</option>`).join('');
 
     const diminta = url.get('ekskul');
     if (diminta && EKSKUL.some(e => e.id === diminta)) el('pilihEkskul').value = diminta;

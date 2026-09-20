@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#241F17">
 <title>Nilai akhir · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo.png">
-<link rel="stylesheet" href="assets/style.css?v=20260913h">
+<link rel="stylesheet" href="assets/style.css?v=20260920a">
 </head>
 <body class="ada-bar">
 
@@ -70,7 +70,7 @@
     <h2>Kegiatan</h2>
     <div class="baris">
       <div>
-        <label for="pilihEkskul">Ekstrakurikuler</label>
+        <label for="pilihEkskul">Kegiatan</label>
         <select id="pilihEkskul"><option>Memuat…</option></select>
       </div>
     </div>
@@ -89,8 +89,8 @@
         <option value="C">Semua C — Cukup</option>
       </select>
       <button class="tbl tbl-kecil" id="terapkan" type="button">Terapkan</button>
-      <button class="tbl tbl-kecil" id="unduhNilai" type="button">Unduh ekskul ini (CSV)</button>
-      <button class="tbl tbl-kecil" id="unduhSemua" type="button" data-pengelola>Unduh semua ekskul (CSV)</button>
+      <button class="tbl tbl-kecil" id="unduhNilai" type="button">Unduh kegiatan ini (CSV)</button>
+      <button class="tbl tbl-kecil" id="unduhSemua" type="button" data-pengelola>Unduh semua kegiatan (CSV)</button>
     </div>
     <div id="daftarNilai"><p class="kosong">Memuat…</p></div>
   </section>
@@ -99,12 +99,22 @@
   <div id="layarKelas" class="sembunyi">
     <section class="kartu">
       <h2>Rekap nilai per kelas</h2>
-      <p class="ket">Untuk dikirim ke wali kelas saat pengisian rapor. Berisi seluruh
-        ekstrakurikuler yang diikuti tiap siswa di kelas tersebut.</p>
-      <div class="baris">
+      <p class="ket">Untuk dikirim ke wali kelas saat pengisian rapor. Berisi kegiatan
+        yang diikuti tiap siswa di kelas tersebut. Nilai ekskul di rapor hanya mengambil
+        kategori <b>Ekstrakurikuler</b>; kategori lain diunduh sebagai berkas tersendiri.</p>
+      <div class="baris dua">
         <div>
           <label for="pilihKelas">Kelas</label>
           <select id="pilihKelas"><option value="">Memuat…</option></select>
+        </div>
+        <div>
+          <label for="kategoriKelas">Kategori</label>
+          <select id="kategoriKelas">
+            <option>Ekstrakurikuler</option>
+            <option>Pembinaan Imtaq</option>
+            <option>Pembinaan Kesiswaan</option>
+            <option value="">Semua kategori</option>
+          </select>
         </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -145,6 +155,6 @@
     <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
 </nav>
 
-<script type="module" src="scripts/nilai.js?v=20260913h"></script>
+<script type="module" src="scripts/nilai.js?v=20260920a"></script>
 </body>
 </html>

@@ -3,14 +3,14 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260913h';
+import * as CFG from './supabase-client.js?v=20260920a';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
 const G = CFG.SUMBER_GURU || { tabel: 'guru', id: 'id', nama: 'nama' };
 
 // Status pembina diturunkan dari keterkaitannya dengan data guru.
 const berjenis = p => ({ ...p, jenis: p.id_guru ? 'Internal' : 'Eksternal' });
-import * as D from './demo-data.js?v=20260913h';
+import * as D from './demo-data.js?v=20260920a';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 

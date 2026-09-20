@@ -155,6 +155,11 @@ body.ada-bar{padding-bottom:156px}
 tr.awal-kelompok td{border-top:1.5px solid var(--garis)}
 td.kelompok{background:#FAF6EC;font-weight:600}
 
+/* Judul pemisah kategori kegiatan pada daftar data induk */
+.kelompok-judul{margin:18px 0 8px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--emas)}
+.kelompok-judul:first-child{margin-top:0}
+.kelompok-judul small{margin-left:6px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--tinta-2)}
+
 /* ---------- Tabel ---------- */
 .gulir{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}

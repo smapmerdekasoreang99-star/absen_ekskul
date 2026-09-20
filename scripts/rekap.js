@@ -1,12 +1,15 @@
-import { ambilMaster, muatPeriode, namaSiswa } from '../assets/db.js?v=20260913h';
+import { ambilMaster, muatPeriode, namaSiswa } from '../assets/db.js?v=20260920a';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, bersihkanPesan, hariIni,
-         tanggalPanjang, tanggalPendek, persen, unduhCSV, jam } from '../assets/ui.js?v=20260913h';
+         tanggalPanjang, tanggalPendek, persen, unduhCSV, jam,
+         kategoriDari } from '../assets/ui.js?v=20260920a';
 
 const el = id => document.getElementById(id);
 const LABEL = { H: 'Hadir', DG: 'Digantikan', TH: 'Tidak hadir', KG: 'Ditiadakan' };
 const LKELAS = { H: 'l-hadir', DG: 'l-ganti', TH: 'l-tidak', KG: 'l-libur' };
 
-let AKUN = null, EKSKUL = [], PEMBINA = {}, SESI = [], KEHADIRAN = [], NAMA = {};
+// SEMUA berisi seluruh kegiatan yang boleh dilihat akun ini; EKSKUL adalah
+// hasil penyaringan kategori, dan seluruh perhitungan di bawah memakai EKSKUL.
+let AKUN = null, SEMUA = [], EKSKUL = [], PEMBINA = {}, SESI = [], KEHADIRAN = [], NAMA = {};
 let tab = 'ekskul';
 
 AKUN = wajibMasuk(false);
@@ -31,6 +34,7 @@ function pasangPeriode(jenis) {
 document.querySelectorAll('[data-cepat]').forEach(b =>
   b.addEventListener('click', () => { pasangPeriode(b.dataset.cepat); muat(); }));
 el('muat').addEventListener('click', muat);
+el('saringKategori').addEventListener('change', muat);
 el('unduh').addEventListener('click', unduh);
 el('tabRekap').addEventListener('click', ev => {
   const b = ev.target.closest('button');
@@ -45,14 +49,21 @@ el('tabRekap').addEventListener('click', ev => {
   try {
     const m = await ambilMaster();
     PEMBINA = Object.fromEntries(m.pembina.map(p => [p.id, p.nama]));
-    EKSKUL = ekskulBoleh(AKUN, m.ekskul);
+    SEMUA = ekskulBoleh(AKUN, m.ekskul);
+    saringKategori();
     pasangPeriode('bulan-ini');
     await muat();
   } catch (e) { laporError(e); }
 })();
 
+function saringKategori() {
+  const k = el('saringKategori').value;
+  EKSKUL = k ? SEMUA.filter(e => kategoriDari(e) === k) : SEMUA;
+}
+
 async function muat() {
   bersihkanPesan();
+  saringKategori();
   const dari = el('dari').value, sampai = el('sampai').value;
   if (!dari || !sampai) { laporError('Isi tanggal awal dan tanggal akhir.'); return; }
   if (dari > sampai) { laporError('Tanggal awal melewati tanggal akhir.'); return; }
@@ -76,7 +87,7 @@ function barisEkskul() {
     const hadir = terlaksana.reduce((a, x) => a + x.H, 0);
     const slot = terlaksana.reduce((a, x) => a + x.H + x.S + x.I + x.A, 0);
     return {
-      id: e.id, nama: e.nama, pembina: PEMBINA[e.pembina_id] || '—',
+      id: e.id, nama: e.nama, kategori: kategoriDari(e), pembina: PEMBINA[e.pembina_id] || '—',
       jadwal: `${e.hari} ${jam(e.jam_mulai)}`,
       pertemuan: s.length, terlaksana: terlaksana.length,
       pHadir: s.filter(x => x.status_pembina === 'H').length,
@@ -161,13 +172,15 @@ function gambarRingkasan(dari, sampai) {
   const berfoto = b.reduce((a, x) => a + x.foto, 0);
   const belum = EKSKUL.filter(e => e.aktif !== false && !b.some(x => x.id === e.id)).length;
 
+  const kategori = el('saringKategori').value;
   el('ringkasan').innerHTML = `
-    <p class="ket" style="margin-bottom:10px">${tanggalPanjang(dari)} – ${tanggalPanjang(sampai)}</p>
+    <p class="ket" style="margin-bottom:10px">${tanggalPanjang(dari)} – ${tanggalPanjang(sampai)}${
+      kategori ? ` · hanya ${kategori}` : ''}</p>
     ${baris(`${total} pertemuan tercatat`, `${terlaksana} terlaksana · ${total - terlaksana} ditiadakan`)}
     ${baris(`Kehadiran pembina ${persen(pHadir, total)}%`, `${pHadir} dari ${total} pertemuan dihadiri pembina sendiri`)}
     ${baris(`${hadirS} kehadiran siswa`, `rata-rata ${terlaksana ? Math.round(hadirS / terlaksana) : 0} siswa per latihan`)}
     ${baris(`${berfoto} pertemuan berfoto`, `${total - berfoto} laporan belum melampirkan foto`)}
-    ${belum ? baris(`${belum} ekstrakurikuler tanpa catatan`, 'tidak ada satu pun laporan pada rentang ini') : ''}`;
+    ${belum ? baris(`${belum} kegiatan tanpa catatan`, 'tidak ada satu pun laporan pada rentang ini') : ''}`;
 }
 function baris(a, b) {
   return `<div class="jadwal-hari"><span class="isi"><strong>${a}</strong><small>${b}</small></span></div>`;
@@ -175,7 +188,7 @@ function baris(a, b) {
 
 function gambarTabel() {
   const t = el('tabel');
-  const judul = { ekskul: 'Rekap per ekstrakurikuler', pertemuan: 'Rincian tiap pertemuan',
+  const judul = { ekskul: 'Rekap per kegiatan', pertemuan: 'Rincian tiap pertemuan',
                   siswa: 'Kehadiran tiap siswa', pembina: 'Rekap pertemuan per pembina' };
   const ket = {
     ekskul: 'Jumlah pertemuan, kehadiran pembina, dan kehadiran siswa pada rentang tanggal yang dipilih.',
@@ -207,7 +220,8 @@ function tabelEkskul(t) {
       <th class="angka">Siswa hadir</th><th class="angka">Rata-rata</th>
       <th class="angka">Tingkat hadir</th><th class="angka">Berfoto</th></tr></thead>
     <tbody>${b.map(x => `<tr>
-      <td><strong>${x.nama}</strong></td><td>${x.pembina}</td><td>${x.jadwal}</td>
+      <td><strong>${x.nama}</strong>${x.kategori !== 'Ekstrakurikuler'
+        ? `<small class="ket">${x.kategori}</small>` : ''}</td><td>${x.pembina}</td><td>${x.jadwal}</td>
       <td class="angka">${x.pertemuan}</td><td class="angka">${x.terlaksana}</td>
       <td class="angka">${x.pHadir}</td><td class="angka">${x.pGanti}</td><td class="angka">${x.pTidak}</td>
       <td class="angka">${x.hadirSiswa}</td><td class="angka">${x.rata}</td>
@@ -288,17 +302,21 @@ function unduh() {
   const dari = el('dari').value, sampai = el('sampai').value;
   if (!SESI.length) { laporError('Belum ada data untuk diunduh.'); return; }
   const nama = Object.fromEntries(EKSKUL.map(e => [e.id, e.nama]));
+  // Berkas yang disaring diberi penanda kategori di namanya, supaya tidak
+  // tertukar dengan berkas yang berisi semua kegiatan.
+  const k = el('saringKategori').value;
+  const sufiks = k ? '_' + k.toLowerCase().replace(/\s+/g, '_') : '';
   if (tab === 'ekskul') {
     const b = barisEkskul();
-    unduhCSV(`rekap_ekskul_${dari}_sd_${sampai}.csv`, [
-      ['Ekstrakurikuler', 'Pembina', 'Jadwal', 'Pertemuan', 'Terlaksana', 'Pembina hadir',
+    unduhCSV(`rekap_kegiatan${sufiks}_${dari}_sd_${sampai}.csv`, [
+      ['Kegiatan', 'Kategori', 'Pembina', 'Jadwal', 'Pertemuan', 'Terlaksana', 'Pembina hadir',
        'Digantikan', 'Tidak hadir', 'Ditiadakan', 'Total siswa hadir', 'Rata-rata siswa',
        'Tingkat kehadiran siswa (%)', 'Pertemuan berfoto'],
-      ...b.map(x => [x.nama, x.pembina, x.jadwal, x.pertemuan, x.terlaksana, x.pHadir,
+      ...b.map(x => [x.nama, x.kategori, x.pembina, x.jadwal, x.pertemuan, x.terlaksana, x.pHadir,
                      x.pGanti, x.pTidak, x.pLibur, x.hadirSiswa, x.rata, x.tingkat, x.foto])
     ]);
   } else if (tab === 'pertemuan') {
-    unduhCSV(`rincian_pertemuan_${dari}_sd_${sampai}.csv`, [
+    unduhCSV(`rincian_pertemuan${sufiks}_${dari}_sd_${sampai}.csv`, [
       ['Tanggal', 'Ekstrakurikuler', 'Status pembina', 'Pengganti', 'Hadir', 'Sakit', 'Izin', 'Alfa',
        'Materi', 'Catatan', 'Foto', 'Dicatat oleh'],
       ...SESI.map(s => [s.tanggal, nama[s.ekskul_id] || s.ekskul_id,
@@ -307,14 +325,14 @@ function unduh() {
         s.foto || '', s.dicatat_oleh || ''])
     ]);
   } else if (tab === 'pembina') {
-    unduhCSV(`rekap_per_pembina_${dari}_sd_${sampai}.csv`, [
+    unduhCSV(`rekap_per_pembina${sufiks}_${dari}_sd_${sampai}.csv`, [
       ['No.', 'Ekstrakurikuler', 'Pembina', 'Pertemuan', 'Tanggal', 'Digantikan oleh',
        'Kehadiran Siswa', 'Peserta terdaftar', '% Kehadiran'],
       ...barisPembina().map((x, i) => [i + 1, x.ekskulPenuh, x.pembinaPenuh, x.pertemuan,
         x.tanggal, x.pengganti, x.hadir, x.peserta, x.persen])
     ]);
   } else {
-    unduhCSV(`kehadiran_siswa_${dari}_sd_${sampai}.csv`, [
+    unduhCSV(`kehadiran_siswa${sufiks}_${dari}_sd_${sampai}.csv`, [
       ['Nama siswa', 'Kelas', 'Ekstrakurikuler', 'Hadir', 'Sakit', 'Izin', 'Alfa', 'Pertemuan', 'Kehadiran (%)'],
       ...barisSiswa().map(x => [x.nama, x.kelas, x.ekskul, x.H, x.S, x.I, x.A, x.total, x.persen])
     ]);

@@ -32,8 +32,11 @@ export const EKSKUL = [
   { id: 'E11', nama: 'Karawitan',    pembina_id: 'P03', hari: 'Rabu',   jam_mulai: '15:30', jam_selesai: '17:00', tempat: '', aktif: true },
   { id: 'E12', nama: 'Pramuka',      pembina_id: 'P11', hari: 'Kamis',  jam_mulai: '15:45', jam_selesai: '17:30', tempat: '', aktif: true },
   { id: 'E13', nama: 'English Club', pembina_id: 'P12', hari: 'Kamis',  jam_mulai: '15:30', jam_selesai: '17:00', tempat: '', aktif: true },
-  { id: 'E14', nama: 'Futsal',       pembina_id: 'P13', hari: 'Jumat',  jam_mulai: '16:00', jam_selesai: '18:00', tempat: '', aktif: true }
+  { id: 'E14', nama: 'Futsal',       pembina_id: 'P13', hari: 'Jumat',  jam_mulai: '16:00', jam_selesai: '18:00', tempat: '', aktif: true },
+  { id: 'E15', nama: 'Tahfidz',      pembina_id: 'P12', hari: 'Jumat',  jam_mulai: '13:30', jam_selesai: '15:00', tempat: 'Masjid sekolah', aktif: true, kategori: 'Pembinaan Imtaq' }
 ];
+// Baris tanpa kolom kategori dianggap Ekstrakurikuler, sama seperti data
+// sungguhan yang dibuat sebelum kolom itu ada.
 
 // ---- Siswa contoh -----------------------------------------------------
 const DEPAN = ['Aisyah','Rizki','Nabila','Fajar','Salma','Dimas','Zahra','Bayu','Intan','Rafi',

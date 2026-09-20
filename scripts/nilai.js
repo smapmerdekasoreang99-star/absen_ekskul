@@ -1,10 +1,11 @@
 import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPeriode,
          ambilNilai, simpanNilai, kehadiranPerSiswa, kehadiranSemua,
-         nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260913h';
+         nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260920a';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
-         bersihkanPesan, tanggalPanjang, persen, unduhCSV } from '../assets/ui.js?v=20260913h';
+         bersihkanPesan, tanggalPanjang, persen, unduhCSV,
+         kategoriDari, perKategori } from '../assets/ui.js?v=20260920a';
 import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG, pakaiIdentitas }
-  from '../assets/dokumen.js?v=20260913h';
+  from '../assets/dokumen.js?v=20260920a';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };
@@ -25,8 +26,11 @@ try { tandaiMode(); } catch (e) { console.error(e); }
       laporError('Belum ada ekstrakurikuler atas nama Anda.');
       return;
     }
-    el('pilihEkskul').innerHTML = EKSKUL.map(e =>
-      `<option value="${e.id}">${e.nama} — ${e.hari}</option>`).join('');
+    // Dikelompokkan supaya pembina tidak keliru mengisi nilai Tahfidz sebagai
+    // nilai ekskul, dan sebaliknya.
+    el('pilihEkskul').innerHTML = perKategori(EKSKUL).map(([kategori, isi]) =>
+      `<optgroup label="${kategori}">` + isi.map(e =>
+        `<option value="${e.id}">${e.nama} — ${e.hari}</option>`).join('') + '</optgroup>').join('');
     el('pilihEkskul').addEventListener('change', muatSiswa);
     el('tombolSimpan').addEventListener('click', simpan);
     el('terapkan').addEventListener('click', terapkanMassal);
@@ -36,6 +40,7 @@ try { tandaiMode(); } catch (e) { console.error(e); }
       el('tabNilai').classList.remove('sembunyi');
       el('tabNilai').addEventListener('click', gantiTab);
       el('pilihKelas').addEventListener('change', gambarKelas);
+      el('kategoriKelas').addEventListener('change', gambarKelas);
       el('unduhKelasXlsx').addEventListener('click', () => unduhKelas('xlsx'));
       el('unduhKelasPng').addEventListener('click', () => unduhKelas('png'));
       el('unduhSemuaKelas').addEventListener('click', unduhSemuaKelas);
@@ -277,14 +282,14 @@ async function unduhSemua() {
       peserta.forEach(s => {
         const h = hadir[s.id] || { H: 0, total: 0 };
         const n = nilai[s.id] || {};
-        baris.push([e.nama, PEMBINA_NAMA[e.pembina_id] || '', s.nama, s.kelas || '',
+        baris.push([e.nama, kategoriDari(e), PEMBINA_NAMA[e.pembina_id] || '', s.nama, s.kelas || '',
                     h.total, h.H, persen(h.H, h.total), n.predikat || '',
                     PREDIKAT[n.predikat] || '', n.deskripsi || '']);
       });
     }
     if (!baris.length) { laporError('Belum ada peserta yang terdaftar.'); return; }
-    unduhCSV(`nilai_semua_ekskul_${aktif.tahun_ajaran.replace('/', '-')}_${aktif.semester}.csv`, [
-      ['Ekstrakurikuler', 'Pembina', 'Nama siswa', 'Kelas', 'Pertemuan', 'Hadir',
+    unduhCSV(`nilai_semua_kegiatan_${aktif.tahun_ajaran.replace('/', '-')}_${aktif.semester}.csv`, [
+      ['Kegiatan', 'Kategori', 'Pembina', 'Nama siswa', 'Kelas', 'Pertemuan', 'Hadir',
        '% Kehadiran', 'Predikat', 'Keterangan', 'Deskripsi'],
       ...baris
     ]);
@@ -293,7 +298,7 @@ async function unduhSemua() {
     laporError(e);
   } finally {
     tombol.disabled = false;
-    tombol.textContent = 'Unduh semua ekskul (CSV)';
+    tombol.textContent = 'Unduh semua kegiatan (CSV)';
   }
 }
 
@@ -329,7 +334,7 @@ async function susunKelas() {
         const n = nilai[s.id] || {};
         (KELAS[k] || (KELAS[k] = [])).push({
           pembina: PEMBINA_NAMA[e.pembina_id] || '',
-          nama: s.nama, ekskul: e.nama,
+          nama: s.nama, ekskul: e.nama, kategori: kategoriDari(e),
           predikat: n.predikat || '', keterangan: PREDIKAT[n.predikat] || '',
           deskripsi: n.deskripsi || ''
         });
@@ -338,22 +343,34 @@ async function susunKelas() {
     Object.values(KELAS).forEach(d => d.sort((a, b) =>
       String(a.nama).localeCompare(String(b.nama), 'id') || a.ekskul.localeCompare(b.ekskul, 'id')));
     const daftar = Object.keys(KELAS).sort((a, b) => a.localeCompare(b, 'id', { numeric: true }));
+    // Jumlah barisnya tergantung kategori yang sedang dipilih, jadi angkanya
+    // ditampilkan di keterangan tabel, bukan di nama kelas.
     el('pilihKelas').innerHTML = daftar.length
-      ? daftar.map(k => `<option value="${k}">${k} — ${KELAS[k].length} baris</option>`).join('')
+      ? daftar.map(k => `<option value="${k}">${k}</option>`).join('')
       : '<option value="">Belum ada peserta</option>';
     kelasSiap = true;
     gambarKelas();
   } catch (e) { laporError(e); }
 }
 
+// Baris satu kelas sesudah disaring kategori. Rapor hanya memakai kategori
+// Ekstrakurikuler, jadi penyaringnya bawaan ke situ.
+function kategoriKelas() { return el('kategoriKelas').value; }
+function barisKelas() {
+  const isi = KELAS[el('pilihKelas').value] || [];
+  const k = kategoriKelas();
+  return k ? isi.filter(x => x.kategori === k) : isi;
+}
+
 function gambarKelas() {
   const k = el('pilihKelas').value;
-  const isi = KELAS[k] || [];
+  const isi = barisKelas();
+  const kat = kategoriKelas();
   el('judulKelas').textContent = k ? `Kelas ${k}` : 'Daftar';
   const belum = isi.filter(x => !x.predikat).length;
   el('ketKelas').textContent = isi.length
-    ? `${isi.length} baris nilai${belum ? ` · ${belum} belum diisi pembina` : ' · seluruhnya sudah diisi'}`
-    : 'Belum ada peserta pada kelas ini.';
+    ? `${kat || 'Semua kategori'} · ${isi.length} baris nilai${belum ? ` · ${belum} belum diisi pembina` : ' · seluruhnya sudah diisi'}`
+    : `Belum ada peserta ${kat ? `berkategori ${kat} ` : ''}pada kelas ini.`;
   const t = el('tabelKelas');
   if (!isi.length) {
     t.innerHTML = '<tbody><tr><td class="kosong">Belum ada data.</td></tr></tbody>';
@@ -361,10 +378,10 @@ function gambarKelas() {
   }
   t.innerHTML = `
     <thead><tr><th class="angka">No.</th><th>Nama Siswa</th>
-      <th>Ekstrakurikuler</th><th class="angka">Predikat</th><th>Keterangan</th><th>Deskripsi</th></tr></thead>
+      <th>Kegiatan</th><th class="angka">Predikat</th><th>Keterangan</th><th>Deskripsi</th></tr></thead>
     <tbody>${isi.map((x, i) => `<tr>
       <td class="angka">${i + 1}</td><td>${x.nama}</td>
-      <td>${x.ekskul}</td>
+      <td>${x.ekskul}${kat ? '' : `<small class="ket">${x.kategori}</small>`}</td>
       <td class="angka">${x.predikat
         ? '<span class="lencana l-hadir">' + x.predikat + '</span>'
         : '<span class="lencana l-tidak">—</span>'}</td>
@@ -378,20 +395,22 @@ function labelPeriode() {
 async function unduhKelas(bentuk) {
   bersihkanPesan();
   const k = el('pilihKelas').value;
-  const isi = KELAS[k] || [];
+  const isi = barisKelas();
   if (!isi.length) { laporError('Belum ada data pada kelas ini.'); return; }
+  const judulKategori = (kategoriKelas() || 'Kegiatan').toUpperCase();
+  const berkas = 'nilai_' + (kategoriKelas() || 'kegiatan').toLowerCase().replace(/\s+/g, '_');
   const tombol = el(bentuk === 'png' ? 'unduhKelasPng' : 'unduhKelasXlsx');
   const semula = tombol.textContent;
   tombol.disabled = true;
   tombol.textContent = 'Menyiapkan…';
   try {
     const pembina = [...new Set(isi.map(x => x.pembina).filter(Boolean))];
-    const arg = { kelas: k, periode: labelPeriode(), baris: isi,
+    const arg = { kelas: k, periode: labelPeriode(), baris: isi, judulKategori,
                   pembina: pembina.length === 1 ? pembina[0] : '' };
     if (bentuk === 'png') {
-      await unduhNilaiKelasPNG({ ...arg, namaBerkas: `nilai_ekskul_${k}.png` });
+      await unduhNilaiKelasPNG({ ...arg, namaBerkas: `${berkas}_${k}.png` });
     } else {
-      await unduhNilaiKelasXLSX({ ...arg, namaBerkas: `nilai_ekskul_${k}.xlsx` });
+      await unduhNilaiKelasXLSX({ ...arg, namaBerkas: `${berkas}_${k}.xlsx` });
     }
     sukses('Berkas diunduh.');
   } catch (e) {
@@ -404,18 +423,25 @@ async function unduhKelas(bentuk) {
 
 async function unduhSemuaKelas() {
   bersihkanPesan();
-  const daftar = Object.keys(KELAS);
-  if (!daftar.length) { laporError('Belum ada data.'); return; }
+  const kat = kategoriKelas();
+  const saring = (rows) => kat ? rows.filter(x => x.kategori === kat) : rows;
+  const judulKategori = (kat || 'Kegiatan').toUpperCase();
+  const berkas = 'nilai_' + (kat || 'kegiatan').toLowerCase().replace(/\s+/g, '_');
+  // Kelas yang tidak punya peserta pada kategori ini dilewati, supaya tidak
+  // terunduh berkas kosong.
+  const daftar = Object.keys(KELAS).filter(k => saring(KELAS[k]).length);
+  if (!daftar.length) { laporError('Belum ada data pada kategori ini.'); return; }
   const tombol = el('unduhSemuaKelas');
   tombol.disabled = true;
   tombol.textContent = 'Menyiapkan…';
   try {
     for (const k of daftar) {
-      const p = [...new Set(KELAS[k].map(x => x.pembina).filter(Boolean))];
+      const isi = saring(KELAS[k]);
+      const p = [...new Set(isi.map(x => x.pembina).filter(Boolean))];
       await unduhNilaiKelasXLSX({
-        kelas: k, periode: labelPeriode(), baris: KELAS[k],
+        kelas: k, periode: labelPeriode(), baris: isi, judulKategori,
         pembina: p.length === 1 ? p[0] : '',
-        namaBerkas: `nilai_ekskul_${k}.xlsx`
+        namaBerkas: `${berkas}_${k}.xlsx`
       });
       await new Promise(r => setTimeout(r, 400));   // jeda agar unduhan tidak diblokir
     }

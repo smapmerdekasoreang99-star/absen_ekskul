@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#241F17">
 <title>Rekap kehadiran · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo.png">
-<link rel="stylesheet" href="assets/style.css?v=20260913h">
+<link rel="stylesheet" href="assets/style.css?v=20260920a">
 </head>
 <body>
 
@@ -34,6 +34,16 @@
       <div><label for="dari">Dari tanggal</label><input type="date" id="dari"></div>
       <div><label for="sampai">Sampai tanggal</label><input type="date" id="sampai"></div>
     </div>
+    <div class="baris dua">
+      <div><label for="saringKategori">Kategori kegiatan</label>
+        <select id="saringKategori">
+          <option value="">Semua kategori</option>
+          <option>Ekstrakurikuler</option>
+          <option>Pembinaan Imtaq</option>
+          <option>Pembinaan Kesiswaan</option>
+        </select></div>
+      <div></div>
+    </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="tbl tbl-kecil" data-cepat="bulan-ini" type="button">Bulan ini</button>
       <button class="tbl tbl-kecil" data-cepat="bulan-lalu" type="button">Bulan lalu</button>
@@ -48,14 +58,14 @@
   </section>
 
   <div class="tab-rekap" id="tabRekap">
-    <button type="button" data-tab="ekskul" aria-pressed="true">Per ekstrakurikuler</button>
+    <button type="button" data-tab="ekskul" aria-pressed="true">Per kegiatan</button>
     <button type="button" data-tab="pertemuan" aria-pressed="false">Per pertemuan</button>
     <button type="button" data-tab="pembina" aria-pressed="false">Per pembina</button>
     <button type="button" data-tab="siswa" aria-pressed="false">Per siswa</button>
   </div>
 
   <section class="kartu">
-    <h2 id="judulTabel">Rekap per ekstrakurikuler</h2>
+    <h2 id="judulTabel">Rekap per kegiatan</h2>
     <p class="ket" id="ketTabel">Jumlah pertemuan, kehadiran pembina, dan kehadiran siswa pada rentang tanggal yang dipilih.</p>
     <div class="gulir"><table id="tabel"><tbody><tr><td class="kosong">Belum ada data.</td></tr></tbody></table></div>
     <button class="tbl tbl-kecil" id="unduh" type="button" style="margin-top:12px">Unduh tabel ini (CSV)</button>
@@ -78,6 +88,6 @@
     <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
 </nav>
 
-<script type="module" src="scripts/rekap.js?v=20260913h"></script>
+<script type="module" src="scripts/rekap.js?v=20260920a"></script>
 </body>
 </html>

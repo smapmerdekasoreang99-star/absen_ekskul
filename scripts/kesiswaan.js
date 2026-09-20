@@ -1,11 +1,11 @@
 import { ambilMaster, muatPeriode, simpanPembina, hapusPembina, nomorPembinaBaru, daftarGuru,
          simpanEkskul, hapusEkskul, nomorEkskulBaru,
          daftarTarif, simpanTarif, hapusTarif,
-         ambilPengaturan, simpanPengaturan } from '../assets/db.js?v=20260913h';
+         ambilPengaturan, simpanPengaturan } from '../assets/db.js?v=20260920a';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan, hariIni,
          tanggalPanjang, tanggalPendek, rupiah, tarifUntuk, rentangTarif,
-         unduhCSV, jam } from '../assets/ui.js?v=20260913h';
-import { unduhTransportXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260913h';
+         unduhCSV, jam, kategoriDari, perKategori, KATEGORI_BAWAAN } from '../assets/ui.js?v=20260920a';
+import { unduhTransportXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260920a';
 
 const el = id => document.getElementById(id);
 let AKUN = null, PEMBINA = [], EKSKUL = [], TARIF = [], GURU = [], BARIS = [];
@@ -371,15 +371,19 @@ function gambarEkskul() {
   const kotak = el('daftarEkskul');
   el('ePembina').innerHTML = pilihanPembina(el('ePembina').value);
   if (!EKSKUL.length) {
-    kotak.innerHTML = '<p class="kosong">Belum ada ekstrakurikuler.</p>';
+    kotak.innerHTML = '<p class="kosong">Belum ada kegiatan.</p>';
     return;
   }
   const nama = Object.fromEntries(PEMBINA.map(p => [p.id, p.nama]));
   const URUT = { Senin: 1, Selasa: 2, Rabu: 3, Kamis: 4, Jumat: 5, Sabtu: 6 };
-  kotak.innerHTML = [...EKSKUL]
-    .sort((a, b) => (URUT[a.hari] || 9) - (URUT[b.hari] || 9) ||
-                    String(a.jam_mulai).localeCompare(String(b.jam_mulai)))
-    .map(e => `
+  // Dikelompokkan per kategori supaya jelas mana yang masuk rapor sebagai
+  // nilai ekskul dan mana yang direkap terpisah.
+  kotak.innerHTML = perKategori(EKSKUL).map(([kategori, isi]) => `
+      <h3 class="kelompok-judul">${kategori} <small>${isi.length} kegiatan</small></h3>` +
+    [...isi]
+      .sort((a, b) => (URUT[a.hari] || 9) - (URUT[b.hari] || 9) ||
+                      String(a.jam_mulai).localeCompare(String(b.jam_mulai)))
+      .map(e => `
       <div class="siswa">
         <span class="nama">${e.nama}
           <small>${e.hari} ${jam(e.jam_mulai)}–${jam(e.jam_selesai)} ·
@@ -387,7 +391,7 @@ function gambarEkskul() {
         ${e.aktif === false ? '<span class="lencana l-libur">Nonaktif</span>' : ''}
         <button class="tbl tbl-kecil" data-ubah-e="${e.id}" type="button">Ubah</button>
         <button class="tbl tbl-kecil tbl-hapus" data-hapus-e="${e.id}" type="button">Hapus</button>
-      </div>`).join('');
+      </div>`).join('')).join('');
   kotak.querySelectorAll('[data-ubah-e]').forEach(b =>
     b.addEventListener('click', () => isiFormEkskul(b.dataset.ubahE)));
   kotak.querySelectorAll('[data-hapus-e]').forEach(b =>
@@ -405,15 +409,17 @@ function isiFormEkskul(id) {
   el('eMulai').value = jam(e.jam_mulai);
   el('eSelesai').value = jam(e.jam_selesai);
   el('eTempat').value = e.tempat || '';
+  el('eKategori').value = kategoriDari(e);
   el('eAktif').value = e.aktif === false ? 'Nonaktif' : 'Aktif';
   el('judulFormEkskul').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function kosongkanFormEkskul() {
   sedangUbahEkskul = null;
-  el('judulFormEkskul').textContent = 'Tambah ekstrakurikuler';
+  el('judulFormEkskul').textContent = 'Tambah kegiatan';
   ['eNama', 'eTempat'].forEach(k => { el(k).value = ''; });
   el('ePembina').innerHTML = pilihanPembina('');
+  el('eKategori').value = KATEGORI_BAWAAN;
   el('eHari').value = 'Senin';
   el('eMulai').value = '15:30';
   el('eSelesai').value = '17:00';
@@ -435,6 +441,7 @@ async function simpanFormEkskul() {
     jam_mulai: mulai || null,
     jam_selesai: selesai || null,
     tempat: el('eTempat').value.trim(),
+    kategori: el('eKategori').value,
     aktif: el('eAktif').value === 'Aktif'
   };
   try {

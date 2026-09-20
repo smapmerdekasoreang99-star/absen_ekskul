@@ -1,7 +1,7 @@
 import { ambilMaster, pesertaEkskul, cariSiswaSekolah, daftarKelas,
-         daftarkanPeserta, hapusPeserta } from '../assets/db.js?v=20260913h';
-import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan, unduhCSV, jam }
-  from '../assets/ui.js?v=20260913h';
+         daftarkanPeserta, hapusPeserta } from '../assets/db.js?v=20260920a';
+import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan, unduhCSV, jam, perKategori }
+  from '../assets/ui.js?v=20260920a';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, PESERTA = [], HASIL = [], jeda = null;
@@ -15,8 +15,9 @@ try { tandaiMode(); } catch (e) { console.error(e); }
     const m = await ambilMaster();
     EKSKUL = m.ekskul.filter(e => e.aktif !== false);
     PEMBINA = Object.fromEntries(m.pembina.map(p => [p.id, p.nama]));
-    el('pilihEkskul').innerHTML = EKSKUL.map(e =>
-      `<option value="${e.id}">${e.nama} — ${e.hari}</option>`).join('');
+    el('pilihEkskul').innerHTML = perKategori(EKSKUL).map(([kategori, isi]) =>
+      `<optgroup label="${kategori}">` + isi.map(e =>
+        `<option value="${e.id}">${e.nama} — ${e.hari}</option>`).join('') + '</optgroup>').join('');
     el('pilihEkskul').addEventListener('change', muat);
     el('cariSiswa').addEventListener('input', () => {
       clearTimeout(jeda);

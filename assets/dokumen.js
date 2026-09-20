@@ -3,7 +3,7 @@
 // Prinsip tampilan: hemat tinta printer. Latar putih, garis tipis abu-abu,
 // tanpa blok warna lebar. Hanya baris judul tabel yang diberi abu sangat
 // muda, dan aksen emas dipakai tipis sebagai garis, bukan bidang.
-import { SEKOLAH } from './sekolah.js?v=20260913h';
+import { SEKOLAH } from './sekolah.js?v=20260920a';
 
 // Identitas yang dipakai pada kop dan blok tanda tangan. Nilai bawaan
 // berasal dari sekolah.js dan ditimpa oleh pengaturan dari database
@@ -244,7 +244,7 @@ export async function unduhTransportXLSX({ baris, tarif, dari, sampai, jenis, na
 // B. NILAI EKSTRAKURIKULER PER KELAS
 // baris: [{ nama, ekskul, predikat, keterangan, deskripsi }]
 // =====================================================================
-export async function unduhNilaiKelasXLSX({ kelas, periode, baris, pembina, namaBerkas }) {
+export async function unduhNilaiKelasXLSX({ kelas, periode, baris, pembina, namaBerkas, judulKategori }) {
   const ExcelJS = await excel();
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(kelas.replace(/[\\/*?:[\]]/g, '-'), {
@@ -253,10 +253,10 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, pembina, nama
   });
   ws.columns = [{ width: 5 }, { width: 28 }, { width: 20 },
                 { width: 9 }, { width: 16 }, { width: 36 }];
-  await kop(ws, wb, `NILAI EKSTRAKURIKULER — KELAS ${kelas}`, periode, 6);
+  await kop(ws, wb, `NILAI ${judulKategori || "EKSTRAKURIKULER"} — KELAS ${kelas}`, periode, 6);
 
   let r = 7;
-  barisJudulTabel(ws, r, ['No.', 'Nama Siswa', 'Ekstrakurikuler',
+  barisJudulTabel(ws, r, ['No.', 'Nama Siswa', 'Kegiatan',
                           'Predikat', 'Keterangan', 'Deskripsi']);
   r++;
   baris.forEach((b, i) => {
@@ -290,7 +290,7 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, pembina, nama
 }
 
 // ---- PNG: digambar langsung di canvas, tanpa pustaka luar ------------
-export async function unduhNilaiKelasPNG({ kelas, periode, baris, pembina, namaBerkas }) {
+export async function unduhNilaiKelasPNG({ kelas, periode, baris, pembina, namaBerkas, judulKategori }) {
   const skala = 2;                    // supaya tajam di layar HP
   const lebar = 1000;
   const padding = 40;
@@ -325,7 +325,7 @@ export async function unduhNilaiKelasPNG({ kelas, periode, baris, pembina, namaB
   g.fillText(ID.alamat, padding + 92, 72);
   g.fillStyle = '#241F17';
   g.font = 'bold 17px Arial, sans-serif';
-  g.fillText(`NILAI EKSTRAKURIKULER — KELAS ${kelas}`, padding + 92, 96);
+  g.fillText(`NILAI ${judulKategori || "EKSTRAKURIKULER"} — KELAS ${kelas}`, padding + 92, 96);
   g.fillStyle = '#6B6252';
   g.font = '13px Arial, sans-serif';
   g.fillText(periode, padding + 92, 114);
@@ -340,7 +340,7 @@ export async function unduhNilaiKelasPNG({ kelas, periode, baris, pembina, namaB
   const kolom = [
     { t: 'No.', w: 44, rata: 'center' },
     { t: 'Nama Siswa', w: 250 },
-    { t: 'Ekstrakurikuler', w: 190 },
+    { t: 'Kegiatan', w: 190 },
     { t: 'Predikat', w: 80, rata: 'center' },
     { t: 'Keterangan', w: 156 },
     { t: 'Deskripsi', w: 200 }

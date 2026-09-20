@@ -1,5 +1,5 @@
 // Fungsi bersama untuk semua halaman: sesi masuk, format, pesan, foto.
-import { MODE } from './db.js?v=20260913h';
+import { MODE } from './db.js?v=20260920a';
 
 export const PIN_PENGELOLA = 'merdeka2026';
 
@@ -84,6 +84,23 @@ export function sukses(teks) {
 export function bersihkanPesan() {
   const kotak = document.getElementById('kotakPesan');
   if (kotak) kotak.classList.add('sembunyi');
+}
+
+// ------------------------------------------------------------- kategori
+// Pemisah pelaporan, bukan pemisah mesin: semua kategori memakai pendaftaran
+// peserta, laporan pertemuan, rekap, nilai, dan transport yang sama. Yang
+// berbeda hanya ke mana angkanya dilaporkan — nilai rapor hanya mengambil
+// 'Ekstrakurikuler'.
+export const KATEGORI = ['Ekstrakurikuler', 'Pembinaan Imtaq', 'Pembinaan Kesiswaan'];
+export const KATEGORI_BAWAAN = 'Ekstrakurikuler';
+// Baris lama (sebelum kolom kategori ada) dianggap Ekstrakurikuler.
+export const kategoriDari = e => (e && e.kategori) || KATEGORI_BAWAAN;
+
+// Mengelompokkan daftar kegiatan menurut kategori, urut seperti KATEGORI.
+export function perKategori(daftar) {
+  return KATEGORI
+    .map(k => [k, daftar.filter(e => kategoriDari(e) === k)])
+    .filter(([, isi]) => isi.length);
 }
 
 // ----------------------------------------------------------------- format
