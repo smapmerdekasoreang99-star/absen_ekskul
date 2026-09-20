@@ -1,6 +1,6 @@
-import { ambilMaster, muatPeriode } from '../assets/db.js?v=20260920k';
+import { ambilMaster, muatPeriode } from '../assets/db.js?v=20260920m';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, hariIni, namaHari,
-         tanggalPanjang, persen, jam } from '../assets/ui.js?v=20260920k';
+         tanggalPanjang, persen, jam } from '../assets/ui.js?v=20260920m';
 
 const AKUN = wajibMasuk(false);
 try { tandaiMode(); } catch (e) { console.error(e); }
