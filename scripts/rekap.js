@@ -1,11 +1,11 @@
-import { ambilMaster, muatPeriode, namaSiswa } from '../assets/db.js?v=20260920m';
+import { ambilMaster, muatPeriode, namaSiswa } from '../assets/db.js?v=20260920x';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, bersihkanPesan, hariIni,
          tanggalPanjang, tanggalPendek, persen, unduhCSV, jam,
-         kategoriDari } from '../assets/ui.js?v=20260920m';
+         kategoriDari } from '../assets/ui.js?v=20260920x';
 
 const el = id => document.getElementById(id);
-const LABEL = { H: 'Hadir', DG: 'Digantikan', TH: 'Tidak hadir', KG: 'Ditiadakan' };
-const LKELAS = { H: 'l-hadir', DG: 'l-ganti', TH: 'l-tidak', KG: 'l-libur' };
+const LABEL = { H: 'Hadir', TH: 'Tidak hadir', KG: 'Ditiadakan' };
+const LKELAS = { H: 'l-hadir', TH: 'l-tidak', KG: 'l-libur' };
 
 // SEMUA berisi seluruh kegiatan yang boleh dilihat akun ini; EKSKUL adalah
 // hasil penyaringan kategori, dan seluruh perhitungan di bawah memakai EKSKUL.
@@ -91,7 +91,6 @@ function barisEkskul() {
       jadwal: `${e.hari} ${jam(e.jam_mulai)}`,
       pertemuan: s.length, terlaksana: terlaksana.length,
       pHadir: s.filter(x => x.status_pembina === 'H').length,
-      pGanti: s.filter(x => x.status_pembina === 'DG').length,
       pTidak: s.filter(x => x.status_pembina === 'TH').length,
       pLibur: s.filter(x => x.status_pembina === 'KG').length,
       hadirSiswa: hadir,
@@ -125,8 +124,9 @@ function barisSiswa() {
 }
 
 // Satu baris satu pertemuan yang berjalan, dikelompokkan per ekstrakurikuler.
-// Pertemuan berstatus ditiadakan (KG) dan pembina tidak hadir (TH) dibuang,
-// karena tidak menimbulkan hak transport.
+// Hanya pertemuan yang dihadiri pembinanya (H) yang menimbulkan hak
+// transport. Ekstrakurikuler tidak mengenal penggantian: bila pembinanya
+// berhalangan, pertemuan itu tidak berjalan.
 function barisPembina() {
   const hasil = [];
   let no = 0;
@@ -136,8 +136,7 @@ function barisPembina() {
     String(PEMBINA[a.pembina_id] || '').localeCompare(String(PEMBINA[b.pembina_id] || ''), 'id') ||
     a.nama.localeCompare(b.nama, 'id'));
   urut.forEach(e => {
-    const s = SESI.filter(x => x.ekskul_id === e.id &&
-                               (x.status_pembina === 'H' || x.status_pembina === 'DG'))
+    const s = SESI.filter(x => x.ekskul_id === e.id && x.status_pembina === 'H')
                   .sort((a, b) => a.tanggal.localeCompare(b.tanggal));
     if (!s.length) return;
     no++;
@@ -152,7 +151,6 @@ function barisPembina() {
         awal: i === 0,
         tanggal: x.tanggal,
         pertemuan: tanggalPanjang(x.tanggal),
-        pengganti: x.status_pembina === 'DG' ? (x.pengganti || 'pelatih pengganti') : '',
         hadir: x.H,
         peserta: total,
         persen: persen(x.H, total)
@@ -216,21 +214,20 @@ function tabelEkskul(t) {
   t.innerHTML = `
     <thead><tr><th>Ekstrakurikuler</th><th>Pembina</th><th>Jadwal</th>
       <th class="angka">Pertemuan</th><th class="angka">Terlaksana</th>
-      <th class="angka">Pembina hadir</th><th class="angka">Diganti</th><th class="angka">Absen</th>
+      <th class="angka">Pembina hadir</th><th class="angka">Tidak hadir</th>
       <th class="angka">Siswa hadir</th><th class="angka">Rata-rata</th>
       <th class="angka">Tingkat hadir</th><th class="angka">Berfoto</th></tr></thead>
     <tbody>${b.map(x => `<tr>
       <td><strong>${x.nama}</strong>${x.kategori !== 'Ekstrakurikuler'
         ? `<small class="ket">${x.kategori}</small>` : ''}</td><td>${x.pembina}</td><td>${x.jadwal}</td>
       <td class="angka">${x.pertemuan}</td><td class="angka">${x.terlaksana}</td>
-      <td class="angka">${x.pHadir}</td><td class="angka">${x.pGanti}</td><td class="angka">${x.pTidak}</td>
+      <td class="angka">${x.pHadir}</td><td class="angka">${x.pTidak}</td>
       <td class="angka">${x.hadirSiswa}</td><td class="angka">${x.rata}</td>
       <td class="angka">${x.tingkat}%</td><td class="angka">${x.foto}</td></tr>`).join('')}</tbody>
     <tfoot><tr><td colspan="3">Jumlah</td>
       <td class="angka">${b.reduce((a, x) => a + x.pertemuan, 0)}</td>
       <td class="angka">${b.reduce((a, x) => a + x.terlaksana, 0)}</td>
       <td class="angka">${b.reduce((a, x) => a + x.pHadir, 0)}</td>
-      <td class="angka">${b.reduce((a, x) => a + x.pGanti, 0)}</td>
       <td class="angka">${b.reduce((a, x) => a + x.pTidak, 0)}</td>
       <td class="angka">${b.reduce((a, x) => a + x.hadirSiswa, 0)}</td>
       <td class="angka">—</td><td class="angka">—</td>
@@ -247,7 +244,7 @@ function tabelPertemuan(t) {
       <td>${tanggalPendek(s.tanggal)}</td>
       <td>${nama[s.ekskul_id] || s.ekskul_id}</td>
       <td><span class="lencana ${LKELAS[s.status_pembina] || ''}">${LABEL[s.status_pembina] || s.status_pembina}</span>
-        ${s.pengganti ? '<br><small>' + s.pengganti + '</small>' : ''}</td>
+</td>
       <td class="angka">${s.H}</td><td class="angka">${s.S}</td>
       <td class="angka">${s.I}</td><td class="angka">${s.A}</td>
       <td>${s.foto
@@ -269,7 +266,7 @@ function tabelPembina(t) {
       <td class="angka">${x.no}</td>
       <td${x.ekskul ? ' class="kelompok"' : ''}>${x.ekskul}</td>
       <td>${x.pembina}</td>
-      <td>${x.pertemuan}${x.pengganti ? '<br><small>digantikan ' + x.pengganti + '</small>' : ''}</td>
+      <td>${x.pertemuan}</td>
       <td class="angka">${x.hadir}</td>
       <td class="angka">${x.persen}%</td></tr>`).join('')}</tbody>
     <tfoot><tr><td colspan="3">Jumlah</td>
@@ -310,26 +307,26 @@ function unduh() {
     const b = barisEkskul();
     unduhCSV(`rekap_kegiatan${sufiks}_${dari}_sd_${sampai}.csv`, [
       ['Kegiatan', 'Kategori', 'Pembina', 'Jadwal', 'Pertemuan', 'Terlaksana', 'Pembina hadir',
-       'Digantikan', 'Tidak hadir', 'Ditiadakan', 'Total siswa hadir', 'Rata-rata siswa',
+       'Tidak hadir', 'Ditiadakan', 'Total siswa hadir', 'Rata-rata siswa',
        'Tingkat kehadiran siswa (%)', 'Pertemuan berfoto'],
       ...b.map(x => [x.nama, x.kategori, x.pembina, x.jadwal, x.pertemuan, x.terlaksana, x.pHadir,
-                     x.pGanti, x.pTidak, x.pLibur, x.hadirSiswa, x.rata, x.tingkat, x.foto])
+                     x.pTidak, x.pLibur, x.hadirSiswa, x.rata, x.tingkat, x.foto])
     ]);
   } else if (tab === 'pertemuan') {
     unduhCSV(`rincian_pertemuan${sufiks}_${dari}_sd_${sampai}.csv`, [
-      ['Tanggal', 'Ekstrakurikuler', 'Status pembina', 'Pengganti', 'Hadir', 'Sakit', 'Izin', 'Alfa',
+      ['Tanggal', 'Ekstrakurikuler', 'Status pembina', 'Hadir', 'Sakit', 'Izin', 'Alfa',
        'Materi', 'Catatan', 'Foto', 'Dicatat oleh'],
       ...SESI.map(s => [s.tanggal, nama[s.ekskul_id] || s.ekskul_id,
-        LABEL[s.status_pembina] || s.status_pembina, s.pengganti || '',
+        LABEL[s.status_pembina] || s.status_pembina,
         s.H, s.S, s.I, s.A, s.materi || '', s.catatan || '',
         s.foto || '', s.dicatat_oleh || ''])
     ]);
   } else if (tab === 'pembina') {
     unduhCSV(`rekap_per_pembina${sufiks}_${dari}_sd_${sampai}.csv`, [
-      ['No.', 'Ekstrakurikuler', 'Pembina', 'Pertemuan', 'Tanggal', 'Digantikan oleh',
+      ['No.', 'Ekstrakurikuler', 'Pembina', 'Pertemuan', 'Tanggal',
        'Kehadiran Siswa', 'Peserta terdaftar', '% Kehadiran'],
       ...barisPembina().map((x, i) => [i + 1, x.ekskulPenuh, x.pembinaPenuh, x.pertemuan,
-        x.tanggal, x.pengganti, x.hadir, x.peserta, x.persen])
+        x.tanggal, x.hadir, x.peserta, x.persen])
     ]);
   } else {
     unduhCSV(`kehadiran_siswa${sufiks}_${dari}_sd_${sampai}.csv`, [

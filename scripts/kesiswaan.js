@@ -1,7 +1,7 @@
 import { ambilMaster, simpanPembina, hapusPembina, nomorPembinaBaru, daftarGuru,
-         simpanEkskul, hapusEkskul, nomorEkskulBaru } from '../assets/db.js?v=20260920m';
+         simpanEkskul, hapusEkskul, nomorEkskulBaru } from '../assets/db.js?v=20260920x';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan,
-         jam, kategoriDari, perKategori, KATEGORI_BAWAAN } from '../assets/ui.js?v=20260920m';
+         jam, kategoriDari, perKategori, KATEGORI_BAWAAN } from '../assets/ui.js?v=20260920x';
 
 // Halaman ini mengelola DATA INDUK ekskul: pembina dan kegiatan. Aturan tarif
 // transport, daftar pembayarannya, dan identitas dokumen sudah pindah —
@@ -63,6 +63,25 @@ function gambarPembina() {
     return;
   }
   const jumlahEkskul = id => EKSKUL.filter(e => e.pembina_id === id).length;
+
+  /* Dua penanda yang datang dari database, bukan dihitung di sini.
+
+     Pembina internal adalah satu orang yang tercatat di DUA aplikasi:
+     datanya di Data Induk, penunjukannya sebagai pembina di sini. Selama
+     keduanya dipelihara dengan tangan, keduanya akan menyimpang — dan
+     diam-diam. Namanya sudah tidak mungkin menyimpang lagi karena kini
+     diturunkan dari data guru; yang tersisa adalah dua keadaan yang tidak
+     bisa diturunkan, jadi dikatakan saja apa adanya. */
+  const peringatan = (p) => {
+    if (p.nonaktif_di_induk) return '<span class="lencana l-tidak" '
+      + 'title="Gurunya sudah tidak aktif di Data Induk, tetapi masih terdaftar sebagai pembina di sini.">'
+      + 'nonaktif di Data Induk</span>';
+    if (p.tanpa_tugas_induk) return '<span class="lencana l-ganti" '
+      + 'title="Belum tercatat memegang tugas Pembina Ekskul di Data Induk. Tambahkan di Data Induk → Tugas Guru agar penugasannya tercatat di kedua tempat.">'
+      + 'belum ada tugasnya di Data Induk</span>';
+    return '';
+  };
+
   kotak.innerHTML = [...PEMBINA]
     .sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
     .map(p => `
@@ -70,6 +89,7 @@ function gambarPembina() {
         <span class="nama">${p.nama}
           <small>${p.id} · ${jumlahEkskul(p.id)} ekskul${p.no_hp ? ' · ' + p.no_hp : ''}
             ${p.status === 'Nonaktif' ? ' · nonaktif' : ''}</small></span>
+        ${peringatan(p)}
         <span class="lencana ${p.jenis === 'Eksternal' ? 'l-ganti' : 'l-hadir'}">${p.jenis}</span>
         <button class="tbl tbl-kecil" data-ubah="${p.id}" type="button">Ubah</button>
         <button class="tbl tbl-kecil tbl-hapus" data-hapus="${p.id}" type="button">Hapus</button>
@@ -93,7 +113,8 @@ function saatPilihGuru() {
   const g = GURU.find(x => x.id === el('pGuru').value);
   el('ketStatus').innerHTML = g
     ? 'Berstatus <strong>Internal</strong> karena tertaut ke data guru. ' +
-      'Namanya mengikuti data guru supaya penulisannya tidak berbeda.'
+      'Namanya <strong>diambil langsung</strong> dari data guru setiap kali ditampilkan, ' +
+      'jadi perbaikan ejaan di Data Induk langsung berlaku di sini — tidak perlu diubah dua kali.'
     : 'Berstatus <strong>Eksternal</strong>. Nama diisi sendiri di bawah.';
   if (g) {
     el('pNama').value = g.nama;

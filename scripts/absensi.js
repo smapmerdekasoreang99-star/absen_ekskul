@@ -1,8 +1,8 @@
 import { ambilMaster, pesertaEkskul, ambilSesi, simpanSesi, unggahFoto }
-  from '../assets/db.js?v=20260920m';
+  from '../assets/db.js?v=20260920x';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan,
          kompresGambar, hariIni, namaHari, tanggalPanjang, mingguKe, jam, kategoriDari }
-  from '../assets/ui.js?v=20260920m';
+  from '../assets/ui.js?v=20260920x';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, SISWA = [], STATUS = {};
@@ -55,7 +55,6 @@ try { tandaiMode(); } catch (e) { console.error(e); }
       statusPembina = b.dataset.nilai;
       [...el('statusPembina').children].forEach(x =>
         x.setAttribute('aria-pressed', String(x === b)));
-      el('kotakPengganti').classList.toggle('sembunyi', statusPembina !== 'DG');
       el('kartuSiswa').classList.toggle('sembunyi', statusPembina === 'KG');
       el('kartuFoto').classList.toggle('sembunyi', statusPembina === 'KG');
       hitung();
@@ -89,7 +88,6 @@ async function muatSesi() {
     const lama = await ambilSesi(id, tgl);
     if (lama) {
       statusPembina = lama.sesi.status_pembina || 'H';
-      el('namaPengganti').value = lama.sesi.pengganti || '';
       el('tempatLatihan').value = lama.sesi.tempat || '';
       el('materiLatihan').value = lama.sesi.materi || '';
       el('catatanSesi').value = lama.sesi.catatan || '';
@@ -101,13 +99,12 @@ async function muatSesi() {
       sukses('Catatan tanggal ini sudah pernah diisi. Perubahan akan menimpa catatan lama.');
     } else {
       statusPembina = 'H';
-      ['namaPengganti', 'materiLatihan', 'catatanSesi'].forEach(k => { el(k).value = ''; });
+      ['materiLatihan', 'catatanSesi'].forEach(k => { el(k).value = ''; });
       el('tempatLatihan').value = e.tempat || '';
     }
 
     [...el('statusPembina').children].forEach(x =>
       x.setAttribute('aria-pressed', String(x.dataset.nilai === statusPembina)));
-    el('kotakPengganti').classList.toggle('sembunyi', statusPembina !== 'DG');
     el('kartuSiswa').classList.toggle('sembunyi', statusPembina === 'KG');
     el('kartuFoto').classList.toggle('sembunyi', statusPembina === 'KG');
 
@@ -222,9 +219,6 @@ async function simpan() {
   const id = el('pilihEkskul').value;
   const tgl = el('pilihTanggal').value;
   if (!id || !tgl) { laporError('Ekstrakurikuler dan tanggal wajib diisi.'); return; }
-  if (statusPembina === 'DG' && !el('namaPengganti').value.trim()) {
-    laporError('Tulis nama pelatih yang menggantikan.'); return;
-  }
   if (statusPembina !== 'KG' && !foto) {
     if (!confirm('Belum ada foto kegiatan. Simpan tanpa foto?')) return;
   }
@@ -237,7 +231,6 @@ async function simpan() {
       tanggal: tgl,
       minggu_ke: mingguKe(tgl),
       status_pembina: statusPembina,
-      pengganti: el('namaPengganti').value.trim(),
       tempat: el('tempatLatihan').value.trim(),
       materi: el('materiLatihan').value.trim(),
       catatan: el('catatanSesi').value.trim(),
