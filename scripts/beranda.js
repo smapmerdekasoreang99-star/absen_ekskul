@@ -49,7 +49,7 @@ function baris(a, b) {
           <span class="isi"><strong>${e.nama}</strong>
             <small>${namaPembina[e.pembina_id] || 'Pembina belum diisi'} ·
               ${jam(e.jam_mulai)}–${jam(e.jam_selesai)}</small></span>
-          <span style="font-weight:700;color:${sudah.has(e.id) ? 'var(--daun)' : 'var(--emas)'}">
+          <span style="font-weight:700;color:${sudah.has(e.id) ? 'var(--hadir)' : 'var(--emas)'}">
             ${sudah.has(e.id) ? 'Sudah' : 'Lapor'}</span>
         </a>`).join('');
     }

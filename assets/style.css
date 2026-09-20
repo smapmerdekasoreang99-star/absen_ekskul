@@ -1,137 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap');
-
 /* =====================================================================
    Absensi Ekstrakurikuler — SMA Plus Merdeka Soreang
    =====================================================================
-   Berkas ini disusun sebagai ACUAN tampilan untuk aplikasi lain dalam
-   kumpulan ini. Aturannya:
+   Warna, jarak, sudut, bayang, ukuran huruf, dan tingkat lapisan TIDAK
+   ditentukan di sini, melainkan di assets/dasar.css yang sama persis di
+   kelima aplikasi. Berkas ini hanya menyusun komponen milik aplikasi ini
+   sendiri, dan mengambil semuanya dari token di sana.
 
-   1. Tidak ada angka lepas di tengah berkas. Warna, jarak, sudut, bayang,
-      ukuran huruf, dan tingkat lapisan semuanya bernama, dinyatakan sekali
-      di blok :root, lalu dipakai lewat var(). Angka lepas yang tersebar
-      adalah asal-mula tampilan yang tidak rapi — dan, pada kasus lapisan,
-      asal-mula dialog yang tertimbun toolbar.
-
-   2. Jaraknya berirama kelipatan 4 px. Semua padding dan gap mengambil
-      dari satu tangga jarak, supaya unsur yang sejajar benar-benar
-      sejajar dan kartu yang bersebelahan sama tingginya.
-
-   3. Warna selalu berarti sesuatu, tidak pernah menjadi hiasan. Emas dari
-      lambang sekolah adalah aksen utama — penanda "di sini kamu berada"
-      dan "ini tindakan utamanya". Selebihnya hanya dua macam makna:
-
-        keadaan    hijau hadir · merah tidak hadir · biru sakit · emas izin
-        pekerjaan  hijau mencatat · biru membaca · emas mengelola
-
-      Warna pekerjaan itulah yang memberi warna pada kartu pintasan dan
-      tombolnya: sekali terbiasa, mata tahu sebuah tombol mengisi data atau
-      sekadar menampilkan sebelum tulisannya dibaca. Tidak ada warna
-      ketujuh yang ditambahkan hanya supaya tampak ramai — deretan warna
-      tanpa arti justru membuat yang penting tenggelam.
-
-   4. Satu susunan untuk dua bentuk. Di layar sempit navigasinya di bawah
-      (pembina melapor dari HP sambil berdiri); mulai 980 px berubah
-      menjadi bilah samping tanpa mengubah satu baris pun HTML-nya.
+   Muat dasar.css lebih dulu; tanpa itu seluruh var() di bawah kosong.
    ===================================================================== */
 
 :root{
-  /* ---- Warna dasar: diturunkan dari lambang sekolah, dilembutkan ---- */
-  --kertas:#FAF7F0;            /* latar halaman */
-  --kertas-2:#FFFFFF;          /* permukaan kartu */
-  --kertas-3:#F6F2E8;          /* permukaan kedua: kepala tabel, baris jumlah */
-  --gelap:#221E17;             /* topbar dan bilah samping */
-  --gelap-2:#3A3328;           /* garis di atas latar gelap */
-
-  --tinta:#221E17;             /* teks utama */
-  --tinta-2:#5E5548;           /* teks keterangan */
-  --tinta-3:#8B8173;           /* teks paling redup */
-  --tinta-terang:#F7F3E9;      /* teks di atas latar gelap */
-  --tinta-terang-2:#BDB3A0;
-
-  --garis:#E7E0D1;             /* garis pemisah */
-  --garis-2:#D6CCB6;           /* garis yang perlu lebih tegas */
-
-  /* ---- Aksen tunggal ---- */
-  --emas:#C29433;
-  --emas-tua:#A67C1E;          /* tepi, dan teks di atas emas muda */
-  --emas-teks:#8F6B1A;         /* emas untuk TULISAN KECIL di latar terang.
-                                  Emas tua tidak dipakai di sini: rasionya
-                                  hanya 3,8:1 di atas putih, di bawah ambang
-                                  4,5:1 untuk teks biasa. Ini yang paling
-                                  terang yang masih lolos, jadi tetap terbaca
-                                  sebagai emas, bukan cokelat. */
-  --emas-muda:#F6E8C6;
-  --emas-kabut:#FBF5E6;
-
-  /* ---- Warna keadaan: status kehadiran ---- */
-  --hadir:#3F6B4F;   --hadir-muda:#E4EFE7;   --hadir-tua:#2B4B37;
-  --absen:#A8432E;   --absen-muda:#F7E4DF;   --absen-tua:#7C2F1F;
-  --sakit:#2F5D7C;   --sakit-muda:#E3EDF3;   --sakit-tua:#234A63;
-  --netral-muda:#EDE8DD;
-
-  /* ---- Warna pekerjaan: jenis tindakan sebuah halaman atau tombol ----
-     Sengaja memakai hue yang SAMA dengan warna keadaan di atas, bukan hue
-     baru. Palet tetap berisi tiga warna; yang bertambah hanya maknanya.
-     Menambah hue keempat dan kelima adalah cara tercepat membuat tampilan
-     terasa ramai tanpa menjadi lebih jelas. */
-  --kerja-catat:var(--hadir);   /* mengisi atau mengubah data   */
-  --kerja-baca:var(--sakit);    /* melihat, merekap, mengunduh  */
-  --kerja-kelola:var(--emas-teks); /* mengelola daftar induk    */
-
-  /* ---- Tangga jarak: kelipatan 4 px ---- */
-  --j1:4px; --j2:8px; --j3:12px; --j4:16px; --j5:24px; --j6:32px; --j7:48px;
-
-  /* ---- Sudut ---- */
-  --r1:8px;    /* isian, tombol kecil */
-  --r2:10px;   /* tombol */
-  --r3:14px;   /* kartu */
-  --r-bulat:999px;
-
-  /* ---- Bayang: sangat tipis, hanya untuk memisahkan permukaan ---- */
-  --bayang-1:0 1px 2px rgba(34,30,23,.05);
-  --bayang-2:0 1px 2px rgba(34,30,23,.06), 0 6px 18px rgba(34,30,23,.05);
-  --bayang-atas:0 -4px 14px rgba(34,30,23,.07);
-
-  /* ---- Ukuran huruf ---- */
-  --h-xs:12px; --h-s:13px; --h-m:14px; --h-n:15px; --h-b:16px;
-  --h-judul-s:18px; --h-judul:23px; --h-judul-b:26px;
-
-  /* ---- Ukuran sentuh terkecil (pedoman aksesibilitas) ---- */
-  --sentuh:44px;
-
-  /* ---- Ukuran kerangka ---- */
+  /* Ukuran kerangka: milik aplikasi ini saja, karena hanya aplikasi ini
+     yang navigasinya berpindah dari bawah ke samping. */
   --lebar-isi:1080px;          /* lebar isi terbesar di layar lebar */
   --lebar-sisi:236px;          /* lebar bilah samping */
   --tinggi-nav:62px;           /* tinggi navigasi bawah di layar sempit */
   --tinggi-topbar:60px;        /* dipakai topbar DAN perhitungan bilah samping */
-
-  /* ---- Tingkat lapisan ----
-     Dinyatakan sekali di sini, tidak pernah sebagai angka lepas. Angka
-     z-index yang dipilih sendiri-sendiri di tengah berkas pernah membuat
-     dialog tertimbun toolbar sampai tombolnya tidak bisa ditekan.
-
-     Tangganya, dari bawah ke atas:
-        2  unsur kecil di atas isi kartunya    --lapis-isi
-       30  topbar                              --lapis-topbar
-       35  bilah simpan mengambang             --lapis-bar
-       40  navigasi                            --lapis-nav
-      200  tirai: dialog, layar kunci          (belum dipakai di sini)
-      300  pesan sekilas — selalu paling atas  (belum dipakai di sini)
-
-     Dua tingkat teratas sengaja TIDAK dituliskan sebagai token selama
-     belum ada yang memakainya: token yang menganggur akan menyesatkan
-     siapa pun yang membacanya nanti. Saat aplikasi ini kelak punya dialog
-     atau pesan sekilas, tambahkan tokennya dengan angka di atas. */
-  --lapis-isi:2;
-  --lapis-topbar:30;
-  --lapis-bar:35;
-  --lapis-nav:40;
 }
 
 /* =====================================================================
-   1. Dasar
+   1. Dasar khusus halaman ini
    ===================================================================== */
-*{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
   background:var(--kertas);
@@ -145,16 +34,6 @@ body{
 h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:700;margin:0;line-height:1.2}
 a{color:var(--sakit)}
 img{max-width:100%}
-
-/* Satu cincin fokus untuk seluruh aplikasi. Tidak pernah dihilangkan:
-   sebagian pengguna memakai papan ketik, dan tanpa cincin ini mereka
-   kehilangan jejak posisi. */
-:where(a,button,input,select,textarea,[tabindex]):focus-visible{
-  outline:3px solid rgba(194,148,51,.45);
-  outline-offset:2px;
-  border-radius:var(--r1);
-}
-
 /* =====================================================================
    2. Kerangka
    Layar sempit: topbar di atas, navigasi di bawah.
