@@ -16,9 +16,18 @@
       dari satu tangga jarak, supaya unsur yang sejajar benar-benar
       sejajar dan kartu yang bersebelahan sama tingginya.
 
-   3. Satu warna aksen saja (emas, dari lambang sekolah). Warna lain hanya
-      dipakai untuk MAKNA — hijau hadir, merah tidak hadir, biru sakit —
-      tidak pernah sebagai hiasan.
+   3. Warna selalu berarti sesuatu, tidak pernah menjadi hiasan. Emas dari
+      lambang sekolah adalah aksen utama — penanda "di sini kamu berada"
+      dan "ini tindakan utamanya". Selebihnya hanya dua macam makna:
+
+        keadaan    hijau hadir · merah tidak hadir · biru sakit · emas izin
+        pekerjaan  hijau mencatat · biru membaca · emas mengelola
+
+      Warna pekerjaan itulah yang memberi warna pada kartu pintasan dan
+      tombolnya: sekali terbiasa, mata tahu sebuah tombol mengisi data atau
+      sekadar menampilkan sebelum tulisannya dibaca. Tidak ada warna
+      ketujuh yang ditambahkan hanya supaya tampak ramai — deretan warna
+      tanpa arti justru membuat yang penting tenggelam.
 
    4. Satu susunan untuk dua bentuk. Di layar sempit navigasinya di bawah
       (pembina melapor dari HP sambil berdiri); mulai 980 px berubah
@@ -44,15 +53,30 @@
 
   /* ---- Aksen tunggal ---- */
   --emas:#C29433;
-  --emas-tua:#A67C1E;          /* untuk tepi dan teks di atas emas muda */
+  --emas-tua:#A67C1E;          /* tepi, dan teks di atas emas muda */
+  --emas-teks:#8F6B1A;         /* emas untuk TULISAN KECIL di latar terang.
+                                  Emas tua tidak dipakai di sini: rasionya
+                                  hanya 3,8:1 di atas putih, di bawah ambang
+                                  4,5:1 untuk teks biasa. Ini yang paling
+                                  terang yang masih lolos, jadi tetap terbaca
+                                  sebagai emas, bukan cokelat. */
   --emas-muda:#F6E8C6;
   --emas-kabut:#FBF5E6;
 
-  /* ---- Warna bermakna: hanya untuk status, bukan hiasan ---- */
+  /* ---- Warna keadaan: status kehadiran ---- */
   --hadir:#3F6B4F;   --hadir-muda:#E4EFE7;   --hadir-tua:#2B4B37;
   --absen:#A8432E;   --absen-muda:#F7E4DF;   --absen-tua:#7C2F1F;
   --sakit:#2F5D7C;   --sakit-muda:#E3EDF3;   --sakit-tua:#234A63;
   --netral-muda:#EDE8DD;
+
+  /* ---- Warna pekerjaan: jenis tindakan sebuah halaman atau tombol ----
+     Sengaja memakai hue yang SAMA dengan warna keadaan di atas, bukan hue
+     baru. Palet tetap berisi tiga warna; yang bertambah hanya maknanya.
+     Menambah hue keempat dan kelima adalah cara tercepat membuat tampilan
+     terasa ramai tanpa menjadi lebih jelas. */
+  --kerja-catat:var(--hadir);   /* mengisi atau mengubah data   */
+  --kerja-baca:var(--sakit);    /* melihat, merekap, mengunduh  */
+  --kerja-kelola:var(--emas-teks); /* mengelola daftar induk    */
 
   /* ---- Tangga jarak: kelipatan 4 px ---- */
   --j1:4px; --j2:8px; --j3:12px; --j4:16px; --j5:24px; --j6:32px; --j7:48px;
@@ -142,7 +166,9 @@ img{max-width:100%}
   display:flex;align-items:center;gap:var(--j3);
   padding:var(--j3) var(--j4);
   background:var(--gelap);color:var(--tinta-terang);
-  border-bottom:1px solid var(--gelap-2);
+  /* Garis emas tipis di bawah topbar: satu-satunya hiasan yang dibiarkan,
+     karena ia membawa warna lambang sekolah ke setiap halaman. */
+  border-bottom:3px solid var(--emas);
   min-height:var(--tinggi-topbar);
 }
 .topbar img{width:34px;height:34px;object-fit:contain;flex:none}
@@ -232,20 +258,20 @@ textarea{min-height:80px;resize:vertical;line-height:1.5}
 .tbl{
   font-family:inherit;font-size:var(--h-n);font-weight:600;cursor:pointer;
   border-radius:var(--r2);padding:var(--j3) var(--j4);
-  border:1px solid var(--garis-2);background:var(--kertas-2);color:var(--tinta);
+  border:1px solid var(--garis-2);background:var(--emas-kabut);color:var(--tinta);
   min-height:var(--sentuh);
   display:inline-flex;align-items:center;justify-content:center;gap:var(--j2);
 }
-.tbl:hover{border-color:var(--tinta-3)}
+.tbl:hover{border-color:var(--emas);background:var(--emas-muda)}
 .tbl-utama{background:var(--emas);border-color:var(--emas-tua);color:#2A2114}
 .tbl-utama:hover{background:var(--emas-tua);border-color:var(--emas-tua);color:var(--tinta-terang)}
 .tbl-gelap{background:var(--gelap);border-color:var(--gelap);color:var(--tinta-terang)}
 .tbl-gelap:hover{background:#3A3328;border-color:#3A3328}
-.tbl-hapus{background:var(--kertas-2);border-color:var(--absen);color:var(--absen)}
+.tbl-hapus{background:var(--absen-muda);border-color:var(--absen);color:var(--absen-tua)}
 .tbl-hapus:hover{background:var(--absen-muda);border-color:var(--absen)}
 .tbl-kecil{padding:var(--j2) var(--j3);font-size:var(--h-s);min-height:36px}
 .tbl:disabled{opacity:.45;cursor:not-allowed}
-.tbl:disabled:hover{border-color:var(--garis-2);background:var(--kertas-2);color:var(--tinta)}
+.tbl:disabled:hover{border-color:var(--garis-2);background:var(--emas-kabut);color:var(--tinta)}
 .tbl-utama:disabled:hover{background:var(--emas);color:#2A2114}
 
 /* ---- Pilihan berderet (segmented) ----
@@ -254,12 +280,15 @@ textarea{min-height:80px;resize:vertical;line-height:1.5}
    yang membuat tampilan terasa tidak rapi. */
 .segmen{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--j2)}
 @media(min-width:520px){ .segmen{grid-template-columns:repeat(4,minmax(0,1fr))} }
+/* Deretan pilihan diberi latar emas paling muda, bukan putih. Gunanya
+   praktis: deretan itu jadi terbaca sebagai SATU kelompok yang menunggu
+   dipilih, bukan beberapa tombol yang kebetulan bersebelahan. */
 .segmen button{
   font-family:inherit;font-size:var(--h-m);font-weight:600;cursor:pointer;
-  border:1px solid var(--garis-2);background:var(--kertas-2);color:var(--tinta-2);
+  border:1px solid var(--garis-2);background:var(--emas-kabut);color:var(--tinta-2);
   border-radius:var(--r2);padding:var(--j3) var(--j1);min-height:46px;
 }
-.segmen button:hover{border-color:var(--tinta-3)}
+.segmen button:hover{border-color:var(--emas);background:var(--emas-muda);color:var(--tinta)}
 .segmen button[aria-pressed="true"]{background:var(--gelap);border-color:var(--gelap);color:var(--tinta-terang)}
 .segmen button[aria-pressed="true"][data-nilai="H"]{background:var(--hadir);border-color:var(--hadir)}
 .segmen button[aria-pressed="true"][data-nilai="TH"]{background:var(--absen);border-color:var(--absen)}
@@ -268,11 +297,16 @@ textarea{min-height:80px;resize:vertical;line-height:1.5}
 @media(min-width:640px){ .tab-rekap{grid-template-columns:repeat(4,minmax(0,1fr))} }
 .tab-rekap button{
   font-family:inherit;font-size:var(--h-s);font-weight:600;cursor:pointer;
-  border:1px solid var(--garis-2);background:var(--kertas-2);color:var(--tinta-2);
+  border:1px solid var(--garis-2);background:var(--emas-kabut);color:var(--tinta-2);
   border-radius:var(--r2);padding:var(--j3) var(--j1);min-height:var(--sentuh);
 }
-.tab-rekap button:hover{border-color:var(--tinta-3)}
-.tab-rekap button[aria-pressed="true"]{background:var(--emas);border-color:var(--emas-tua);color:#2A2114}
+.tab-rekap button:hover{border-color:var(--emas);background:var(--emas-muda);color:var(--tinta)}
+/* Tab terpilih tidak hanya berubah warna, tetapi juga menebal dan diberi
+   bayang — supaya tetap terbaca oleh yang sukar membedakan warna. */
+.tab-rekap button[aria-pressed="true"]{
+  background:var(--emas);border-color:var(--emas-tua);color:#2A2114;
+  font-weight:700;box-shadow:var(--bayang-1);
+}
 
 .pilih-peran{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--j2);margin-bottom:var(--j4)}
 .pilih-peran button{
@@ -373,30 +407,49 @@ td.kelompok{background:var(--kertas-3);font-weight:600}
 /* ---- Judul pemisah kelompok ---- */
 .kelompok-judul{
   margin:var(--j5) 0 var(--j2);font-size:var(--h-s);
-  letter-spacing:.06em;text-transform:uppercase;color:var(--emas-tua);font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--emas-teks);font-weight:700;
 }
 .kelompok-judul:first-child{margin-top:0}
 .kelompok-judul small{margin-left:var(--j2);text-transform:none;letter-spacing:0;font-weight:400;color:var(--tinta-2)}
 
-/* ---- Pintasan ---- */
+/* ---- Pintasan ----
+   Tiap kartu diberi warna menurut JENIS PEKERJAANNYA, bukan menurut urutan:
+   hijau untuk yang mencatat, biru untuk yang membaca, emas untuk yang
+   mengelola daftar induk. Alamat tujuannya dipakai sebagai penentu, jadi
+   tidak ada kelas tambahan yang perlu ditulis di HTML tiap halaman. */
 .pintasan{display:grid;gap:var(--j3);grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .pintasan a{
   display:flex;flex-direction:column;gap:var(--j1);
   text-decoration:none;color:inherit;
-  background:var(--kertas-2);border:1px solid var(--garis);border-radius:var(--r3);
+  background:var(--kertas-2);border:1px solid var(--garis);
+  border-left:4px solid var(--garis-2);
+  border-radius:var(--r3);
   padding:var(--j4);box-shadow:var(--bayang-1);
   min-height:96px;justify-content:center;
 }
-.pintasan a:hover{border-color:var(--emas);box-shadow:var(--bayang-2)}
+.pintasan a:hover{box-shadow:var(--bayang-2)}
 .pintasan a strong{font-family:'Fraunces',serif;font-size:var(--h-judul-s);font-weight:700}
 .pintasan a span{font-size:var(--h-s);color:var(--tinta-2)}
+
+.pintasan a[href^="absensi"],
+.pintasan a[href^="nilai"]{border-left-color:var(--kerja-catat)}
+.pintasan a[href^="absensi"] strong,
+.pintasan a[href^="nilai"] strong{color:var(--kerja-catat)}
+
+.pintasan a[href^="rekap"]{border-left-color:var(--kerja-baca)}
+.pintasan a[href^="rekap"] strong{color:var(--kerja-baca)}
+
+.pintasan a[href^="data"],
+.pintasan a[href^="kesiswaan"]{border-left-color:var(--kerja-kelola)}
+.pintasan a[href^="data"] strong,
+.pintasan a[href^="kesiswaan"] strong{color:var(--kerja-kelola)}
 
 /* ---- Jadwal hari ini ---- */
 .jadwal-hari{display:flex;align-items:center;gap:var(--j3);padding:var(--j3) 0;border-bottom:1px solid var(--garis)}
 .jadwal-hari:last-child{border-bottom:0}
 .jadwal-hari .jam{
   font-variant-numeric:tabular-nums;font-weight:700;font-size:var(--h-s);
-  flex:none;width:58px;color:var(--tinta-2);
+  flex:none;width:58px;color:var(--emas-teks);
 }
 .jadwal-hari .isi{flex:1;min-width:0}
 .jadwal-hari .isi strong{display:block;font-size:var(--h-n)}
