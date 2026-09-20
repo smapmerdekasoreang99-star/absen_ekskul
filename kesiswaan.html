@@ -7,7 +7,7 @@
 <title>Kesiswaan · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo.png">
 <link rel="stylesheet" href="assets/dasar.css?v=1">
-<link rel="stylesheet" href="assets/style.css?v=20260920j">
+<link rel="stylesheet" href="assets/style.css?v=20260920k">
 </head>
 <body class="aplikasi">
 
@@ -60,7 +60,12 @@
       </div>
       <div class="baris tiga">
         <div><label for="pHp">Nomor HP</label><input id="pHp" type="tel" placeholder="08…"></div>
-        <div><label for="pPin">PIN pelaporan</label><input id="pPin" type="text" inputmode="numeric" placeholder="4 angka"><p class="ket-pin" id="ketPin">Wajib diisi supaya pembina bisa melapor.</p></div>
+        <div><label for="pPin">PIN pelaporan</label>
+          <div class="isian-tombol">
+            <input id="pPin" type="text" inputmode="numeric" placeholder="4 angka">
+            <button class="tbl tbl-kecil" id="pinAcak" type="button" title="Buatkan PIN acak">Acak</button>
+          </div>
+          <p class="ket-pin" id="ketPin">Wajib diisi supaya pembina bisa melapor.</p></div>
         <div><label for="pAktif">Keaktifan</label>
           <select id="pAktif"><option>Aktif</option><option>Nonaktif</option></select></div>
       </div>
@@ -135,6 +140,6 @@
     <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
 </nav>
 
-<script type="module" src="scripts/kesiswaan.js?v=20260920j"></script>
+<script type="module" src="scripts/kesiswaan.js?v=20260920k"></script>
 </body>
 </html>

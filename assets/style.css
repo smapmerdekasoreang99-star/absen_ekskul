@@ -469,3 +469,8 @@ td.kelompok{background:var(--kertas-3);font-weight:600}
    bisa melapor sama sekali, dan itu perlu terlihat tanpa dibaca. */
 .ket-pin{margin:var(--j1) 0 0;font-size:var(--h-xs);color:var(--tinta-2);line-height:1.4}
 .ket-pin.perlu-pin{color:var(--absen-tua);font-weight:600}
+
+/* Isian dengan tombol kecil di sebelahnya — mis. PIN dan tombol "Acak". */
+.isian-tombol{display:flex;gap:var(--j2);align-items:stretch}
+.isian-tombol input{flex:1;min-width:0}
+.isian-tombol .tbl{flex:none;min-height:auto}

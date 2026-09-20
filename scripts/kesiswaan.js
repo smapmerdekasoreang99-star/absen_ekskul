@@ -1,7 +1,7 @@
 import { ambilMaster, simpanPembina, hapusPembina, nomorPembinaBaru, daftarGuru,
-         simpanEkskul, hapusEkskul, nomorEkskulBaru } from '../assets/db.js?v=20260920j';
+         simpanEkskul, hapusEkskul, nomorEkskulBaru } from '../assets/db.js?v=20260920k';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan,
-         jam, kategoriDari, perKategori, KATEGORI_BAWAAN } from '../assets/ui.js?v=20260920j';
+         jam, kategoriDari, perKategori, KATEGORI_BAWAAN } from '../assets/ui.js?v=20260920k';
 
 // Halaman ini mengelola DATA INDUK ekskul: pembina dan kegiatan. Aturan tarif
 // transport, daftar pembayarannya, dan identitas dokumen sudah pindah —
@@ -43,6 +43,12 @@ el('tabKesiswaan').addEventListener('click', ev => {
     gambarEkskul();
 
     el('simpanPembina').addEventListener('click', simpanFormPembina);
+    el('pinAcak').addEventListener('click', () => {
+      el('pPin').value = buatPinAcak();
+      el('ketPin').textContent = 'PIN baru dibuat. Catat dan sampaikan kepada pembinanya — '
+        + 'sesudah disimpan, PIN ini tidak bisa dilihat lagi oleh siapa pun.';
+      el('ketPin').classList.remove('perlu-pin');
+    });
     el('batalPembina').addEventListener('click', kosongkanFormPembina);
     el('simpanEkskul').addEventListener('click', simpanFormEkskul);
     el('batalEkskul').addEventListener('click', kosongkanFormEkskul);
@@ -131,6 +137,23 @@ function kosongkanFormPembina() {
   isiPilihanGuru('');
   el('pGuru').value = '';
   saatPilihGuru();
+}
+
+/* PIN acak.
+
+   Seluruh PIN yang ada sekarang adalah empat digit terakhir nomor HP
+   pembinanya — dan nomor HP itu memang perlu terlihat di halaman ini. Kata
+   sandi yang bisa diturunkan dari keterangan yang terbuka bukan kata sandi;
+   menyembunyikan kolom PIN tidak menolong apa pun selama pola itu dipakai.
+
+   Tombol ini membuatkan empat angka acak memakai pembangkit acak milik
+   peramban — bukan Math.random, yang urutannya bisa ditebak. PIN-nya
+   ditampilkan apa adanya supaya pengelola dapat mencatat dan
+   menyampaikannya kepada pembina yang bersangkutan. */
+function buatPinAcak() {
+  const n = new Uint32Array(1);
+  crypto.getRandomValues(n);
+  return String(n[0] % 10000).padStart(4, '0');
 }
 
 async function simpanFormPembina() {
