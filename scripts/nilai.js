@@ -1,11 +1,11 @@
 import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPeriode,
          ambilNilai, simpanNilai, kehadiranPerSiswa, kehadiranSemua,
-         nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260920f';
+         nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260920j';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
          bersihkanPesan, tanggalPanjang, persen, unduhCSV,
-         kategoriDari, perKategori } from '../assets/ui.js?v=20260920f';
+         kategoriDari, perKategori } from '../assets/ui.js?v=20260920j';
 import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG, pakaiIdentitas }
-  from '../assets/dokumen.js?v=20260920f';
+  from '../assets/dokumen.js?v=20260920j';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };

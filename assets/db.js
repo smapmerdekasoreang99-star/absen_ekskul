@@ -3,14 +3,14 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260920f';
+import * as CFG from './supabase-client.js?v=20260920j';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
 const G = CFG.SUMBER_GURU || { tabel: 'guru', id: 'id', nama: 'nama', tmt: 'tmt_sekolah' };
 
 // Status pembina diturunkan dari keterkaitannya dengan data guru.
 const berjenis = p => ({ ...p, jenis: p.id_guru ? 'Internal' : 'Eksternal' });
-import * as D from './demo-data.js?v=20260920f';
+import * as D from './demo-data.js?v=20260920j';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -31,7 +31,8 @@ function periksa(res, apa) {
 // Ini mencegah galat "relation must be a non-empty string" ketika berkas
 // konfigurasi lama masih terpakai.
 const T = {
-  pembina:   'ae_pembina',
+  pembina:   'ae_pembina',       // ditulisi
+  pembinaBaca: 'ae_pembina_aman', // dibaca — tanpa kolom PIN
   ekskul:    'ae_ekskul',
   peserta:   'ae_peserta',
   sesi:      'ae_sesi',
@@ -62,7 +63,7 @@ export async function ambilMaster() {
   const c = await sb();
   const [e, p] = await Promise.all([
     c.from(T.ekskul).select('*').order('id'),
-    c.from(T.pembina).select('*').order('nama')
+    c.from(T.pembinaBaca).select('*').order('nama')
   ]);
   return {
     ekskul: periksa(e, 'Gagal memuat ekstrakurikuler'),
@@ -70,14 +71,30 @@ export async function ambilMaster() {
   };
 }
 
-// Memeriksa PIN pembina. Mengembalikan data pembina bila cocok.
+/* Memeriksa PIN pembina DI DATABASE, bukan di peramban.
+
+   Sebelumnya halaman masuk mengunduh seluruh isi tabel pembina — termasuk
+   kolom PIN — lalu membandingkannya di sini. Akibatnya PIN setiap pembina
+   bisa dibaca siapa pun yang membuka peralatan pengembang, atau bahkan
+   cukup memanggil API-nya dengan kunci publik yang memang tertulis di
+   dalam kode ini. Kini PIN tidak pernah meninggalkan database: fungsi
+   f_ae_masuk_pembina hanya menjawab cocok atau tidak. */
 export async function cekPembina(pembinaId, pin) {
-  const { pembina } = await ambilMaster();
-  const p = pembina.find(x => x.id === pembinaId);
-  if (!p) throw new Error('Pembina tidak ditemukan.');
-  if (!p.kode_akses) throw new Error('Pembina ini belum diberi PIN. Hubungi Wakasek Kesiswaan.');
-  if (String(p.kode_akses).trim() !== String(pin).trim()) throw new Error('PIN salah.');
-  return p;
+  if (MODE === 'contoh') {
+    const p = D.PEMBINA.find(x => x.id === pembinaId);
+    if (!p) throw new Error('Pembina tidak ditemukan.');
+    if (!p.kode_akses) throw new Error('Pembina ini belum diberi PIN. Hubungi Wakasek Kesiswaan.');
+    if (String(p.kode_akses).trim() !== String(pin).trim()) throw new Error('PIN salah.');
+    return berjenis(p);
+  }
+  const c = await sb();
+  const { data, error } = await c.rpc('f_ae_masuk_pembina', { p_id: pembinaId, p_pin: pin });
+  // Pesan dari database sudah jelas bagi pembina ("PIN salah.", "Pembina ini
+  // belum diberi PIN…"), jadi diteruskan apa adanya.
+  if (error) throw new Error(error.message.replace(/^.*?:s*/, ''));
+  const p = (data || [])[0];
+  if (!p) throw new Error('PIN salah.');
+  return berjenis(p);
 }
 
 // --------------------------------------------------------------- peserta

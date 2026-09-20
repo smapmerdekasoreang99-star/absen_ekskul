@@ -463,3 +463,9 @@ td.kelompok{background:var(--kertas-3);font-weight:600}
   .gulir{border:0;overflow:visible}
   th{position:static}
 }
+
+/* Keterangan di bawah isian PIN pembina. Warnanya berubah menjadi merah
+   hanya ketika pembina memang belum punya PIN — karena selama itu ia tidak
+   bisa melapor sama sekali, dan itu perlu terlihat tanpa dibaca. */
+.ket-pin{margin:var(--j1) 0 0;font-size:var(--h-xs);color:var(--tinta-2);line-height:1.4}
+.ket-pin.perlu-pin{color:var(--absen-tua);font-weight:600}

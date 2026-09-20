@@ -1,7 +1,7 @@
 import { ambilMaster, simpanPembina, hapusPembina, nomorPembinaBaru, daftarGuru,
-         simpanEkskul, hapusEkskul, nomorEkskulBaru } from '../assets/db.js?v=20260920f';
+         simpanEkskul, hapusEkskul, nomorEkskulBaru } from '../assets/db.js?v=20260920j';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan,
-         jam, kategoriDari, perKategori, KATEGORI_BAWAAN } from '../assets/ui.js?v=20260920f';
+         jam, kategoriDari, perKategori, KATEGORI_BAWAAN } from '../assets/ui.js?v=20260920j';
 
 // Halaman ini mengelola DATA INDUK ekskul: pembina dan kegiatan. Aturan tarif
 // transport, daftar pembayarannya, dan identitas dokumen sudah pindah —
@@ -106,7 +106,15 @@ function isiFormPembina(id) {
   el('pGuru').value = p.id_guru || '';
   el('pNama').value = p.nama;
   el('pHp').value = p.no_hp || '';
-  el('pPin').value = p.kode_akses || '';
+  /* PIN tidak diisikan kembali: kolomnya memang tidak lagi terbaca dari
+     peramban. Isian dibiarkan kosong dan artinya "biarkan seperti semula";
+     yang perlu diketahui pengelola hanyalah sudah ada PIN-nya atau belum. */
+  el('pPin').value = '';
+  el('pPin').placeholder = p.ada_pin ? 'sudah ada — isi untuk mengganti' : 'belum ada PIN';
+  el('ketPin').textContent = p.ada_pin
+    ? 'PIN sudah diatur. Kosongkan bila tidak ingin mengubahnya.'
+    : 'Pembina ini belum bisa melapor sebelum diberi PIN.';
+  el('ketPin').classList.toggle('perlu-pin', !p.ada_pin);
   el('pAktif').value = p.status || 'Aktif';
   saatPilihGuru();
   el('judulFormPembina').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -116,6 +124,9 @@ function kosongkanFormPembina() {
   sedangUbah = null;
   el('judulFormPembina').textContent = 'Tambah pembina';
   ['pNama', 'pHp', 'pPin'].forEach(k => { el(k).value = ''; });
+  el('pPin').placeholder = '4 angka';
+  el('ketPin').textContent = 'Wajib diisi supaya pembina bisa melapor.';
+  el('ketPin').classList.remove('perlu-pin');
   el('pAktif').value = 'Aktif';
   isiPilihanGuru('');
   el('pGuru').value = '';
@@ -134,9 +145,12 @@ async function simpanFormPembina() {
     nama,
     id_guru: idGuru,
     no_hp: el('pHp').value.trim(),
-    kode_akses: pin,
     status: el('pAktif').value
   };
+  /* PIN hanya disertakan bila memang diisi. Kalau kolomnya dikirim kosong,
+     PIN yang sudah ada akan terhapus — dan pembinanya tidak bisa melapor
+     lagi tanpa ada yang menyadari penyebabnya. */
+  if (pin) baris.kode_akses = pin;
   try {
     await simpanPembina(baris);
     const m = await ambilMaster();
