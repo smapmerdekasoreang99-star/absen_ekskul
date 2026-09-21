@@ -1,9 +1,9 @@
 import { ambilMaster, simpanPembina, hapusPembina, nomorPembinaBaru, daftarGuru,
          simpanEkskul, hapusEkskul, nomorEkskulBaru,
-         simpanPembimbingKegiatan } from '../assets/db.js?v=20260921c';
+         simpanPembimbingKegiatan } from '../assets/db.js?v=20260921d';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan,
          jam, kategoriDari, perKategori, KATEGORI_BAWAAN,
-         pembimbingDari, dibimbingBersama } from '../assets/ui.js?v=20260921c';
+         pembimbingDari, dibimbingBersama } from '../assets/ui.js?v=20260921d';
 
 // Halaman ini mengelola DATA INDUK ekskul: pembina dan kegiatan. Aturan tarif
 // transport, daftar pembayarannya, dan identitas dokumen sudah pindah —

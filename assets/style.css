@@ -283,6 +283,29 @@ td.kelompok{background:var(--kertas-3);font-weight:600}
 .sembunyi{display:none !important}
 .kosong{text-align:center;color:var(--tinta-2);padding:var(--j6) var(--j3);font-size:var(--h-m)}
 
+/* ---- Unggah daftar peserta ----
+   Nama kolom yang dibaca ditampilkan sebagai keping, bukan kalimat, supaya
+   sekali lihat tahu apa yang harus ada di berkas. Pratinjau memakai tabel
+   dan lencana yang sama dengan halaman lain. */
+.deret-tombol{display:flex;flex-wrap:wrap;gap:var(--j2);margin-bottom:var(--j3)}
+.deret-tombol label.tbl{margin:0}
+.kolom-format{display:flex;flex-wrap:wrap;align-items:center;gap:var(--j2);margin-bottom:var(--j3)}
+.kolom-format span{
+  display:inline-flex;align-items:baseline;gap:var(--j2);
+  padding:var(--j2) var(--j3);border:1px dashed var(--garis-2);border-radius:var(--r1);
+  background:var(--kertas-3);font-size:var(--h-s);
+}
+.kolom-format code{font-family:inherit;font-weight:700;color:var(--tinta)}
+.kolom-format small{color:var(--tinta-2);font-size:var(--h-xs)}
+.kolom-format .ket-kolom{flex-basis:100%;color:var(--tinta-2);font-size:var(--h-xs)}
+.ringkas-unggah{display:flex;flex-wrap:wrap;gap:var(--j2);margin-bottom:var(--j3)}
+.pratinjau-unggah .gulir{margin-bottom:var(--j3)}
+.pratinjau-unggah td.nomor{color:var(--tinta-2);font-variant-numeric:tabular-nums}
+.pratinjau-unggah td.nama-berkas small{display:block;color:var(--tinta-2);font-size:var(--h-xs)}
+.pratinjau-unggah td.hasil small{display:block;color:var(--tinta-2);font-size:var(--h-xs);margin-top:2px}
+.pratinjau-unggah tr.masalah td{background:var(--absen-muda)}
+.pratinjau-unggah tr.masalah:hover td{background:var(--absen-muda)}
+
 /* ---- Judul pemisah kelompok ---- */
 .kelompok-judul{
   margin:var(--j5) 0 var(--j2);font-size:var(--h-s);

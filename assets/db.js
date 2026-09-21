@@ -3,15 +3,15 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260921c';
-import { pakaiRujukan, lupakanRujukan } from './simpanan.js?v=20260921c';
+import * as CFG from './supabase-client.js?v=20260921d';
+import { pakaiRujukan, lupakanRujukan } from './simpanan.js?v=20260921d';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
 const G = CFG.SUMBER_GURU || { tabel: 'guru', id: 'id', nama: 'nama', tmt: 'tmt_sekolah' };
 
 // Status pembina diturunkan dari keterkaitannya dengan data guru.
 const berjenis = p => ({ ...p, jenis: p.id_guru ? 'Internal' : 'Eksternal' });
-import * as D from './demo-data.js?v=20260921c';
+import * as D from './demo-data.js?v=20260921d';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -204,6 +204,23 @@ export async function cariSiswaSekolah(kata, kelas) {
   return periksa(await permintaan, 'Gagal mencari siswa').map(rapikan);
 }
 
+// Seluruh siswa aktif, untuk mencocokkan berkas unggahan di halaman Data.
+// Diminta per 1000 baris karena PostgREST membatasi satu jawaban sebesar itu;
+// sekolah ini punya beberapa ratus siswa, jadi biasanya cukup satu kali.
+export async function semuaSiswaSekolah() {
+  if (MODE === 'contoh') return salin(D.SISWA);
+  const c = await sbSiswa();
+  const semua = [];
+  for (let awal = 0; ; awal += 1000) {
+    let permintaan = c.from(K.tabel).select(kolomSiswa()).order(K.id).range(awal, awal + 999);
+    if (K.kolomAktif) permintaan = permintaan.eq(K.kolomAktif, true);
+    const bagian = periksa(await permintaan, 'Gagal membaca data siswa');
+    semua.push(...bagian.map(rapikan));
+    if (bagian.length < 1000) break;
+  }
+  return semua;
+}
+
 export async function daftarKelas() {
   if (MODE === 'contoh') return [...new Set(D.SISWA.map(s => s.kelas))].sort();
   return pakaiRujukan('kelas', daftarKelasJaringan);
@@ -229,6 +246,21 @@ export async function daftarkanPeserta(ekskulId, siswa) {
     ekskul_id: ekskulId, siswa_id: siswa.id, nama_siswa: siswa.nama,
     kelas: siswa.kelas, aktif: true
   }, { onConflict: 'ekskul_id,siswa_id' }), 'Gagal mendaftarkan peserta');
+}
+
+// Mendaftarkan banyak siswa sekaligus (dari berkas unggahan) dalam satu
+// permintaan. Sama seperti satuan: yang sudah terdaftar tidak digandakan.
+export async function daftarkanPesertaBanyak(ekskulId, daftar) {
+  if (!daftar.length) return;
+  if (MODE === 'contoh') {
+    for (const s of daftar) await daftarkanPeserta(ekskulId, s);
+    return;
+  }
+  const c = await sb();
+  periksa(await c.from(T.peserta).upsert(daftar.map(s => ({
+    ekskul_id: ekskulId, siswa_id: s.id, nama_siswa: s.nama,
+    kelas: s.kelas, aktif: true
+  })), { onConflict: 'ekskul_id,siswa_id' }), 'Gagal mendaftarkan peserta');
 }
 
 export async function hapusPeserta(ekskulId, siswaId) {

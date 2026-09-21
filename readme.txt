@@ -22,7 +22,8 @@ app/
   absensi.html      Laporan satu pertemuan: status pembina, foto, kehadiran siswa
   rekap.html        Rekap rentang tanggal: per ekskul / per pertemuan / per siswa
   data.html         Pendaftaran peserta dari data siswa sekolah (pengelola saja)
-  assets/           style.css, logo.png, db.js, ui.js, demo-data.js, supabase-client.js
+  assets/           style.css, logo.png, db.js, ui.js, demo-data.js, supabase-client.js,
+                    unggah-peserta.js (baca XLSX/CSV + pencocokan nama)
   scripts/          masuk.js, beranda.js, absensi.js, rekap.js, data.js
 db/
   schema.sql            Tabel ae_*, kebijakan akses, bucket foto (Kehadiran_Guru)
@@ -153,6 +154,24 @@ Pindahkan isinya, jangan dibuat ulang:
    -- (nama lama, karena di Tryout_guru belum sempat diberi awalan)
    ```
    Jangan dijalankan sebelum data di tempat baru diperiksa.
+
+## Unggah daftar peserta
+
+Di menu Data, selain mencari satu per satu, pengelola bisa mendaftarkan
+banyak siswa sekaligus dari berkas **.xlsx** atau **.csv**. Kolom yang
+dibaca hanya dua: `Nama siswa` (wajib) dan `Kelas` (dianjurkan); judulnya
+dikenali dari isinya, jadi boleh ada judul dokumen di atas tabel, dan kolom
+lain diabaikan. Tombol **Unduh format** memberi berkas kosong dengan pilihan
+kelas dari data sekolah dan lembar petunjuk.
+
+Berkas tidak pernah dipercaya apa adanya. Tiap baris dicocokkan ke data
+siswa sekolah (huruf besar-kecil, tanda baca, dan cara menulis kelas
+seperti `X-1` / `X 1` tidak dipersoalkan), lalu hasilnya ditampilkan dulu:
+akan didaftarkan, sudah terdaftar, ditulis dua kali, perlu dipastikan
+(dua siswa bernama sama tanpa kelas), atau tidak ditemukan. Hanya yang
+cocok yang disimpan, dan yang tersimpan tetap id siswa dari data sekolah —
+bukan tulisan di berkas. Berkas CSV hasil "Unduh daftar peserta" bisa
+diunggah kembali, misalnya untuk menyalin peserta ke kegiatan lain.
 
 ## Foto kegiatan
 

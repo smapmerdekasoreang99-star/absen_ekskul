@@ -3,7 +3,7 @@
 // Prinsip tampilan: hemat tinta printer. Latar putih, garis tipis abu-abu,
 // tanpa blok warna lebar. Hanya baris judul tabel yang diberi abu sangat
 // muda, dan aksen emas dipakai tipis sebagai garis, bukan bidang.
-import { SEKOLAH } from './sekolah.js?v=20260921c';
+import { SEKOLAH } from './sekolah.js?v=20260921d';
 
 // Identitas yang dipakai pada kop dan blok tanda tangan. Nilai bawaan
 // berasal dari sekolah.js dan ditimpa oleh pengaturan dari database
@@ -42,6 +42,9 @@ async function excel() {
   _ExcelJS = window.ExcelJS;
   return _ExcelJS;
 }
+// Dipakai juga oleh pembaca berkas unggahan (unggah-peserta.js), supaya
+// pustakanya dimuat sekali saja dari satu tempat.
+export const pustakaExcel = excel;
 
 async function logoBase64() {
   try {
