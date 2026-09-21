@@ -3,14 +3,15 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260921b';
+import * as CFG from './supabase-client.js?v=20260921c';
+import { pakaiRujukan, lupakanRujukan } from './simpanan.js?v=20260921c';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
 const G = CFG.SUMBER_GURU || { tabel: 'guru', id: 'id', nama: 'nama', tmt: 'tmt_sekolah' };
 
 // Status pembina diturunkan dari keterkaitannya dengan data guru.
 const berjenis = p => ({ ...p, jenis: p.id_guru ? 'Internal' : 'Eksternal' });
-import * as D from './demo-data.js?v=20260921b';
+import * as D from './demo-data.js?v=20260921c';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -64,9 +65,12 @@ async function sbSiswa() {
    pembimbingDari() di ui.js. Kegiatan berpembina tunggal tidak punya baris di
    ae_ekskul_pembimbing, jadi larik ini kosong dan helper itu jatuh ke
    pembina_id — dua keadaan, seperti yang ditetapkan di database. */
-export async function ambilMaster() {
+export async function ambilMaster(saatBerubah) {
   if (MODE === 'contoh')
     return { ekskul: salin(D.EKSKUL), pembina: salin(D.PEMBINA).map(berjenis) };
+  return pakaiRujukan('master', ambilMasterJaringan, saatBerubah);
+}
+async function ambilMasterJaringan() {
   const c = await sb();
   const [e, p, b] = await Promise.all([
     c.from(T.ekskul).select('*').order('id'),
@@ -93,6 +97,7 @@ export async function ambilMaster() {
 
    Larik kosong berarti kegiatan itu kembali berpembina tunggal. */
 export async function simpanPembimbingKegiatan(ekskulId, daftarPembina) {
+  lupakanRujukan('master');
   if (MODE === 'contoh') {
     const e = D.EKSKUL.find(x => x.id === ekskulId);
     if (e) e.pembimbing = [...daftarPembina];
@@ -137,7 +142,7 @@ export async function cekPembina(pembinaId, pin) {
 // Membaca peserta satu ekskul. Nama & kelas diambil dari tabel siswa
 // milik aplikasi Tryout & Asesmen; bila tabel itu tidak terbaca, dipakai
 // salinan nama yang tersimpan saat pendaftaran.
-export async function pesertaEkskul(ekskulId) {
+export async function pesertaEkskul(ekskulId, { cepat = false } = {}) {
   if (MODE === 'contoh') {
     return D.PESERTA.filter(p => p.ekskul_id === ekskulId && p.aktif)
       .map(p => {
@@ -153,6 +158,15 @@ export async function pesertaEkskul(ekskulId) {
     'Gagal memuat peserta'
   );
   if (!baris.length) return [];
+
+  /* Jalur cepat untuk halaman yang hanya perlu nama untuk mengabsen atau
+     menilai: salinan nama dan kelas yang dibuat saat pendaftaran sudah
+     cukup, dan pencocokan ke tabel siswa sekolah — satu perjalanan lagi,
+     bergiliran — dilewati. Halaman Data Peserta tetap memakai jalur penuh,
+     karena di sanalah nama yang berubah perlu terlihat. */
+  if (cepat)
+    return baris.map(b => ({ id: b.siswa_id, nis: '', nama: b.nama_siswa || b.siswa_id, kelas: b.kelas || '' }))
+      .sort((a, b) => String(a.nama).localeCompare(String(b.nama), 'id'));
 
   let terbaru = {};
   try {
@@ -192,6 +206,9 @@ export async function cariSiswaSekolah(kata, kelas) {
 
 export async function daftarKelas() {
   if (MODE === 'contoh') return [...new Set(D.SISWA.map(s => s.kelas))].sort();
+  return pakaiRujukan('kelas', daftarKelasJaringan);
+}
+async function daftarKelasJaringan() {
   const c = await sbSiswa();
   let permintaan = c.from(K.tabel).select(K.kelas).limit(5000);
   if (K.kolomAktif) permintaan = permintaan.eq(K.kolomAktif, true);
@@ -252,25 +269,23 @@ export async function ambilSesi(ekskulId, tanggal) {
     D.KEHADIRAN.filter(x => x.sesi_id === s.id).forEach(x => { k[x.siswa_id] = x.status; });
     return { sesi: salin(s), kehadiran: k };
   }
+  /* Sesi, kehadiran siswa, dan kehadiran pembimbing diminta dalam SATU
+     permintaan — PostgREST menanam baris anak lewat relasi kuncinya. Dulu
+     tiga permintaan bergiliran (sesi dulu, baru dua anaknya), dan tiap
+     giliran adalah satu perjalanan ke Supabase. */
   const c = await sb();
   const baris = periksa(
-    await c.from(T.sesi).select('*').eq('ekskul_id', ekskulId).eq('tanggal', tanggal).limit(1),
+    await c.from(T.sesi)
+      .select(`*, ${T.kehadiran}(siswa_id,status), ${T.sesiPembimbing}(pembina_id,status)`)
+      .eq('ekskul_id', ekskulId).eq('tanggal', tanggal).limit(1),
     'Gagal memeriksa catatan'
   );
   if (!baris.length) return null;
-  const s = baris[0];
-  const kh = periksa(
-    await c.from(T.kehadiran).select('siswa_id,status').eq('sesi_id', s.id),
-    'Gagal memuat kehadiran siswa'
-  );
+  const { [T.kehadiran]: kh, [T.sesiPembimbing]: bp, ...s } = baris[0];
   const k = {};
-  kh.forEach(x => { k[x.siswa_id] = x.status; });
-  const bp = periksa(
-    await c.from(T.sesiPembimbing).select('pembina_id,status').eq('sesi_id', s.id),
-    'Gagal memuat kehadiran pembimbing'
-  );
+  (kh || []).forEach(x => { k[x.siswa_id] = x.status; });
   const pembimbing = {};
-  bp.forEach(x => { pembimbing[x.pembina_id] = x.status; });
+  (bp || []).forEach(x => { pembimbing[x.pembina_id] = x.status; });
   return { sesi: s, kehadiran: k, pembimbing };
 }
 
@@ -328,16 +343,16 @@ export async function muatPeriode(dari, sampai) {
     const ids = sesi.map(s => s.id);
     kehadiran = salin(D.KEHADIRAN.filter(k => ids.includes(k.sesi_id)));
   } else {
+    // Kehadiran ditanam ke tiap sesi: satu permintaan, bukan sesi dulu
+    // lalu kehadirannya menyusul.
     const c = await sb();
-    sesi = periksa(
-      await c.from(T.sesi).select('*').gte('tanggal', dari).lte('tanggal', sampai).order('tanggal'),
+    const baris = periksa(
+      await c.from(T.sesi).select(`*, ${T.kehadiran}(sesi_id,siswa_id,status)`)
+        .gte('tanggal', dari).lte('tanggal', sampai).order('tanggal'),
       'Gagal memuat sesi'
     );
-    const ids = sesi.map(s => s.id);
-    kehadiran = ids.length
-      ? periksa(await c.from(T.kehadiran).select('sesi_id,siswa_id,status').in('sesi_id', ids),
-                'Gagal memuat kehadiran')
-      : [];
+    kehadiran = baris.flatMap(s => s[T.kehadiran] || []);
+    sesi = baris.map(({ [T.kehadiran]: _abaikan, ...s }) => s);
   }
   const hitung = {};
   kehadiran.forEach(k => {
@@ -357,32 +372,35 @@ export async function namaSiswa(ids) {
     D.SISWA.filter(s => ids.includes(s.id)).forEach(s => { hasil[s.id] = s; });
     return hasil;
   }
-  try {
-    const cs = await sbSiswa();
-    const data = periksa(await cs.from(K.tabel).select(kolomSiswa()).in(K.id, ids),
-                         'Gagal membaca data siswa');
-    data.forEach(s => { hasil[String(s[K.id])] = rapikan(s); });
-  } catch (e) {
-    console.warn(e.message);
-  }
-  const c = await sb();
-  const kurang = ids.filter(i => !hasil[i]);
-  if (kurang.length) {
-    const cad = periksa(
-      await c.from(T.peserta).select('siswa_id,nama_siswa,kelas').in('siswa_id', kurang),
-      'Gagal membaca salinan nama'
-    );
-    cad.forEach(b => {
-      if (!hasil[b.siswa_id])
-        hasil[b.siswa_id] = { id: b.siswa_id, nis: '', nama: b.nama_siswa || b.siswa_id, kelas: b.kelas || '' };
-    });
-  }
+  // Tabel siswa sekolah dan salinan nama di peserta diminta serentak; salinan
+  // mengisi dulu, lalu yang hidup menimpanya. Dulu bergiliran: yang hidup
+  // dulu, baru salinan untuk yang tidak ketemu.
+  const [hidup, salinan] = await Promise.all([
+    (async () => {
+      try {
+        const cs = await sbSiswa();
+        return periksa(await cs.from(K.tabel).select(kolomSiswa()).in(K.id, ids), 'Gagal membaca data siswa');
+      } catch (e) { console.warn(e.message); return []; }
+    })(),
+    (async () => {
+      const c = await sb();
+      return periksa(await c.from(T.peserta).select('siswa_id,nama_siswa,kelas').in('siswa_id', ids),
+                     'Gagal membaca salinan nama');
+    })()
+  ]);
+  salinan.forEach(b => {
+    hasil[b.siswa_id] = { id: b.siswa_id, nis: '', nama: b.nama_siswa || b.siswa_id, kelas: b.kelas || '' };
+  });
+  hidup.forEach(s => { hasil[String(s[K.id])] = rapikan(s); });
   return hasil;
 }
 
 // ------------------------------------------------------- periode & nilai
 export async function daftarPeriode() {
   if (MODE === 'contoh') return salin(D.PERIODE);
+  return pakaiRujukan('periode', daftarPeriodeJaringan);
+}
+async function daftarPeriodeJaringan() {
   const c = await sb();
   return periksa(
     await c.from(T.periode).select('*').order('tanggal_mulai', { ascending: false }),
@@ -391,6 +409,7 @@ export async function daftarPeriode() {
 }
 
 export async function simpanPeriode(baris) {
+  lupakanRujukan('periode');
   if (MODE === 'contoh') {
     const lama = D.PERIODE.find(p =>
       p.tahun_ajaran === baris.tahun_ajaran && p.semester === baris.semester);
@@ -406,6 +425,7 @@ export async function simpanPeriode(baris) {
 }
 
 export async function ubahStatusPeriode(id, dibuka) {
+  lupakanRujukan('periode');
   if (MODE === 'contoh') {
     const p = D.PERIODE.find(x => x.id === id);
     if (p) p.dibuka = dibuka;
@@ -530,6 +550,7 @@ export async function nilaiSeluruhPeriode(periodeId) {
    tersimpan tetapi belum ber-PIN — keadaan yang terlihat di layar lewat
    penanda ada_pin, bukan kegagalan yang menghilang tanpa jejak. */
 export async function simpanPembina(baris) {
+  lupakanRujukan('master');
   if (MODE === 'contoh') {
     const lama = D.PEMBINA.find(p => p.id === baris.id);
     if (lama) Object.assign(lama, baris); else D.PEMBINA.push({ ...baris });
@@ -545,6 +566,7 @@ export async function simpanPembina(baris) {
 }
 
 export async function hapusPembina(id) {
+  lupakanRujukan('master');
   if (MODE === 'contoh') {
     const i = D.PEMBINA.findIndex(p => p.id === id);
     if (i >= 0) D.PEMBINA.splice(i, 1);
@@ -573,6 +595,7 @@ export function nomorPembinaBaru(daftar) {
 
 // ------------------------------------------------ data induk ekstrakurikuler
 export async function simpanEkskul(baris) {
+  lupakanRujukan('master');
   if (MODE === 'contoh') {
     const lama = D.EKSKUL.find(e => e.id === baris.id);
     if (lama) Object.assign(lama, baris); else D.EKSKUL.push({ ...baris });
@@ -586,6 +609,7 @@ export async function simpanEkskul(baris) {
 // Menghapus ekskul ikut menghapus peserta dan seluruh riwayat kehadirannya,
 // jadi penghapusan ditolak bila jejaknya sudah ada.
 export async function hapusEkskul(id) {
+  lupakanRujukan('master');
   if (MODE === 'contoh') {
     if (D.SESI.some(s => s.ekskul_id === id) || D.PESERTA.some(p => p.ekskul_id === id))
       throw new Error('Ekstrakurikuler ini sudah punya peserta atau riwayat laporan. ' +
@@ -620,6 +644,9 @@ export function nomorEkskulBaru(daftar) {
 // berkas yang dihasilkan tidak berubah.
 export async function ambilPengaturan() {
   if (MODE === 'contoh') return { ...(D.PENGATURAN || {}) };
+  return pakaiRujukan('pengaturan', ambilPengaturanJaringan);
+}
+async function ambilPengaturanJaringan() {
   const c = await sb();
   const [prof, ta] = await Promise.all([
     // Seluruh kolom diambil karena kop juga memerlukan npsn, catatan kaki,
@@ -660,6 +687,9 @@ export async function ambilPengaturan() {
    siapa pun yang membuka kodenya. */
 export async function daftarGuru() {
   if (MODE === 'contoh') return salin(D.GURU);
+  return pakaiRujukan('guru', daftarGuruJaringan);
+}
+async function daftarGuruJaringan() {
   const c = await sb();
   const data = periksa(
     await c.from('v_guru_pembina_ekskul').select('id,nama,tmt_sekolah'),

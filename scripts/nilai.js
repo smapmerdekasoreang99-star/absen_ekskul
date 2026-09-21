@@ -1,11 +1,11 @@
 import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPeriode,
          ambilNilai, simpanNilai, kehadiranPerSiswa, kehadiranSemua,
-         nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260921b';
+         nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260921c';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
          bersihkanPesan, tanggalPanjang, persen, unduhCSV,
-         kategoriDari, perKategori } from '../assets/ui.js?v=20260921b';
+         kategoriDari, perKategori } from '../assets/ui.js?v=20260921c';
 import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG, pakaiIdentitas }
-  from '../assets/dokumen.js?v=20260921b';
+  from '../assets/dokumen.js?v=20260921c';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };
@@ -52,10 +52,12 @@ try { tandaiMode(); } catch (e) { console.error(e); }
       el('tombolBuka').addEventListener('click', bukaTutup);
     }
 
-    try { pakaiIdentitas(await ambilPengaturan()); }
-    catch (e) { console.warn('Pengaturan dokumen belum terbaca:', e.message); }
-
-    await muatPeriode();
+    // Identitas dokumen dan periode tidak saling bergantung: serentak.
+    const [pengaturan] = await Promise.all([
+      ambilPengaturan().catch(e => { console.warn('Pengaturan dokumen belum terbaca:', e.message); return null; }),
+      muatPeriode()
+    ]);
+    if (pengaturan) pakaiIdentitas(pengaturan);
     await muatSiswa();
   } catch (e) { laporError(e); }
 })();
@@ -157,9 +159,12 @@ async function muatSiswa() {
   if (!id) return;
   el('daftarNilai').innerHTML = '<p class="kosong">Memuat…</p>';
   try {
-    SISWA = await pesertaEkskul(id);
-    HADIR = aktif ? await kehadiranPerSiswa(id, aktif.tanggal_mulai, aktif.tanggal_selesai) : {};
-    NILAI = aktif ? await ambilNilai(aktif.id, id) : {};
+    // Ketiganya hanya butuh kegiatan dan periode — diminta serentak.
+    [SISWA, HADIR, NILAI] = await Promise.all([
+      pesertaEkskul(id, { cepat: true }),
+      aktif ? kehadiranPerSiswa(id, aktif.tanggal_mulai, aktif.tanggal_selesai) : {},
+      aktif ? ambilNilai(aktif.id, id) : {}
+    ]);
     gambar();
   } catch (e) { laporError(e); }
 }
@@ -275,8 +280,11 @@ async function unduhSemua() {
       nilaiSeluruhPeriode(aktif.id)
     ]);
     const baris = [];
-    for (const e of EKSKUL) {
-      const peserta = await pesertaEkskul(e.id);
+    // Peserta seluruh kegiatan diminta serentak — dulu satu per satu,
+    // enam belas perjalanan bergiliran untuk enam belas kegiatan.
+    const pesertaPer = await Promise.all(EKSKUL.map(e => pesertaEkskul(e.id, { cepat: true })));
+    for (const [i, e] of EKSKUL.entries()) {
+      const peserta = pesertaPer[i];
       const hadir = hadirSemua[e.id] || {};
       const nilai = nilaiSemua[e.id] || {};
       peserta.forEach(s => {
@@ -326,8 +334,11 @@ async function susunKelas() {
   try {
     const nilaiSemua = await nilaiSeluruhPeriode(aktif.id);
     KELAS = {};
-    for (const e of EKSKUL) {
-      const peserta = await pesertaEkskul(e.id);
+    // Peserta seluruh kegiatan diminta serentak — dulu satu per satu,
+    // enam belas perjalanan bergiliran untuk enam belas kegiatan.
+    const pesertaPer = await Promise.all(EKSKUL.map(e => pesertaEkskul(e.id, { cepat: true })));
+    for (const [i, e] of EKSKUL.entries()) {
+      const peserta = pesertaPer[i];
       const nilai = nilaiSemua[e.id] || {};
       peserta.forEach(s => {
         const k = s.kelas || 'Tanpa kelas';

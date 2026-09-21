@@ -1,9 +1,9 @@
 import { ambilMaster, pesertaEkskul, ambilSesi, simpanSesi, unggahFoto }
-  from '../assets/db.js?v=20260921b';
+  from '../assets/db.js?v=20260921c';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan,
          kompresGambar, hariIni, namaHari, tanggalPanjang, mingguKe, jam, kategoriDari,
          pembimbingDari, dibimbingBersama }
-  from '../assets/ui.js?v=20260921b';
+  from '../assets/ui.js?v=20260921c';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, SISWA = [], STATUS = {};
@@ -19,7 +19,10 @@ try { tandaiMode(); } catch (e) { console.error(e); }
 (async function mulai() {
   if (!AKUN) return;
   try {
-    const m = await ambilMaster();
+    // Master dari simpanan browser — seketika. Bila versi terbarunya
+    // ternyata berbeda, daftar kegiatan disusun ulang tanpa mengganggu
+    // yang sedang dipilih.
+    const m = await ambilMaster(masterBerubah);
     PEMBINA = Object.fromEntries(m.pembina.map(p => [p.id, p.nama]));
     EKSKUL = ekskulBoleh(AKUN, m.ekskul.filter(e => e.aktif !== false));
     if (!EKSKUL.length) {
@@ -31,14 +34,7 @@ try { tandaiMode(); } catch (e) { console.error(e); }
     const tgl = url.get('tanggal') || hariIni();
     el('pilihTanggal').value = tgl;
 
-    const hariNama = namaHari(tgl);
-    const urut = [...EKSKUL].sort((a, b) =>
-      (b.hari === hariNama) - (a.hari === hariNama) || a.nama.localeCompare(b.nama, 'id'));
-    // Tetap diurutkan "hari ini dulu" — itu yang menolong saat melapor. Kategori
-    // cukup ditempelkan pada kegiatan yang bukan ekstrakurikuler.
-    el('pilihEkskul').innerHTML = urut.map(e =>
-      `<option value="${e.id}">${e.nama} — ${e.hari}${
-        kategoriDari(e) !== 'Ekstrakurikuler' ? ` · ${kategoriDari(e)}` : ''}</option>`).join('');
+    isiPilihanEkskul(tgl);
 
     const diminta = url.get('ekskul');
     if (diminta && EKSKUL.some(e => e.id === diminta)) el('pilihEkskul').value = diminta;
@@ -71,6 +67,28 @@ try { tandaiMode(); } catch (e) { console.error(e); }
   } catch (e) { laporError(e); }
 })();
 
+// Tetap diurutkan "hari ini dulu" — itu yang menolong saat melapor. Kategori
+// cukup ditempelkan pada kegiatan yang bukan ekstrakurikuler.
+function isiPilihanEkskul(tgl) {
+  const hariNama = namaHari(tgl);
+  const urut = [...EKSKUL].sort((a, b) =>
+    (b.hari === hariNama) - (a.hari === hariNama) || a.nama.localeCompare(b.nama, 'id'));
+  el('pilihEkskul').innerHTML = urut.map(e =>
+    `<option value="${e.id}">${e.nama} — ${e.hari}${
+      kategoriDari(e) !== 'Ekstrakurikuler' ? ` · ${kategoriDari(e)}` : ''}</option>`).join('');
+}
+
+// Pembaruan latar mendapati master yang berbeda (kegiatan atau pembina
+// berubah di Kesiswaan). Daftarnya disusun ulang; pilihan yang sedang
+// dibuka dipertahankan bila masih ada.
+function masterBerubah(m) {
+  PEMBINA = Object.fromEntries(m.pembina.map(p => [p.id, p.nama]));
+  EKSKUL = ekskulBoleh(AKUN, m.ekskul.filter(e => e.aktif !== false));
+  const dipilih = el('pilihEkskul').value;
+  isiPilihanEkskul(el('pilihTanggal').value || hariIni());
+  if (EKSKUL.some(e => e.id === dipilih)) el('pilihEkskul').value = dipilih;
+}
+
 // ---------------------------------------------------------------- memuat
 async function muatSesi() {
   bersihkanPesan();
@@ -87,12 +105,17 @@ async function muatSesi() {
 
   el('daftarSiswa').innerHTML = '<p class="kosong">Memuat peserta…</p>';
   try {
-    SISWA = await pesertaEkskul(id);
+    // Peserta dan catatan hari itu diminta serentak — keduanya hanya butuh
+    // kegiatan dan tanggal. Dulu bergiliran, dan tiap giliran satu perjalanan.
+    const [siswa, lama] = await Promise.all([
+      pesertaEkskul(id, { cepat: true }),
+      ambilSesi(id, tgl)
+    ]);
+    SISWA = siswa;
     STATUS = {};
     SISWA.forEach(s => { STATUS[s.id] = 'A'; });
     foto = '';
 
-    const lama = await ambilSesi(id, tgl);
     if (lama) {
       statusPembina = lama.sesi.status_pembina || 'H';
       el('tempatLatihan').value = lama.sesi.tempat || '';
