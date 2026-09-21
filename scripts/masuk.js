@@ -1,6 +1,6 @@
-import { ambilMaster, cekPembina } from '../assets/db.js?v=20260920y';
-import { masukSebagai, tandaiMode, laporError, bersihkanPesan, PIN_PENGELOLA }
-  from '../assets/ui.js?v=20260920y';
+import { ambilMaster, cekPembina } from '../assets/db.js?v=20260921b';
+import { masukSebagai, tandaiMode, laporError, bersihkanPesan, PIN_PENGELOLA, pembimbingDari }
+  from '../assets/ui.js?v=20260921b';
 
 const el = id => document.getElementById(id);
 let peran = 'pembina';
@@ -23,7 +23,9 @@ document.addEventListener('keydown', ev => { if (ev.key === 'Enter') masuk(); })
 (async function mulai() {
   try {
     const { pembina, ekskul } = await ambilMaster();
-    const punyaEkskul = new Set(ekskul.filter(e => e.aktif !== false).map(e => e.pembina_id));
+    // Pembimbing kedua sampai kelima sebuah kegiatan bersama juga berhak masuk,
+    // jadi yang dikumpulkan seluruh pembimbingnya, bukan penanggung jawabnya saja.
+    const punyaEkskul = new Set(ekskul.filter(e => e.aktif !== false).flatMap(pembimbingDari));
     const daftar = pembina.filter(p => punyaEkskul.has(p.id));
     el('pilihNama').innerHTML = daftar.map(p => `<option value="${p.id}">${p.nama}</option>`).join('')
       || '<option value="">Belum ada pembina terdaftar</option>';

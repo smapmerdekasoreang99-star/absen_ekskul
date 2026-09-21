@@ -1,7 +1,7 @@
-import { ambilMaster, muatPeriode, namaSiswa } from '../assets/db.js?v=20260920y';
+import { ambilMaster, muatPeriode, namaSiswa } from '../assets/db.js?v=20260921b';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, bersihkanPesan, hariIni,
          tanggalPanjang, tanggalPendek, persen, unduhCSV, jam,
-         kategoriDari } from '../assets/ui.js?v=20260920y';
+         kategoriDari } from '../assets/ui.js?v=20260921b';
 
 const el = id => document.getElementById(id);
 const LABEL = { H: 'Hadir', TH: 'Tidak hadir', KG: 'Ditiadakan' };

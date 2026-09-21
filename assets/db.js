@@ -3,14 +3,14 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260920y';
+import * as CFG from './supabase-client.js?v=20260921b';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
 const G = CFG.SUMBER_GURU || { tabel: 'guru', id: 'id', nama: 'nama', tmt: 'tmt_sekolah' };
 
 // Status pembina diturunkan dari keterkaitannya dengan data guru.
 const berjenis = p => ({ ...p, jenis: p.id_guru ? 'Internal' : 'Eksternal' });
-import * as D from './demo-data.js?v=20260920y';
+import * as D from './demo-data.js?v=20260921b';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -39,6 +39,8 @@ const T = {
   kehadiran: 'ae_kehadiran',
   periode:   'ae_periode',
   nilai:     'ae_nilai',
+  pembimbing:     'ae_ekskul_pembimbing', // daftar pembimbing sebuah kegiatan
+  sesiPembimbing: 'ae_sesi_pembimbing',   // siapa yang hadir membimbing tiap pertemuan
   ...(CFG.TABEL || {})
 };
 
@@ -56,19 +58,53 @@ async function sbSiswa() {
   return c;
 }
 
-// ---------------------------------------------------------------- master
+/* ---------------------------------------------------------------- master
+   Daftar pembimbing ditempelkan ke tiap kegiatan sebagai `pembimbing`, supaya
+   seluruh layar cukup bertanya sekali "siapa saja yang membimbing ini" lewat
+   pembimbingDari() di ui.js. Kegiatan berpembina tunggal tidak punya baris di
+   ae_ekskul_pembimbing, jadi larik ini kosong dan helper itu jatuh ke
+   pembina_id — dua keadaan, seperti yang ditetapkan di database. */
 export async function ambilMaster() {
   if (MODE === 'contoh')
     return { ekskul: salin(D.EKSKUL), pembina: salin(D.PEMBINA).map(berjenis) };
   const c = await sb();
-  const [e, p] = await Promise.all([
+  const [e, p, b] = await Promise.all([
     c.from(T.ekskul).select('*').order('id'),
-    c.from(T.pembinaBaca).select('*').order('nama')
+    c.from(T.pembinaBaca).select('*').order('nama'),
+    c.from(T.pembimbing).select('ekskul_id,pembina_id')
   ]);
+  const ekskul = periksa(e, 'Gagal memuat ekstrakurikuler');
+  const daftar = new Map();
+  periksa(b, 'Gagal memuat daftar pembimbing').forEach(x => {
+    if (!daftar.has(x.ekskul_id)) daftar.set(x.ekskul_id, []);
+    daftar.get(x.ekskul_id).push(x.pembina_id);
+  });
+  ekskul.forEach(x => { x.pembimbing = daftar.get(x.id) || []; });
   return {
-    ekskul: periksa(e, 'Gagal memuat ekstrakurikuler'),
+    ekskul,
     pembina: periksa(p, 'Gagal memuat pembina').map(berjenis)
   };
+}
+
+/* Mengganti seluruh daftar pembimbing sebuah kegiatan.
+   Dihapus dulu lalu diisi ulang, bukan disisipkan satu-satu: daftar ini
+   bermakna sebagai KESELURUHAN — siapa yang tidak ada di dalamnya berarti
+   tidak lagi membimbing, dan itu harus ikut tersimpan.
+
+   Larik kosong berarti kegiatan itu kembali berpembina tunggal. */
+export async function simpanPembimbingKegiatan(ekskulId, daftarPembina) {
+  if (MODE === 'contoh') {
+    const e = D.EKSKUL.find(x => x.id === ekskulId);
+    if (e) e.pembimbing = [...daftarPembina];
+    return;
+  }
+  const c = await sb();
+  periksa(await c.from(T.pembimbing).delete().eq('ekskul_id', ekskulId),
+          'Gagal memperbarui daftar pembimbing');
+  if (!daftarPembina.length) return;
+  periksa(await c.from(T.pembimbing).insert(
+            daftarPembina.map(pembina_id => ({ ekskul_id: ekskulId, pembina_id }))),
+          'Gagal menyimpan daftar pembimbing');
 }
 
 /* Memeriksa PIN pembina DI DATABASE, bukan di peramban.
@@ -229,11 +265,23 @@ export async function ambilSesi(ekskulId, tanggal) {
   );
   const k = {};
   kh.forEach(x => { k[x.siswa_id] = x.status; });
-  return { sesi: s, kehadiran: k };
+  const bp = periksa(
+    await c.from(T.sesiPembimbing).select('pembina_id,status').eq('sesi_id', s.id),
+    'Gagal memuat kehadiran pembimbing'
+  );
+  const pembimbing = {};
+  bp.forEach(x => { pembimbing[x.pembina_id] = x.status; });
+  return { sesi: s, kehadiran: k, pembimbing };
 }
 
+/* `pembimbing` berisi { pembina_id: 'H' | 'TH' } dan HANYA dikirim untuk
+   kegiatan yang dibimbing lebih dari satu orang. Untuk kegiatan berpembina
+   tunggal ia dibiarkan kosong — bukan diisi satu baris — karena tidak adanya
+   baris itulah yang menandai "kehadirannya ada di ae_sesi.status_pembina".
+   Mengisinya juga untuk pembina tunggal akan memindahkan makna tanpa ada yang
+   memintanya, dan dua penanda untuk satu hal selalu berakhir tidak sepakat. */
 export async function simpanSesi(data) {
-  const { kehadiran, ...sesi } = data;
+  const { kehadiran, pembimbing, ...sesi } = data;
   if (MODE === 'contoh') {
     let s = D.SESI.find(x => x.ekskul_id === sesi.ekskul_id && x.tanggal === sesi.tanggal);
     if (s) Object.assign(s, sesi);
@@ -254,6 +302,20 @@ export async function simpanSesi(data) {
   if (isi.length)
     periksa(await c.from(T.kehadiran).upsert(isi, { onConflict: 'sesi_id,siswa_id' }),
             'Gagal menyimpan kehadiran siswa');
+
+  /* Dihapus lebih dulu, SELALU — bukan hanya ketika ada yang mau ditulis.
+     Dua keadaan memerlukannya: pembimbing yang dikeluarkan dari daftar
+     kegiatan tidak boleh meninggalkan catatan kehadiran yang masih ikut
+     membagi honor, dan pertemuan yang diubah menjadi "ditiadakan" harus
+     kehilangan seluruh catatan pembimbingnya. Untuk kegiatan berpembina
+     tunggal perintah ini tidak menyentuh baris apa pun. */
+  const bp = Object.entries(pembimbing || {}).map(([pembina_id, status]) =>
+    ({ sesi_id: baris.id, pembina_id, status }));
+  periksa(await c.from(T.sesiPembimbing).delete().eq('sesi_id', baris.id),
+          'Gagal memperbarui kehadiran pembimbing');
+  if (bp.length)
+    periksa(await c.from(T.sesiPembimbing).insert(bp),
+            'Gagal menyimpan kehadiran pembimbing');
   return baris.id;
 }
 
@@ -442,16 +504,44 @@ export async function nilaiSeluruhPeriode(periodeId) {
   return hasil;
 }
 
-// --------------------------------------------------- data induk pembina
+/* --------------------------------------------------- data induk pembina
+   PIN DISIMPAN TERPISAH, DAN ITU WAJIB — bukan pilihan gaya.
+
+   Hak baca kolom kode_akses sudah dicabut dari anon (migrasi
+   20260920100827, menutup kebocoran PIN). Hak tulisnya masih ada, jadi
+   sekilas menyertakan kode_akses dalam upsert tampak tidak masalah.
+   Ternyata masalah: upsert PostgREST menjadi
+
+       INSERT ... ON CONFLICT (id) DO UPDATE SET kode_akses = excluded.kode_akses
+
+   dan PostgreSQL MENUNTUT hak SELECT atas setiap kolom yang disentuh
+   cabang DO UPDATE — termasuk lewat excluded. Akibatnya seluruh
+   penyimpanan pembina ditolak "permission denied for table ae_pembina"
+   begitu PIN ikut diisi, padahal INSERT biasa maupun UPDATE biasa atas
+   kolom yang sama berjalan normal.
+
+   Jebakannya halus: menyimpan pembina TANPA PIN tetap berhasil, jadi
+   kesalahannya hanya muncul saat seseorang menetapkan PIN baru — persis
+   pekerjaan yang paling jarang dilakukan dan paling sulit dikaitkan
+   dengan migrasi hak akses berbulan-bulan sebelumnya.
+
+   Karena itu barisnya disimpan tanpa kode_akses, lalu PIN-nya ditulis
+   dengan UPDATE tersendiri. Bila langkah kedua gagal, pembinanya sudah
+   tersimpan tetapi belum ber-PIN — keadaan yang terlihat di layar lewat
+   penanda ada_pin, bukan kegagalan yang menghilang tanpa jejak. */
 export async function simpanPembina(baris) {
   if (MODE === 'contoh') {
     const lama = D.PEMBINA.find(p => p.id === baris.id);
     if (lama) Object.assign(lama, baris); else D.PEMBINA.push({ ...baris });
     return;
   }
+  const { kode_akses: pin, ...tanpaPin } = baris;
   const c = await sb();
-  periksa(await c.from(T.pembina).upsert(baris, { onConflict: 'id' }),
+  periksa(await c.from(T.pembina).upsert(tanpaPin, { onConflict: 'id' }),
           'Gagal menyimpan data pembina');
+  if (!pin) return;
+  periksa(await c.from(T.pembina).update({ kode_akses: pin }).eq('id', tanpaPin.id),
+          `Data ${tanpaPin.nama} tersimpan, tetapi PIN-nya gagal disimpan — ulangi pengisian PIN saja`);
 }
 
 export async function hapusPembina(id) {

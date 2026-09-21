@@ -1,11 +1,15 @@
 import { ambilMaster, pesertaEkskul, ambilSesi, simpanSesi, unggahFoto }
-  from '../assets/db.js?v=20260920y';
+  from '../assets/db.js?v=20260921b';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan,
-         kompresGambar, hariIni, namaHari, tanggalPanjang, mingguKe, jam, kategoriDari }
-  from '../assets/ui.js?v=20260920y';
+         kompresGambar, hariIni, namaHari, tanggalPanjang, mingguKe, jam, kategoriDari,
+         pembimbingDari, dibimbingBersama }
+  from '../assets/ui.js?v=20260921b';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, SISWA = [], STATUS = {};
+// Kehadiran tiap pembimbing pada pertemuan yang sedang diisi: { pembina_id: 'H' | 'TH' }.
+// Kosong berarti kegiatannya berpembina tunggal.
+let PEMBIMBING = {};
 let statusPembina = 'H';
 let foto = '';
 
@@ -57,6 +61,9 @@ try { tandaiMode(); } catch (e) { console.error(e); }
         x.setAttribute('aria-pressed', String(x === b)));
       el('kartuSiswa').classList.toggle('sembunyi', statusPembina === 'KG');
       el('kartuFoto').classList.toggle('sembunyi', statusPembina === 'KG');
+      // Pertemuan yang ditiadakan tidak punya pembimbing yang hadir.
+      el('kartuPembimbing').classList.toggle(
+        'sembunyi', statusPembina === 'KG' || !Object.keys(PEMBIMBING).length);
       hitung();
     });
 
@@ -103,11 +110,24 @@ async function muatSesi() {
       el('tempatLatihan').value = e.tempat || '';
     }
 
+    /* Kehadiran pembimbing hanya berlaku bagi kegiatan yang dibimbing lebih
+       dari satu orang. Bawaannya semua hadir, karena itu yang umum terjadi;
+       yang tidak datang tinggal dilepas centangnya. Catatan lama, bila ada,
+       menimpa bawaan itu. */
+    PEMBIMBING = {};
+    if (dibimbingBersama(e)) {
+      pembimbingDari(e).forEach(pid => { PEMBIMBING[pid] = 'H'; });
+      if (lama) Object.entries(lama.pembimbing || {}).forEach(([pid, st]) => {
+        if (PEMBIMBING[pid] !== undefined) PEMBIMBING[pid] = st;
+      });
+    }
+
     [...el('statusPembina').children].forEach(x =>
       x.setAttribute('aria-pressed', String(x.dataset.nilai === statusPembina)));
     el('kartuSiswa').classList.toggle('sembunyi', statusPembina === 'KG');
     el('kartuFoto').classList.toggle('sembunyi', statusPembina === 'KG');
 
+    gambarPembimbing(e);
     gambarFoto();
     gambarSiswa();
   } catch (err) { laporError(err); }
@@ -133,6 +153,28 @@ async function pilihFoto(ev) {
   } finally {
     ev.target.value = '';
   }
+}
+
+/* Daftar centang pembimbing yang hadir.
+
+   Tidak ditampilkan sama sekali untuk kegiatan berpembina tunggal: di situ
+   kehadirannya sudah dijawab tombol "Hadir / Tidak hadir / Ditiadakan" di
+   atas, dan dua tempat untuk satu jawaban hanya membuat orang ragu mana yang
+   berlaku. */
+function gambarPembimbing(e) {
+  const kotak = el('daftarPembimbing');
+  const ada = Object.keys(PEMBIMBING).length > 0;
+  el('kartuPembimbing').classList.toggle('sembunyi', !ada || statusPembina === 'KG');
+  if (!ada) { kotak.innerHTML = ''; return; }
+  kotak.innerHTML = pembimbingDari(e).map(pid => `
+    <label class="pilih-satu">
+      <input type="checkbox" data-pembimbing="${pid}"${PEMBIMBING[pid] === 'H' ? ' checked' : ''}>
+      <span>${PEMBINA[pid] || pid}</span>
+    </label>`).join('');
+  kotak.querySelectorAll('[data-pembimbing]').forEach(b =>
+    b.addEventListener('change', () => {
+      PEMBIMBING[b.dataset.pembimbing] = b.checked ? 'H' : 'TH';
+    }));
 }
 
 function gambarFoto() {
@@ -236,7 +278,8 @@ async function simpan() {
       catatan: el('catatanSesi').value.trim(),
       foto: foto || null,
       dicatat_oleh: el('pencatat').value.trim(),
-      kehadiran: statusPembina === 'KG' ? {} : STATUS
+      kehadiran: statusPembina === 'KG' ? {} : STATUS,
+      pembimbing: statusPembina === 'KG' ? {} : PEMBIMBING
     });
     const hadir = SISWA.filter(s => STATUS[s.id] === 'H').length;
     sukses(statusPembina === 'KG'

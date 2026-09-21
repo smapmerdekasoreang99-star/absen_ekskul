@@ -7,7 +7,7 @@
 <title>Kesiswaan · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo.png">
 <link rel="stylesheet" href="assets/dasar.css?v=2">
-<link rel="stylesheet" href="assets/style.css?v=20260920y">
+<link rel="stylesheet" href="assets/style.css?v=20260921b">
 </head>
 <body class="aplikasi">
 
@@ -86,9 +86,12 @@
       <h2>Data induk kegiatan</h2>
       <p class="ket">Nama, pembina, hari, dan jam latihan. Kegiatan yang
         dinonaktifkan tidak lagi muncul di menu Absensi, tetapi seluruh riwayatnya tetap utuh.
-        <b>Kategori</b> hanya memisahkan pelaporan — semua kategori memakai pendaftaran peserta,
-        laporan pertemuan, dan aturan transport yang sama. Hanya kategori Ekstrakurikuler yang
-        masuk nilai ekskul di rapor.</p>
+        <b>Kategori</b> menentukan dua hal di luar aplikasi ini. Yang pertama, nilai rapor:
+        hanya Ekstrakurikuler yang masuk nilai ekskul. Yang kedua, penghonorannya —
+        <b>Ekstrakurikuler</b> dan <b>Pembinaan Imtaq</b> dibayar per pertemuan menurut jumlah
+        siswa hadir (tarif Imtaq tersendiri), sedangkan <b>Pembinaan Kesiswaan</b> (OSIS)
+        dibayar flat per bulan dan sama sekali tidak dihitung dari pertemuan. Pendaftaran
+        peserta, laporan pertemuan, dan kehadirannya sendiri sama untuk ketiganya.</p>
       <div id="daftarEkskul"><p class="kosong">Memuat…</p></div>
     </section>
 
@@ -96,7 +99,17 @@
       <h2 id="judulFormEkskul">Tambah ekstrakurikuler</h2>
       <div class="baris dua">
         <div><label for="eNama">Nama kegiatan</label><input id="eNama" type="text" placeholder="Contoh: Paduan Suara"></div>
-        <div><label for="ePembina">Pembina</label><select id="ePembina"></select></div>
+        <div><label for="ePembina">Pembina penanggung jawab</label><select id="ePembina"></select></div>
+      </div>
+      <div class="baris">
+        <div>
+          <label>Pembimbing lain</label>
+          <div id="ePembimbing" class="pilih-pembimbing"></div>
+          <p class="ket">Kosongkan bila kegiatan ini dibimbing satu orang saja. Bila dicentang
+            beberapa nama, transport tiap pertemuan <b>dibagi rata</b> kepada pembimbing yang
+            hadir pada pertemuan itu — tarifnya tetap dihitung dari seluruh siswa yang hadir,
+            baru hasilnya dibagi. Penanggung jawab selalu ikut membimbing.</p>
+        </div>
       </div>
       <div class="baris dua">
         <div><label for="eKategori">Kategori</label>
@@ -144,6 +157,6 @@
     <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
 </nav>
 
-<script type="module" src="scripts/kesiswaan.js?v=20260920y"></script>
+<script type="module" src="scripts/kesiswaan.js?v=20260921b"></script>
 </body>
 </html>

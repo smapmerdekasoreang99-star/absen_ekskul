@@ -474,3 +474,26 @@ td.kelompok{background:var(--kertas-3);font-weight:600}
 .isian-tombol{display:flex;gap:var(--j2);align-items:stretch}
 .isian-tombol input{flex:1;min-width:0}
 .isian-tombol .tbl{flex:none;min-height:auto}
+
+/* Daftar centang pembimbing — dipakai di dua tempat: menetapkan siapa saja
+   yang membimbing sebuah kegiatan (Kesiswaan), dan menandai siapa yang hadir
+   pada satu pertemuan (Absensi). Bentuknya sengaja sama di keduanya, karena
+   yang dipilih memang orang yang sama dari daftar yang sama. */
+.pilih-pembimbing{
+  display:flex;flex-wrap:wrap;gap:var(--j2);
+  padding:var(--j2);border:1px solid var(--garis);border-radius:var(--r1);
+  background:var(--kertas-3);
+}
+.pilih-satu{
+  display:inline-flex;align-items:center;gap:var(--j2);
+  padding:var(--j2) var(--j3);border:1px solid var(--garis-2);border-radius:var(--r-bulat);
+  background:var(--kertas-2);font-size:var(--h-s);cursor:pointer;
+  min-height:var(--sentuh);   /* sasaran sentuh di HP: dipakai pembina dari lapangan */
+}
+.pilih-satu:hover{border-color:var(--emas)}
+.pilih-satu input{width:18px;height:18px;flex:none;accent-color:var(--emas)}
+.pilih-satu:has(input:checked){background:var(--emas-muda);border-color:var(--emas)}
+/* Penanggung jawab tidak bisa dilepas: dialah yang tersimpan di ekskul.pembina_id. */
+.pilih-satu.pilih-pj{cursor:default;border-style:dashed}
+.pilih-satu small{color:var(--tinta-2)}
+.pilih-pembimbing .kosong{margin:0;padding:var(--j2)}

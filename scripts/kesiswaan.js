@@ -1,7 +1,9 @@
 import { ambilMaster, simpanPembina, hapusPembina, nomorPembinaBaru, daftarGuru,
-         simpanEkskul, hapusEkskul, nomorEkskulBaru } from '../assets/db.js?v=20260920y';
+         simpanEkskul, hapusEkskul, nomorEkskulBaru,
+         simpanPembimbingKegiatan } from '../assets/db.js?v=20260921b';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan,
-         jam, kategoriDari, perKategori, KATEGORI_BAWAAN } from '../assets/ui.js?v=20260920y';
+         jam, kategoriDari, perKategori, KATEGORI_BAWAAN,
+         pembimbingDari, dibimbingBersama } from '../assets/ui.js?v=20260921b';
 
 // Halaman ini mengelola DATA INDUK ekskul: pembina dan kegiatan. Aturan tarif
 // transport, daftar pembayarannya, dan identitas dokumen sudah pindah —
@@ -52,6 +54,9 @@ el('tabKesiswaan').addEventListener('click', ev => {
     el('batalPembina').addEventListener('click', kosongkanFormPembina);
     el('simpanEkskul').addEventListener('click', simpanFormEkskul);
     el('batalEkskul').addEventListener('click', kosongkanFormEkskul);
+    // Berganti penanggung jawab berarti berganti kotak yang terkunci tercentang;
+    // centangan lain dipertahankan supaya pilihan yang sudah dibuat tidak hilang.
+    el('ePembina').addEventListener('change', () => gambarPilihanPembimbing(pembimbingTercentang()));
   } catch (e) { laporError(e); }
 })();
 
@@ -62,7 +67,9 @@ function gambarPembina() {
     kotak.innerHTML = '<p class="kosong">Belum ada pembina terdaftar.</p>';
     return;
   }
-  const jumlahEkskul = id => EKSKUL.filter(e => e.pembina_id === id).length;
+  // Dihitung dari seluruh pembimbingnya, bukan penanggung jawabnya saja —
+  // kalau tidak, pembimbing kedua sampai kelima tampak tidak memegang apa pun.
+  const jumlahEkskul = id => EKSKUL.filter(e => pembimbingDari(e).includes(id)).length;
 
   /* Dua penanda yang datang dari database, bukan dihitung di sini.
 
@@ -93,7 +100,7 @@ function gambarPembina() {
       + bermasalah.map(p => esc(p.nama) + ' — '
           + (p.nonaktif_di_induk
               ? 'gurunya berstatus nonaktif di Data Induk'
-              : 'belum diberi tugas "Pembina Ekskul" di Data Induk')).join('; ')
+              : 'belum diberi tugas pembinaan (Pembina Ekskul / Pembimbing Tahfidz / Pembina OSIS) di Data Induk')).join('; ')
       + '. Perbaiki di <b>Data Induk → Data Guru / Tugas Guru</b>, atau nonaktifkan pembinanya di sini.';
   }
 
@@ -227,7 +234,7 @@ async function simpanFormPembina() {
 
 async function hapus(id) {
   const p = PEMBINA.find(x => x.id === id);
-  const dipakai = EKSKUL.filter(e => e.pembina_id === id);
+  const dipakai = EKSKUL.filter(e => pembimbingDari(e).includes(id));
   if (dipakai.length) {
     laporError(`${p.nama} masih memegang ${dipakai.map(e => e.nama).join(', ')}. ` +
                'Pindahkan pembinanya dulu lewat menu Data.');
@@ -243,6 +250,38 @@ async function hapus(id) {
 }
 
 // ====================================================== DATA EKSKUL
+/* Daftar centang pembimbing.
+
+   Penanggung jawab selalu tercentang dan tidak bisa dilepas — dialah yang
+   tersimpan di ekskul.pembina_id, dan daftar pembimbing yang tidak memuatnya
+   akan bertentangan dengan barisnya sendiri.
+
+   Yang disimpan hanya bila tercentang LEBIH DARI SATU. Satu orang saja berarti
+   kegiatan berpembina tunggal, dan itu dinyatakan dengan daftar kosong —
+   sama seperti aturan di database, supaya tidak ada keadaan ketiga. */
+function gambarPilihanPembimbing(terpilih = []) {
+  const pj = el('ePembina').value;
+  const dicentang = new Set([...terpilih, pj].filter(Boolean));
+  const kotak = el('ePembimbing');
+  const daftar = [...PEMBINA]
+    .filter(p => p.status !== 'Nonaktif' || dicentang.has(p.id))
+    .sort((a, b) => a.nama.localeCompare(b.nama, 'id'));
+  if (!daftar.length) { kotak.innerHTML = '<p class="kosong">Belum ada pembina terdaftar.</p>'; return; }
+  kotak.innerHTML = daftar.map(p => `
+    <label class="pilih-satu${p.id === pj ? ' pilih-pj' : ''}">
+      <input type="checkbox" value="${p.id}"${dicentang.has(p.id) ? ' checked' : ''}${p.id === pj ? ' disabled' : ''}>
+      <span>${p.nama}${p.id === pj ? ' <small>penanggung jawab</small>' : ''}</span>
+    </label>`).join('');
+}
+
+// Yang tercentang, termasuk penanggung jawab yang kotaknya dinonaktifkan
+// (kotak disabled tidak ikut terbaca bila hanya membaca :checked).
+function pembimbingTercentang() {
+  const pj = el('ePembina').value;
+  const dipilih = [...el('ePembimbing').querySelectorAll('input:checked')].map(x => x.value);
+  return [...new Set([pj, ...dipilih].filter(Boolean))];
+}
+
 function pilihanPembina(terpilih) {
   return [...PEMBINA]
     .filter(p => p.status !== 'Nonaktif' || p.id === terpilih)
@@ -271,7 +310,8 @@ function gambarEkskul() {
       <div class="siswa">
         <span class="nama">${e.nama}
           <small>${e.hari} ${jam(e.jam_mulai)}–${jam(e.jam_selesai)} ·
-            ${nama[e.pembina_id] || 'pembina belum diisi'}${e.tempat ? ' · ' + e.tempat : ''}</small></span>
+            ${pembimbingDari(e).map(id => nama[id]).filter(Boolean).join(', ') || 'pembina belum diisi'}${e.tempat ? ' · ' + e.tempat : ''}</small></span>
+        ${dibimbingBersama(e) ? '<span class="lencana l-ganti">dibimbing ' + pembimbingDari(e).length + ' orang</span>' : ''}
         ${e.aktif === false ? '<span class="lencana l-libur">Nonaktif</span>' : ''}
         <button class="tbl tbl-kecil" data-ubah-e="${e.id}" type="button">Ubah</button>
         <button class="tbl tbl-kecil tbl-hapus" data-hapus-e="${e.id}" type="button">Hapus</button>
@@ -295,6 +335,7 @@ function isiFormEkskul(id) {
   el('eTempat').value = e.tempat || '';
   el('eKategori').value = kategoriDari(e);
   el('eAktif').value = e.aktif === false ? 'Nonaktif' : 'Aktif';
+  gambarPilihanPembimbing(e.pembimbing || []);
   el('judulFormEkskul').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -308,6 +349,7 @@ function kosongkanFormEkskul() {
   el('eMulai').value = '15:30';
   el('eSelesai').value = '17:00';
   el('eAktif').value = 'Aktif';
+  gambarPilihanPembimbing([]);
 }
 
 async function simpanFormEkskul() {
@@ -328,14 +370,20 @@ async function simpanFormEkskul() {
     kategori: el('eKategori').value,
     aktif: el('eAktif').value === 'Aktif'
   };
+  // Satu nama saja berarti berpembina tunggal, dan itu disimpan sebagai
+  // daftar KOSONG — bukan daftar berisi satu orang.
+  const pembimbing = pembimbingTercentang();
   try {
     await simpanEkskul(baris);
+    await simpanPembimbingKegiatan(baris.id, pembimbing.length > 1 ? pembimbing : []);
     const m = await ambilMaster();
     EKSKUL = m.ekskul;
     gambarEkskul();
     gambarPembina();
     kosongkanFormEkskul();
-    sukses(`${nama} tersimpan.`);
+    sukses(pembimbing.length > 1
+      ? `${nama} tersimpan — dibimbing ${pembimbing.length} orang, transport tiap pertemuan dibagi rata.`
+      : `${nama} tersimpan.`);
   } catch (e) { laporError(e); }
 }
 

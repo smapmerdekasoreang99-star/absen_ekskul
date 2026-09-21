@@ -1,5 +1,5 @@
 // Fungsi bersama untuk semua halaman: sesi masuk, format, pesan, foto.
-import { MODE } from './db.js?v=20260920y';
+import { MODE } from './db.js?v=20260921b';
 
 export const PIN_PENGELOLA = 'merdeka2026';
 
@@ -50,11 +50,29 @@ export function wajibMasuk(pengelolaSaja) {
   return s;
 }
 
+/* Siapa saja yang membimbing sebuah kegiatan.
+
+   Dua keadaan, sama seperti yang ditetapkan di database:
+     * ada daftar pembimbing  -> daftar itulah seluruhnya, termasuk
+       penanggung jawabnya, yang memang ikut didaftarkan di dalamnya;
+     * tidak ada daftar       -> pembimbingnya cukup pembina_id.
+
+   Seluruh layar bertanya lewat fungsi ini, tidak ada yang membaca
+   pembina_id sendiri lagi — kalau ada, pembimbing kedua sampai kelima akan
+   terkunci di luar tanpa pesan apa pun. */
+export function pembimbingDari(e) {
+  if (!e) return [];
+  if (Array.isArray(e.pembimbing) && e.pembimbing.length) return e.pembimbing;
+  return e.pembina_id ? [e.pembina_id] : [];
+}
+
+export const dibimbingBersama = e => pembimbingDari(e).length > 1;
+
 // Menyaring daftar ekskul sesuai hak pengguna.
 export function ekskulBoleh(s, daftar) {
   if (!s) return [];
   if (s.peran === 'pengelola') return daftar;
-  return daftar.filter(e => e.pembina_id === s.pembina_id);
+  return daftar.filter(e => pembimbingDari(e).includes(s.pembina_id));
 }
 
 export function tandaiMode() {
@@ -87,10 +105,15 @@ export function bersihkanPesan() {
 }
 
 // ------------------------------------------------------------- kategori
-// Pemisah pelaporan, bukan pemisah mesin: semua kategori memakai pendaftaran
-// peserta, laporan pertemuan, rekap, nilai, dan transport yang sama. Yang
-// berbeda hanya ke mana angkanya dilaporkan — nilai rapor hanya mengambil
-// 'Ekstrakurikuler'.
+// Pemisah pelaporan, bukan pemisah mesin: ketiganya memakai pendaftaran
+// peserta, laporan pertemuan, rekap, dan nilai yang sama persis. Yang berbeda
+// ada di luar aplikasi ini, dan keduanya ditentukan oleh kategori:
+//   * nilai rapor hanya mengambil 'Ekstrakurikuler';
+//   * penghonoran di Induk Pembiayaan — 'Ekstrakurikuler' dan 'Pembinaan
+//     Imtaq' per pertemuan menurut siswa hadir (tarif Imtaq tersendiri),
+//     sedangkan 'Pembinaan Kesiswaan' flat per bulan dan tidak dihitung dari
+//     pertemuan sama sekali. Pertemuannya tetap dicatat di sini, hanya bukan
+//     itu dasar pembayarannya.
 export const KATEGORI = ['Ekstrakurikuler', 'Pembinaan Imtaq', 'Pembinaan Kesiswaan'];
 export const KATEGORI_BAWAAN = 'Ekstrakurikuler';
 // Baris lama (sebelum kolom kategori ada) dianggap Ekstrakurikuler.
