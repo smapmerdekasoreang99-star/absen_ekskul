@@ -1,22 +1,29 @@
 import { ambilMaster, pesertaEkskul, cariSiswaSekolah, daftarKelas, semuaSiswaSekolah,
-         daftarkanPeserta, daftarkanPesertaBanyak, hapusPeserta } from '../assets/db.js?v=20260921d';
-import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan, unduhCSV, jam, perKategori }
-  from '../assets/ui.js?v=20260921d';
+         daftarkanPeserta, daftarkanPesertaBanyak, hapusPeserta } from '../assets/db.js?v=20260923a';
+import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan, unduhCSV, jam, perKategori }
+  from '../assets/ui.js?v=20260923a';
 import { unduhFormatPeserta, bacaBerkasPeserta, cocokkanPeserta }
-  from '../assets/unggah-peserta.js?v=20260921d';
+  from '../assets/unggah-peserta.js?v=20260923a';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, PESERTA = [], HASIL = [], jeda = null;
 let KELAS = [], UNGGAHAN = null;   // UNGGAHAN: hasil pencocokan berkas yang sedang dipratinjau
 
-AKUN = wajibMasuk(true);           // hanya pengelola
+// Pembina boleh mengurus peserta kegiatannya sendiri; pengelola semua kegiatan.
+// Unggah massal tetap khusus pengelola (bagian itu bertanda data-pengelola).
+AKUN = wajibMasuk();
 try { tandaiMode(); } catch (e) { console.error(e); }
 
 (async function mulai() {
   if (!AKUN) return;
   try {
     const m = await ambilMaster();
-    EKSKUL = m.ekskul.filter(e => e.aktif !== false);
+    EKSKUL = ekskulBoleh(AKUN, m.ekskul.filter(e => e.aktif !== false));
+    if (!EKSKUL.length) {
+      el('pilihEkskul').innerHTML = '<option value="">Belum ada kegiatan yang Anda bimbing</option>';
+      el('daftarPeserta').innerHTML = '<p class="kosong">Hubungi Wakasek Kesiswaan bila nama Anda belum tercatat sebagai pembimbing.</p>';
+      return;
+    }
     PEMBINA = Object.fromEntries(m.pembina.map(p => [p.id, p.nama]));
     el('pilihEkskul').innerHTML = perKategori(EKSKUL).map(([kategori, isi]) =>
       `<optgroup label="${kategori}">` + isi.map(e =>

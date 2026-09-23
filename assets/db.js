@@ -3,15 +3,15 @@
 // Konfigurasi diimpor sebagai satu kesatuan, bukan per nama, supaya
 // berkas konfigurasi lama yang belum memuat seluruh pengaturan tetap
 // bisa dimuat dan kekurangannya ditambal oleh nilai bawaan di bawah.
-import * as CFG from './supabase-client.js?v=20260921d';
-import { pakaiRujukan, lupakanRujukan } from './simpanan.js?v=20260921d';
+import * as CFG from './supabase-client.js?v=20260923a';
+import { pakaiRujukan, lupakanRujukan } from './simpanan.js?v=20260923a';
 
 const { klien, klienSiswa, terhubung, SUMBER_SISWA, BUCKET_FOTO } = CFG;
 const G = CFG.SUMBER_GURU || { tabel: 'guru', id: 'id', nama: 'nama', tmt: 'tmt_sekolah' };
 
 // Status pembina diturunkan dari keterkaitannya dengan data guru.
 const berjenis = p => ({ ...p, jenis: p.id_guru ? 'Internal' : 'Eksternal' });
-import * as D from './demo-data.js?v=20260921d';
+import * as D from './demo-data.js?v=20260923a';
 
 export const MODE = terhubung ? 'supabase' : 'contoh';
 
@@ -236,8 +236,9 @@ async function daftarKelasJaringan() {
 
 export async function daftarkanPeserta(ekskulId, siswa) {
   if (MODE === 'contoh') {
-    if (!D.PESERTA.find(p => p.ekskul_id === ekskulId && p.siswa_id === siswa.id))
-      D.PESERTA.push({ ekskul_id: ekskulId, siswa_id: siswa.id, aktif: true,
+    const ada = D.PESERTA.find(p => p.ekskul_id === ekskulId && p.siswa_id === siswa.id);
+    if (ada) ada.aktif = true;   // yang pernah dikeluarkan cukup diaktifkan lagi
+    else D.PESERTA.push({ ekskul_id: ekskulId, siswa_id: siswa.id, aktif: true,
                        nama_siswa: siswa.nama, kelas: siswa.kelas });
     return;
   }
@@ -263,14 +264,19 @@ export async function daftarkanPesertaBanyak(ekskulId, daftar) {
   })), { onConflict: 'ekskul_id,siswa_id' }), 'Gagal mendaftarkan peserta');
 }
 
+// Mengeluarkan peserta = menonaktifkan, bukan menghapus barisnya. Sejak
+// pembina sendiri boleh mengeluarkan peserta, salah tekan harus bisa
+// dipulihkan: mendaftarkan kembali (upsert) cukup menyalakan aktif lagi,
+// dan jejak bahwa siswa pernah terdaftar tetap ada.
 export async function hapusPeserta(ekskulId, siswaId) {
   if (MODE === 'contoh') {
-    const i = D.PESERTA.findIndex(p => p.ekskul_id === ekskulId && p.siswa_id === siswaId);
-    if (i >= 0) D.PESERTA.splice(i, 1);
+    const p = D.PESERTA.find(p => p.ekskul_id === ekskulId && p.siswa_id === siswaId);
+    if (p) p.aktif = false;
     return;
   }
   const c = await sb();
-  periksa(await c.from(T.peserta).delete().eq('ekskul_id', ekskulId).eq('siswa_id', siswaId),
+  periksa(await c.from(T.peserta).update({ aktif: false })
+            .eq('ekskul_id', ekskulId).eq('siswa_id', siswaId),
           'Gagal mengeluarkan peserta');
 }
 
