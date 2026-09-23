@@ -23,7 +23,9 @@ app/
   rekap.html        Rekap rentang tanggal: per ekskul / per pertemuan / per siswa
   data.html         Pendaftaran peserta (cari atau unggah XLSX/CSV): pembina untuk
                     kegiatannya, pengelola semua kegiatan
-  assets/           style.css, logo.png, db.js, ui.js, demo-data.js, supabase-client.js,
+  assets/           style.css, logo.png (kop dokumen), logo-kecil.png (header & ikon),
+                    db.js, ui.js, demo-data.js, supabase-client.js, simpanan.js,
+                    vendor/supabase-js-*.js (salinan lokal pustaka Supabase, satu berkas),
                     unggah-peserta.js (baca XLSX/CSV + pencocokan nama)
   scripts/          masuk.js, beranda.js, absensi.js, rekap.js, data.js
 db/

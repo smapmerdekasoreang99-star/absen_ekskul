@@ -1,9 +1,9 @@
 import { ambilMaster, pesertaEkskul, cariSiswaSekolah, daftarKelas, semuaSiswaSekolah,
-         daftarkanPeserta, daftarkanPesertaBanyak, hapusPeserta } from '../assets/db.js?v=20260923a';
+         daftarkanPeserta, daftarkanPesertaBanyak, hapusPeserta } from '../assets/db.js?v=20260923b';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan, unduhCSV, jam, perKategori }
-  from '../assets/ui.js?v=20260923a';
+  from '../assets/ui.js?v=20260923b';
 import { unduhFormatPeserta, bacaBerkasPeserta, cocokkanPeserta }
-  from '../assets/unggah-peserta.js?v=20260923a';
+  from '../assets/unggah-peserta.js?v=20260923b';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, PESERTA = [], HASIL = [], jeda = null;

@@ -57,11 +57,22 @@ const punyaSumberTerpisah = () =>
 
 let _klien = null, _klienSiswa = null;
 
+// Pustaka Supabase dimuat dari salinan lokal (satu berkas, server yang sama
+// dengan halamannya). Dari CDN, berkas ini menarik delapan berkas lain
+// dalam tiga tingkat berurutan di domain ketiga — di HP dengan sinyal
+// pas-pasan itulah yang membuat halaman masuk tertahan di "Memuat…".
+// CDN tetap dicoba sebagai cadangan bila salinan lokal gagal dimuat.
+const PUSTAKA_LOKAL = './vendor/supabase-js-2.117.0.js';
+const PUSTAKA_CDN   = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/+esm';
+
 async function buat(url, key) {
-  const { createClient } = await import(
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
-  );
-  return createClient(url, key);
+  let modul;
+  try { modul = await import(PUSTAKA_LOKAL); }
+  catch (e) {
+    console.warn('Pustaka Supabase lokal gagal dimuat, memakai CDN:', e.message);
+    modul = await import(PUSTAKA_CDN);
+  }
+  return modul.createClient(url, key);
 }
 
 export async function klien() {
