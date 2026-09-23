@@ -1,4 +1,4 @@
-| Pengelola sekolah | Semua ekstrakurikuler, rekap penuh, pendaftaran peserta termasuk unggah massal || Pembina / pelatih | Melapor untuk ekstrakurikulernya sendiri, melihat rekapnya, menambah dan mengeluarkan pesertanya satu per satu |# Absensi Ekstrakurikuler — SMA Plus Merdeka Soreang
+pendaftaran peserta semua kegiatan |menambah (satu per satu atau unggah XLSX/CSV) dan mengeluarkan pesertanya || Pengelola sekolah | Semua ekstrakurikuler, rekap penuh, pendaftaran peserta termasuk unggah massal || Pembina / pelatih | Melapor untuk ekstrakurikulernya sendiri, melihat rekapnya, menambah dan mengeluarkan pesertanya satu per satu |# Absensi Ekstrakurikuler — SMA Plus Merdeka Soreang
 
 Aplikasi web untuk **pelaporan kegiatan ekstrakurikuler oleh pembina langsung
 dari HP**: kehadiran pembina, kehadiran siswa peserta, dan foto kegiatan.
@@ -21,8 +21,8 @@ app/
   index.html        Beranda: latihan hari ini + ringkasan tujuh hari terakhir
   absensi.html      Laporan satu pertemuan: status pembina, foto, kehadiran siswa
   rekap.html        Rekap rentang tanggal: per ekskul / per pertemuan / per siswa
-  data.html         Pendaftaran peserta: pembina untuk kegiatannya, pengelola semua
-                    (unggah massal XLSX/CSV hanya pengelola)
+  data.html         Pendaftaran peserta (cari atau unggah XLSX/CSV): pembina untuk
+                    kegiatannya, pengelola semua kegiatan
   assets/           style.css, logo.png, db.js, ui.js, demo-data.js, supabase-client.js,
                     unggah-peserta.js (baca XLSX/CSV + pencocokan nama)
   scripts/          masuk.js, beranda.js, absensi.js, rekap.js, data.js
@@ -39,8 +39,8 @@ pratinjau_absensi_ekskul.html   Satu berkas mandiri untuk melihat tampilannya
 
 | Peran | Bisa melakukan |
 |---|---|
-| Pembina / pelatih | Melapor untuk ekstrakurikulernya sendiri, melihat rekapnya, menambah dan mengeluarkan pesertanya satu per satu |
-| Pengelola sekolah | Semua ekstrakurikuler, rekap penuh, pendaftaran peserta termasuk unggah massal |
+| Pembina / pelatih | Melapor untuk ekstrakurikulernya sendiri, melihat rekapnya, menambah (satu per satu atau unggah XLSX/CSV) dan mengeluarkan pesertanya |
+| Pengelola sekolah | Semua ekstrakurikuler, rekap penuh, pendaftaran peserta semua kegiatan |
 
 Pembina masuk dengan memilih namanya lalu mengisi PIN pribadi (kolom
 `kode_akses` di tabel `pembina`). PIN pengelola ada di `app/assets/ui.js`

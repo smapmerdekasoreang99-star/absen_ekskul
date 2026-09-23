@@ -9,8 +9,8 @@ const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, PESERTA = [], HASIL = [], jeda = null;
 let KELAS = [], UNGGAHAN = null;   // UNGGAHAN: hasil pencocokan berkas yang sedang dipratinjau
 
-// Pembina boleh mengurus peserta kegiatannya sendiri; pengelola semua kegiatan.
-// Unggah massal tetap khusus pengelola (bagian itu bertanda data-pengelola).
+// Pembina boleh mengurus peserta kegiatannya sendiri, termasuk unggah massal;
+// pengelola semua kegiatan.
 AKUN = wajibMasuk();
 try { tandaiMode(); } catch (e) { console.error(e); }
 
