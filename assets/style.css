@@ -196,6 +196,25 @@ textarea{min-height:80px;resize:vertical;line-height:1.5}
 .pilih-peran button:hover{border-color:var(--tinta-3)}
 .pilih-peran button[aria-pressed="true"]{background:var(--gelap);border-color:var(--gelap);color:var(--tinta-terang)}
 
+/* ---- Rentang cepat di Rekap ----
+   Jenis (Mingguan/Bulanan) di atas, penggeser ◀ label ▶ di bawahnya. Yang
+   sedang berlaku berwarna emas; rentang isian sendiri membuat semuanya polos. */
+.rentang-cepat{display:grid;gap:var(--j2);margin-bottom:var(--j3)}
+.rentang-jenis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--j2)}
+.rentang-geser{display:grid;grid-template-columns:48px minmax(0,1fr) 48px;gap:var(--j2)}
+.rentang-cepat button{
+  font-family:inherit;font-size:var(--h-s);font-weight:600;cursor:pointer;
+  border:1px solid var(--garis-2);background:var(--emas-kabut);color:var(--tinta-2);
+  border-radius:var(--r2);padding:var(--j2) var(--j2);min-height:40px;
+}
+.rentang-cepat button:hover{border-color:var(--emas);background:var(--emas-muda);color:var(--tinta)}
+.rentang-cepat button[aria-pressed="true"],
+.rentang-cepat #rentangLabel.aktif{
+  background:var(--emas);border-color:var(--emas-tua);color:#2A2114;font-weight:700;box-shadow:var(--bayang-1);
+}
+.rentang-cepat #rentangLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rentang-cepat #rentangLabel small{font-weight:500;margin-left:6px}
+
 /* ---- Daftar siswa ---- */
 .cari-siswa{margin-bottom:var(--j3)}
 .siswa{

@@ -1,9 +1,10 @@
 import { ambilMaster, pesertaEkskul, cariSiswaSekolah, daftarKelas, semuaSiswaSekolah,
-         daftarkanPeserta, daftarkanPesertaBanyak, hapusPeserta } from '../assets/db.js?v=20260923b';
-import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan, unduhCSV, jam, perKategori }
-  from '../assets/ui.js?v=20260923b';
+         daftarkanPeserta, daftarkanPesertaBanyak, hapusPeserta, ambilPengaturan } from '../assets/db.js?v=20260928d';
+import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan, jam, perKategori,
+         isianBlanko } from '../assets/ui.js?v=20260928d';
+import { unduhBlankoHadirXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260928c';
 import { unduhFormatPeserta, bacaBerkasPeserta, cocokkanPeserta }
-  from '../assets/unggah-peserta.js?v=20260923b';
+  from '../assets/unggah-peserta.js?v=20260928d';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, PESERTA = [], HASIL = [], jeda = null;
@@ -34,9 +35,11 @@ try { tandaiMode(); } catch (e) { console.error(e); }
       jeda = setTimeout(cari, 350);
     });
     el('filterKelas').addEventListener('change', cari);
-    el('unduhPeserta').addEventListener('click', unduh);
+    el('unduhBlanko').addEventListener('click', unduhBlanko);
     el('unduhFormat').addEventListener('click', unduhFormat);
     el('berkasPeserta').addEventListener('change', bacaUnggahan);
+    ambilPengaturan().then(pakaiIdentitas)
+      .catch(e => console.warn('Pengaturan dokumen belum terbaca:', e.message));
 
     try {
       KELAS = await daftarKelas();
@@ -259,11 +262,16 @@ function tutupUnggahan() {
   el('berkasPeserta').value = '';   // supaya berkas yang sama bisa dipilih lagi
 }
 
-function unduh() {
-  if (!PESERTA.length) { laporError('Belum ada peserta untuk diunduh.'); return; }
-  const e = EKSKUL.find(x => x.id === el('pilihEkskul').value);
-  unduhCSV(`peserta_${(e ? e.nama : 'ekskul').replace(/\s+/g, '_')}.csv`, [
-    ['Nama siswa', 'Kelas'],
-    ...PESERTA.map(s => [s.nama, s.kelas || ''])
-  ]);
+// Blanko yang sama persis dengan di halaman Absen Siswa.
+async function unduhBlanko() {
+  bersihkanPesan();
+  const e = ekskulTerpilih();
+  if (!e) { laporError('Pilih kegiatannya dulu.'); return; }
+  const tombol = el('unduhBlanko'), semula = tombol.textContent;
+  tombol.disabled = true;
+  tombol.textContent = 'Menyiapkan…';
+  try {
+    await unduhBlankoHadirXLSX(isianBlanko(e, PEMBINA, PESERTA));
+  } catch (err) { laporError(err); }
+  finally { tombol.disabled = false; tombol.textContent = semula; }
 }

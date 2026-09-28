@@ -7,17 +7,17 @@
 <title>Nilai akhir · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo-kecil.png">
 <link rel="stylesheet" href="assets/dasar.css?v=2">
-<link rel="stylesheet" href="assets/style.css?v=20260928c">
+<link rel="stylesheet" href="assets/style.css?v=20260928d">
 <!-- Sambungan ke database disiapkan lebih awal, dan seluruh modul skrip
      diminta sekaligus — bukan tiga tingkat berurutan mengikuti rantai impor. -->
 <link rel="preconnect" href="https://xgtoneyvzfvfbidicotq.supabase.co" crossorigin>
-<link rel="modulepreload" href="assets/db.js?v=20260923b">
-<link rel="modulepreload" href="assets/ui.js?v=20260923b">
+<link rel="modulepreload" href="assets/db.js?v=20260928d">
+<link rel="modulepreload" href="assets/ui.js?v=20260928d">
 <link rel="modulepreload" href="assets/supabase-client.js?v=20260923b">
 <link rel="modulepreload" href="assets/simpanan.js?v=20260923b">
 <link rel="modulepreload" href="assets/demo-data.js?v=20260923b">
 <link rel="modulepreload" href="assets/vendor/supabase-js-2.117.0.js">
-<link rel="modulepreload" href="assets/dokumen.js?v=20260928b">
+<link rel="modulepreload" href="assets/dokumen.js?v=20260928c">
 <link rel="modulepreload" href="assets/sekolah.js?v=20260923b">
 </head>
 <body class="aplikasi ada-bar">
@@ -117,7 +117,7 @@
         <option value="C">Semua C — Cukup</option>
       </select>
       <button class="tbl tbl-kecil" id="terapkan" type="button">Terapkan</button>
-      <button class="tbl tbl-kecil" id="unduhNilai" type="button">Unduh kegiatan ini (CSV)</button>
+      <button class="tbl tbl-kecil" id="unduhNilai" type="button">Unduh Daftar Nilai (xlsx)</button>
       <button class="tbl tbl-kecil" id="unduhSemua" type="button" data-pengelola>Unduh semua kegiatan (CSV)</button>
     </div>
     <div id="daftarNilai"><p class="kosong">Memuat…</p></div>
@@ -172,7 +172,7 @@
   <a href="index.html">
     <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Beranda</a>
   <a href="absensi.html">
-    <svg viewBox="0 0 24 24"><path d="M9 4h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3z"/><path d="M8.5 13l2 2 4.5-4.5"/></svg>Absensi</a>
+    <svg viewBox="0 0 24 24"><path d="M9 4h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3z"/><path d="M8.5 13l2 2 4.5-4.5"/></svg>Absen Siswa</a>
   <a href="rekap.html">
     <svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>Rekap</a>
   <a href="nilai.html" aria-current="page">
@@ -184,6 +184,6 @@
 </nav>
 
 <script src="assets/kop-dokumen.js?v=5"></script>
-<script type="module" src="scripts/nilai.js?v=20260928a"></script>
+<script type="module" src="scripts/nilai.js?v=20260928d"></script>
 </body>
 </html>

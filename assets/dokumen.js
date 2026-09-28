@@ -172,6 +172,150 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, namaBerkas, j
          namaBerkas);
 }
 
+// =====================================================================
+// C. TABEL BERKOP (28 September 2026)
+// Satu penulis untuk unduhan tabel di Rekap, Daftar Nilai, dan Blanko
+// Daftar Hadir, mengikuti standar Profil Dokumen di Data Induk:
+// kop → keterangan → tabel → catatan kaki → tanda tangan.
+//
+//   judul, sub     tulisan di bawah identitas sekolah
+//   keterangan     [[label, isi]] di atas tabel, mis. Kegiatan, Pembina
+//   kolom          [{ t, w, rata: 'left'|'center'|'right', bungkus }]
+//   baris          [[nilai…]]; sel boleh { v, rata, indent }
+//   jumlah         baris penutup bertebal, boleh null
+//   catatanBawah   [teks] tepat di bawah tabel
+//   tinggiBaris    tinggi baris isi (poin), mis. untuk ruang paraf
+//   ttd            blok untuk KopDokumen.ttdExcel — lihat ttdPembina()
+//   melintang      true untuk kertas lanskap
+// =====================================================================
+const namaLembar = t => String(t || 'Lembar').replace(/[\\/*?:[\]]/g, '-').slice(0, 31);
+
+async function tulisTabel(wb, o) {
+  const kolom = o.kolom, K = kolom.length;
+  const ws = wb.addWorksheet(namaLembar(o.lembar || o.judul), {
+    pageSetup: { paperSize: 9, orientation: o.melintang ? 'landscape' : 'portrait',
+                 fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true,
+                 margins: { left: 0.5, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } }
+  });
+  ws.columns = kolom.map(k => ({ width: k.w || 12 }));
+  let r = await kop(ws, wb, o.judul, o.sub || '', K);
+
+  const biasa = { name: 'Calibri', size: 10, color: { argb: TINTA } };
+  const barisPenuh = (teks, font) => {
+    if (K > 1) ws.mergeCells(r, 1, r, K);
+    const c = ws.getCell(r, 1);
+    c.value = teks;
+    if (font) c.font = font;
+    c.alignment = { vertical: 'middle', horizontal: 'left' };
+    ws.getRow(r).height = 18;
+    r++;
+  };
+  (o.keterangan || []).forEach(([label, isi]) => barisPenuh({ richText: [
+    { text: label + ' : ', font: { ...biasa, bold: true } },
+    { text: String(isi ?? ''), font: biasa }] }));
+  if ((o.keterangan || []).length) r++;
+
+  const rKepala = r;
+  barisJudulTabel(ws, r, kolom.map(k => k.t));
+  r++;
+  o.baris.forEach(b => {
+    kolom.forEach((k, j) => {
+      const x = b[j];
+      const obj = x !== null && typeof x === 'object' && 'v' in x;
+      const sel = selIsi(ws, r, j + 1, obj ? x.v : (x ?? ''),
+                         { rata: (obj && x.rata) || k.rata, bungkus: k.bungkus });
+      if (obj && x.indent) sel.alignment = { ...sel.alignment, indent: x.indent };
+    });
+    if (o.tinggiBaris) ws.getRow(r).height = o.tinggiBaris;
+    r++;
+  });
+  if (o.jumlah) {
+    kolom.forEach((k, j) => {
+      const sel = selIsi(ws, r, j + 1, o.jumlah[j] ?? '', { rata: k.rata, tebal: true });
+      sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ABU_MUDA } };
+    });
+    r++;
+  }
+  if ((o.catatanBawah || []).length) {
+    r++;
+    o.catatanBawah.forEach(t => barisPenuh(t, biasa));
+  }
+
+  r = kopBersama().kakiExcel(ws, r + 1, { profil: profilKop(), kolomAkhir: K });
+  if ((o.ttd || []).length) kopBersama().ttdExcel(ws, r + 1, { kolomAkhir: K, blok: o.ttd });
+  ws.pageSetup.printTitlesRow = `${rKepala}:${rKepala}`;
+  return ws;
+}
+
+export async function unduhTabelXLSX(o) {
+  const ExcelJS = await excel();
+  const wb = new ExcelJS.Workbook();
+  await tulisTabel(wb, o);
+  const buf = await wb.xlsx.writeBuffer();
+  simpan(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+         o.namaBerkas);
+}
+
+/* Blok tanda tangan. Pembina menandatangani berkas kegiatannya sendiri;
+   berkas yang memuat kegiatan beberapa pembina ditandatangani Wakasek
+   Kesiswaan. `tanggal: false` untuk blanko yang tanggalnya ditulis tangan. */
+export function ttdPembina(nama, jabatan = 'Pembina Ekskul,', { tanggal = true } = {}) {
+  return { atas: [`${ID.kota}, ${tanggal ? tanggalCetak() : '......................'}`, jabatan], nama };
+}
+export function ttdKesiswaan() {
+  return { atas: [`${ID.kota}, ${tanggalCetak()}`, 'Wakasek Kesiswaan,'], nama: ID.kesiswaan };
+}
+
+// =====================================================================
+// D. BLANKO DAFTAR HADIR PER PERTEMUAN (28 September 2026)
+// Satu lembar untuk satu pertemuan: tanggal, tempat, dan materi dikosongkan
+// untuk ditulis tangan; tiap peserta mendapat kotak tanda tangan berselang
+// kiri-kanan (1 di kiri, 2 di kanan, …) supaya paraf tidak bertumpuk.
+// Dipakai halaman Absen Siswa dan Data — berkasnya sama persis.
+//
+//   pembina   daftar nama pembimbing (paling banyak tiga yang bertanda tangan)
+//   peserta   [{ nama, kelas }]
+// =====================================================================
+export async function unduhBlankoHadirXLSX({ kegiatan, kategori, jadwal, tempat, pembina = [], peserta, namaBerkas }) {
+  const titik = '..............................................';
+  const cadangan = 3;   // baris kosong untuk peserta yang belum terdaftar
+  const baris = [...peserta, ...Array.from({ length: cadangan }, () => ({ nama: '', kelas: '' }))]
+    .map((s, i) => {
+      const no = i + 1;
+      return [no, s.nama, s.kelas || '',
+              { v: `${no}.`, rata: 'left', indent: no % 2 ? 0 : 11 }, ''];
+    });
+  const nama = pembina.filter(Boolean);
+  const ttd = (nama.length ? nama : ['']).slice(0, 3).map((n, i, semua) =>
+    i === semua.length - 1 ? ttdPembina(n, 'Pembina,', { tanggal: false })
+                           : { atas: ['', 'Pembina,'], nama: n });
+  await unduhTabelXLSX({
+    judul: `DAFTAR HADIR ${(kategori || 'Ekstrakurikuler').toUpperCase()}`,
+    sub: `${kegiatan}${ID.tahunAjaran ? ` · Tahun Pelajaran ${ID.tahunAjaran}` : ''}`,
+    lembar: 'Daftar Hadir',
+    keterangan: [
+      ['Kegiatan', kegiatan],
+      ['Pembina', nama.join(', ') || titik],
+      ['Jadwal', jadwal || titik],
+      ['Hari/Tanggal', titik],
+      ['Tempat', tempat || titik],
+      ['Materi', titik]
+    ],
+    kolom: [
+      { t: 'No.', w: 5, rata: 'center' },
+      { t: 'Nama Siswa', w: 32 },
+      { t: 'Kelas', w: 9, rata: 'center' },
+      { t: 'Tanda Tangan', w: 30 },
+      { t: 'Keterangan', w: 14 }
+    ],
+    baris,
+    tinggiBaris: 24,
+    catatanBawah: [`Jumlah hadir : ............ dari ${peserta.length} peserta`],
+    ttd,
+    namaBerkas
+  });
+}
+
 // ---- PNG: digambar langsung di canvas, tanpa pustaka luar ------------
 export async function unduhNilaiKelasPNG({ kelas, periode, baris, namaBerkas, judulKategori }) {
   const skala = 2;                    // supaya tajam di layar HP

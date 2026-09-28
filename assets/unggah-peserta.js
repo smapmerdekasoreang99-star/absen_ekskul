@@ -11,7 +11,7 @@
 //   2. bacaBerkasPeserta   — membaca XLSX/CSV menjadi baris {nama, kelas};
 //   3. cocokkanPeserta     — memutuskan nasib tiap baris tanpa menyentuh
 //                            jaringan, supaya mudah diuji.
-import { pustakaExcel } from './dokumen.js?v=20260928b';
+import { pustakaExcel } from './dokumen.js?v=20260928c';
 
 export const KOLOM = { nama: 'Nama siswa', kelas: 'Kelas' };
 
@@ -46,14 +46,13 @@ export async function unduhFormatPeserta(daftarKelas, namaEkskul) {
   const wp = wb.addWorksheet('Petunjuk');
   wp.columns = [{ width: 96 }];
   [
-    `Format daftar peserta${namaEkskul ? ' — ' + namaEkskul : ''}`,
+    `Template berkas daftar peserta${namaEkskul ? ' — ' + namaEkskul : ''}`,
     '',
     '1. Isi lembar "Peserta": satu siswa satu baris, mulai baris kedua.',
     `2. Kolom "${KOLOM.nama}" wajib. Tulis sesuai data sekolah; huruf besar-kecil dan tanda baca tidak dipersoalkan.`,
     `3. Kolom "${KOLOM.kelas}" dianjurkan, supaya siswa yang namanya sama tidak tertukar. Bila kosong, dicocokkan dari nama saja selama namanya hanya satu.`,
     '4. Baris judul jangan diubah. Kolom lain, kalau ada, diabaikan.',
-    '5. Sebelum disimpan, aplikasi menampilkan hasil pencocokan tiap baris. Siswa yang tidak ditemukan di data sekolah tidak didaftarkan — periksa ejaannya lewat kotak pencarian.',
-    '6. Berkas CSV hasil "Unduh daftar peserta" juga bisa diunggah, misalnya untuk menyalin peserta ke kegiatan lain.'
+    '5. Sebelum disimpan, aplikasi menampilkan hasil pencocokan tiap baris. Siswa yang tidak ditemukan di data sekolah tidak didaftarkan — periksa ejaannya lewat kotak pencarian.'
   ].forEach((t, i) => {
     const sel = wp.getCell(i + 1, 1);
     sel.value = t;
@@ -65,7 +64,7 @@ export async function unduhFormatPeserta(daftarKelas, namaEkskul) {
   const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `format_peserta${namaEkskul ? '_' + namaEkskul.replace(/\s+/g, '_') : ''}.xlsx`;
+  a.download = `template_peserta${namaEkskul ? '_' + namaEkskul.replace(/\s+/g, '_') : ''}.xlsx`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -166,7 +165,7 @@ export function ambilBaris(tabel) {
   }
   if (iJudul < 0)
     throw new Error(`Baris judul tidak ditemukan. Baris pertama tabel harus memuat kolom "${KOLOM.nama}" ` +
-                    `(dan sebaiknya "${KOLOM.kelas}"). Unduh formatnya bila ragu.`);
+                    `(dan sebaiknya "${KOLOM.kelas}"). Unduh Template Berkas bila ragu.`);
   const baris = [];
   for (let i = iJudul + 1; i < tabel.length; i++) {
     const nama = (tabel[i][kNama] || '').trim();

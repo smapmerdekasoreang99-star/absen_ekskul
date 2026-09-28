@@ -1,5 +1,5 @@
 // Fungsi bersama untuk semua halaman: sesi masuk, format, pesan, foto.
-import { MODE } from './db.js?v=20260923b';
+import { MODE } from './db.js?v=20260928d';
 
 export const PIN_PENGELOLA = 'merdeka2026';
 
@@ -184,6 +184,19 @@ export function unduhCSV(namaBerkas, barisBaris) {
   document.body.appendChild(a);
   a.click();
   a.remove();
+}
+
+/* Isian Blanko Daftar Hadir untuk satu kegiatan. Dipakai halaman Absen
+   Siswa dan Data dari satu tempat supaya berkas keduanya sama persis. */
+export function isianBlanko(e, namaPembina, peserta) {
+  return {
+    kegiatan: e.nama, kategori: kategoriDari(e),
+    jadwal: `${e.hari} ${jam(e.jam_mulai)}–${jam(e.jam_selesai)}`,
+    tempat: e.tempat || '',
+    pembina: pembimbingDari(e).map(id => namaPembina[id]).filter(Boolean),
+    peserta: peserta.map(s => ({ nama: s.nama, kelas: s.kelas || '' })),
+    namaBerkas: `blanko_daftar_hadir_${String(e.nama).replace(/[^\w-]+/g, '_')}.xlsx`
+  };
 }
 
 export function rupiah(n) {

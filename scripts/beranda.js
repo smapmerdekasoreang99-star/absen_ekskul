@@ -1,6 +1,6 @@
-import { ambilMaster, muatPeriode } from '../assets/db.js?v=20260923b';
+import { ambilMaster, muatPeriode } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, hariIni, namaHari,
-         tanggalPanjang, persen, jam } from '../assets/ui.js?v=20260923b';
+         tanggalPanjang, persen, jam } from '../assets/ui.js?v=20260928d';
 
 const AKUN = wajibMasuk(false);
 try { tandaiMode(); } catch (e) { console.error(e); }
@@ -40,7 +40,7 @@ function baris(a, b) {
     const list = ekskul.filter(e => e.hari === hariNama);
     if (!list.length) {
       kotak.innerHTML = `<p class="kosong">Tidak ada jadwal latihan pada hari ${hariNama}.` +
-        ' Laporan susulan tetap bisa diisi lewat menu Absensi.</p>';
+        ' Laporan susulan tetap bisa diisi lewat menu Absen Siswa.</p>';
     } else {
       kotak.innerHTML = list.map(e => `
         <a class="jadwal-hari" style="text-decoration:none;color:inherit"

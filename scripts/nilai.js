@@ -1,11 +1,11 @@
 import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPeriode,
          ambilNilai, simpanNilai, kehadiranPerSiswa, kehadiranSemua,
-         nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260923b';
+         nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
          bersihkanPesan, tanggalPanjang, persen, unduhCSV,
-         kategoriDari, perKategori } from '../assets/ui.js?v=20260923b';
-import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG, pakaiIdentitas }
-  from '../assets/dokumen.js?v=20260928b';
+         kategoriDari, perKategori } from '../assets/ui.js?v=20260928d';
+import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG, pakaiIdentitas, unduhTabelXLSX, ttdPembina }
+  from '../assets/dokumen.js?v=20260928c';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };
@@ -252,19 +252,45 @@ async function simpan() {
   }
 }
 
-function unduh() {
+/* Daftar nilai satu kegiatan, berkop Profil Dokumen dan ditandatangani
+   pembinanya. Isinya yang tampak di layar, termasuk yang belum disimpan. */
+async function unduh() {
+  bersihkanPesan();
   if (!SISWA.length) { laporError('Belum ada peserta untuk diunduh.'); return; }
   const e = EKSKUL.find(x => x.id === el('pilihEkskul').value);
+  if (!e) return;
   const isi = Object.fromEntries(kumpulkan().map(x => [x.siswa_id, x]));
-  unduhCSV(`nilai_${(e ? e.nama : 'ekskul').replace(/\s+/g, '_')}.csv`, [
-    ['Nama siswa', 'Kelas', 'Pertemuan', 'Hadir', '% Kehadiran', 'Nilai', 'Keterangan', 'Deskripsi'],
-    ...SISWA.map(s => {
-      const h = HADIR[s.id] || { H: 0, total: 0 };
-      const n = isi[s.id] || {};
-      return [s.nama, s.kelas || '', h.total, h.H, persen(h.H, h.total),
-              n.predikat || '', PREDIKAT[n.predikat] || '', n.deskripsi || ''];
-    })
-  ]);
+  const pembina = AKUN.peran === 'pembina' ? AKUN.nama : (PEMBINA_NAMA[e.pembina_id] || '');
+  const periode = aktif ? `Tahun Pelajaran ${aktif.tahun_ajaran} · Semester ${aktif.semester}` : '';
+  const tombol = el('unduhNilai'), semula = tombol.textContent;
+  tombol.disabled = true;
+  tombol.textContent = 'Menyiapkan…';
+  try {
+    await unduhTabelXLSX({
+      judul: `DAFTAR NILAI ${kategoriDari(e).toUpperCase()}`,
+      sub: [e.nama, periode].filter(Boolean).join(' · '),
+      lembar: 'Daftar Nilai',
+      melintang: true,
+      keterangan: [['Kegiatan', `${e.nama} (${kategoriDari(e)})`], ['Pembina', pembina || '—'],
+                   ...(aktif ? [['Periode', `${tanggalPanjang(aktif.tanggal_mulai)} – ${tanggalPanjang(aktif.tanggal_selesai)}`]] : [])],
+      kolom: [
+        { t: 'No.', w: 5, rata: 'center' }, { t: 'Nama Siswa', w: 30 }, { t: 'Kelas', w: 9, rata: 'center' },
+        { t: 'Pertemuan', w: 11, rata: 'center' }, { t: 'Hadir', w: 8, rata: 'center' },
+        { t: '% Kehadiran', w: 12, rata: 'center' }, { t: 'Nilai', w: 8, rata: 'center' },
+        { t: 'Keterangan', w: 16 }, { t: 'Deskripsi', w: 44, bungkus: true }
+      ],
+      baris: SISWA.map((s, i) => {
+        const h = HADIR[s.id] || { H: 0, total: 0 };
+        const n = isi[s.id] || {};
+        return [i + 1, s.nama, s.kelas || '', h.total, h.H, h.total ? persen(h.H, h.total) + '%' : '—',
+                n.predikat || '', PREDIKAT[n.predikat] || '', n.deskripsi || ''];
+      }),
+      ttd: [ttdPembina(pembina, `Pembina ${e.nama},`)],
+      namaBerkas: `daftar_nilai_${String(e.nama).replace(/[^\w-]+/g, '_')}${
+        aktif ? '_' + aktif.tahun_ajaran.replace('/', '-') + '_' + aktif.semester : ''}.xlsx`
+    });
+  } catch (err) { laporError(err); }
+  finally { tombol.disabled = false; tombol.textContent = semula; }
 }
 
 // Rekap nilai seluruh ekstrakurikuler dalam satu berkas, untuk kesiswaan.

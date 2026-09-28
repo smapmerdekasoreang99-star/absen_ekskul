@@ -1,9 +1,10 @@
-import { ambilMaster, pesertaEkskul, ambilSesi, simpanSesi, unggahFoto }
-  from '../assets/db.js?v=20260923b';
+import { ambilMaster, pesertaEkskul, ambilSesi, simpanSesi, unggahFoto, ambilPengaturan }
+  from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan,
          kompresGambar, hariIni, namaHari, tanggalPanjang, mingguKe, jam, kategoriDari,
-         pembimbingDari, dibimbingBersama }
-  from '../assets/ui.js?v=20260923b';
+         pembimbingDari, dibimbingBersama, isianBlanko }
+  from '../assets/ui.js?v=20260928d';
+import { unduhBlankoHadirXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260928c';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, SISWA = [], STATUS = {};
@@ -140,6 +141,11 @@ try { tandaiMode(); } catch (e) { console.error(e); }
     });
     el('alasanJenis').addEventListener('change', aturPindah);
     el('tanggalPindah').addEventListener('change', aturPindah);
+    el('unduhBlanko').addEventListener('click', unduhBlanko);
+
+    // Identitas kop untuk blanko; tidak ditunggu, pengisian daftar hadir lebih dulu.
+    ambilPengaturan().then(pakaiIdentitas)
+      .catch(e => console.warn('Pengaturan dokumen belum terbaca:', e.message));
 
     await muatSesi();
   } catch (e) { laporError(e); }
@@ -396,6 +402,20 @@ function hitung() {
   const i = SISWA.filter(x => STATUS[x.id] === 'I').length;
   el('hitungHadir').textContent = hadir + ' hadir';
   el('hitungDari').textContent = `dari ${SISWA.length} peserta · ${s} sakit · ${i} izin`;
+}
+
+// ---------------------------------------------------------------- blanko
+async function unduhBlanko() {
+  bersihkanPesan();
+  const e = EKSKUL.find(x => x.id === el('pilihEkskul').value);
+  if (!e) { laporError('Pilih kegiatannya dulu.'); return; }
+  const tombol = el('unduhBlanko'), semula = tombol.textContent;
+  tombol.disabled = true;
+  tombol.textContent = 'Menyiapkan…';
+  try {
+    await unduhBlankoHadirXLSX(isianBlanko(e, PEMBINA, SISWA));
+  } catch (err) { laporError(err); }
+  finally { tombol.disabled = false; tombol.textContent = semula; }
 }
 
 // ------------------------------------------------------------- menyimpan

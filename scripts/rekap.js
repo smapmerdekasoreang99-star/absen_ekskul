@@ -1,7 +1,10 @@
-import { ambilMaster, muatPeriode, namaSiswa } from '../assets/db.js?v=20260923b';
+import { ambilMaster, muatPeriode, namaSiswa, jumlahPeserta, ambilPengaturan }
+  from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, bersihkanPesan, hariIni,
-         tanggalPanjang, tanggalPendek, persen, unduhCSV, jam,
-         kategoriDari } from '../assets/ui.js?v=20260923b';
+         tanggalPanjang, tanggalPendek, persen, jam,
+         kategoriDari, KATEGORI } from '../assets/ui.js?v=20260928d';
+import { unduhTabelXLSX, ttdPembina, ttdKesiswaan, pakaiIdentitas }
+  from '../assets/dokumen.js?v=20260928c';
 
 const el = id => document.getElementById(id);
 const LABEL = { H: 'Hadir', TH: 'Tidak hadir', KG: 'Ditiadakan' };
@@ -10,29 +13,86 @@ const LKELAS = { H: 'l-hadir', TH: 'l-tidak', KG: 'l-libur' };
 // SEMUA berisi seluruh kegiatan yang boleh dilihat akun ini; EKSKUL adalah
 // hasil penyaringan kategori, dan seluruh perhitungan di bawah memakai EKSKUL.
 let AKUN = null, SEMUA = [], EKSKUL = [], PEMBINA = {}, SESI = [], KEHADIRAN = [], NAMA = {};
+let PESERTA = { per: {}, unik: 0 };
 let tab = 'ekskul';
 
 AKUN = wajibMasuk(false);
 try { tandaiMode(); } catch (e) { console.error(e); }
 
 function iso(d) { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 10); }
+const tgl = s => new Date(s + 'T00:00:00');
 
-function pasangPeriode(jenis) {
-  const now = new Date();
-  if (jenis === 'bulan-ini') {
-    el('dari').value = iso(new Date(now.getFullYear(), now.getMonth(), 1));
-    el('sampai').value = hariIni();
-  } else if (jenis === 'bulan-lalu') {
-    el('dari').value = iso(new Date(now.getFullYear(), now.getMonth() - 1, 1));
-    el('sampai').value = iso(new Date(now.getFullYear(), now.getMonth(), 0));
+/* Rentang cepat (28 September 2026), meniru pemilih pekan Induk
+   Pembiayaan: pilih Mingguan (Senin–Minggu) atau Bulanan (tanggal 1 sampai
+   akhir bulan), lalu geser ◀ ▶. Label di tengah menyebut rentangnya dan
+   mengembalikan ke minggu/bulan ini bila diketuk. */
+let JENIS = 'bulan';
+function rentang(jenis, acuan) {
+  const d = tgl(acuan);
+  if (jenis === 'minggu') {
+    const s = new Date(d); s.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    const e = new Date(s); e.setDate(s.getDate() + 6);
+    return { dari: iso(s), sampai: iso(e) };
+  }
+  return { dari: iso(new Date(d.getFullYear(), d.getMonth(), 1)),
+           sampai: iso(new Date(d.getFullYear(), d.getMonth() + 1, 0)) };
+}
+// Jenis yang tepat sama dengan tanggal terisi, atau null bila rentangnya bebas.
+function jenisBerlaku() {
+  const dari = el('dari').value, sampai = el('sampai').value;
+  if (!dari || !sampai) return null;
+  return ['minggu', 'bulan'].find(j => {
+    const r = rentang(j, dari);
+    return r.dari === dari && r.sampai === sampai;
+  }) || null;
+}
+function pasangRentang(r) { el('dari').value = r.dari; el('sampai').value = r.sampai; }
+const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+function gambarRentang() {
+  const j = jenisBerlaku();
+  if (j) JENIS = j;
+  document.querySelectorAll('[data-jenis]').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.jenis === j)));
+  const lbl = el('rentangLabel');
+  lbl.classList.toggle('aktif', !!j);
+  if (!j) { lbl.innerHTML = 'Rentang bebas <small>ketuk untuk kembali ke ' +
+    (JENIS === 'minggu' ? 'minggu' : 'bulan') + ' ini</small>'; return; }
+  const kini = rentang(j, hariIni());
+  const dari = el('dari').value, sampai = el('sampai').value;
+  if (j === 'minggu') {
+    const lalu = rentang('minggu', iso(new Date(tgl(kini.dari).getTime() - 7 * 864e5)));
+    const nama = dari === kini.dari ? 'Minggu ini' : dari === lalu.dari ? 'Minggu lalu' : '';
+    const teks = `${tanggalPendek(dari)} – ${tanggalPendek(sampai)} ${tgl(sampai).getFullYear()}`;
+    lbl.innerHTML = nama ? `${nama} <small>${teks}</small>` : teks;
   } else {
-    const s = new Date(now); s.setDate(s.getDate() - ((s.getDay() + 6) % 7));
-    el('dari').value = iso(s); el('sampai').value = hariIni();
+    const d = tgl(dari), k = tgl(kini.dari);
+    const selisih = (k.getFullYear() - d.getFullYear()) * 12 + k.getMonth() - d.getMonth();
+    const nama = selisih === 0 ? 'Bulan ini' : selisih === 1 ? 'Bulan lalu' : '';
+    lbl.innerHTML = nama ? `${nama} <small>${BULAN[d.getMonth()]} ${d.getFullYear()}</small>`
+                         : `${BULAN[d.getMonth()]} ${d.getFullYear()}`;
   }
 }
+function geserRentang(arah) {
+  const acuan = el('dari').value || hariIni();
+  const d = tgl(acuan);
+  if (JENIS === 'minggu') d.setDate(d.getDate() + 7 * arah);
+  else d.setMonth(d.getMonth() + arah, 1);
+  pasangRentang(rentang(JENIS, iso(d)));
+  gambarRentang(); muat();
+}
 
-document.querySelectorAll('[data-cepat]').forEach(b =>
-  b.addEventListener('click', () => { pasangPeriode(b.dataset.cepat); muat(); }));
+document.querySelectorAll('[data-jenis]').forEach(b => b.addEventListener('click', () => {
+  JENIS = b.dataset.jenis;
+  pasangRentang(rentang(JENIS, hariIni()));
+  gambarRentang(); muat();
+}));
+el('rentangMundur').addEventListener('click', () => geserRentang(-1));
+el('rentangMaju').addEventListener('click', () => geserRentang(1));
+el('rentangLabel').addEventListener('click', () => {
+  pasangRentang(rentang(JENIS, hariIni()));
+  gambarRentang(); muat();
+});
+['dari', 'sampai'].forEach(k => el(k).addEventListener('change', gambarRentang));
 el('muat').addEventListener('click', muat);
 el('saringKategori').addEventListener('change', muat);
 el('unduh').addEventListener('click', unduh);
@@ -50,11 +110,31 @@ el('tabRekap').addEventListener('click', ev => {
     const m = await ambilMaster();
     PEMBINA = Object.fromEntries(m.pembina.map(p => [p.id, p.nama]));
     SEMUA = ekskulBoleh(AKUN, m.ekskul);
+    kunciKategori();
     saringKategori();
-    pasangPeriode('bulan-ini');
+    pasangRentang(rentang('bulan', hariIni()));
+    gambarRentang();
+    // Identitas kop untuk unduhan; tidak ditunggu.
+    ambilPengaturan().then(pakaiIdentitas)
+      .catch(e => console.warn('Pengaturan dokumen belum terbaca:', e.message));
     await muat();
   } catch (e) { laporError(e); }
 })();
+
+/* Pembina hanya melihat kegiatan yang dibimbingnya (ekskulBoleh), jadi
+   pilihan kategori baginya dikunci pada kategori kegiatannya sendiri —
+   bila kegiatannya lintas kategori, terkunci pada "Semua kegiatan saya".
+   Hanya akses Kesiswaan (pengelola) yang bebas memilih kategori. */
+function kunciKategori() {
+  if (AKUN.peran === 'pengelola') return;
+  const milik = KATEGORI.filter(k => SEMUA.some(e => kategoriDari(e) === k));
+  const s = el('saringKategori');
+  s.innerHTML = milik.length === 1
+    ? `<option>${milik[0]}</option>`
+    : '<option value="">Semua kegiatan saya</option>';
+  s.disabled = true;
+  el('ketKategori').classList.remove('sembunyi');
+}
 
 function saringKategori() {
   const k = el('saringKategori').value;
@@ -69,7 +149,13 @@ async function muat() {
   if (dari > sampai) { laporError('Tanggal awal melewati tanggal akhir.'); return; }
   try {
     const boleh = new Set(EKSKUL.map(e => e.id));
-    const hasil = await muatPeriode(dari, sampai);
+    // Peserta terdaftar untuk Ringkasan; bila gagal, rekap tetap tampil tanpa angka itu.
+    const [hasil, peserta] = await Promise.all([
+      muatPeriode(dari, sampai),
+      jumlahPeserta(EKSKUL.filter(e => e.aktif !== false).map(e => e.id))
+        .catch(e => { console.warn(e.message); return null; })
+    ]);
+    PESERTA = peserta;
     SESI = hasil.sesi.filter(s => boleh.has(s.ekskul_id));
     const idSesi = new Set(SESI.map(s => s.id));
     KEHADIRAN = hasil.kehadiran.filter(k => idSesi.has(k.sesi_id));
@@ -93,7 +179,7 @@ function barisEkskul() {
       pHadir: s.filter(x => x.status_pembina === 'H').length,
       pTidak: s.filter(x => x.status_pembina === 'TH').length,
       pLibur: s.filter(x => x.status_pembina === 'KG').length,
-      hadirSiswa: hadir,
+      hadirSiswa: hadir, slot,
       rata: terlaksana.length ? Math.round(hadir / terlaksana.length) : 0,
       tingkat: persen(hadir, slot),
       foto: s.filter(x => x.foto).length
@@ -167,7 +253,17 @@ function gambarRingkasan(dari, sampai) {
   const terlaksana = b.reduce((a, x) => a + x.terlaksana, 0);
   const pHadir = b.reduce((a, x) => a + x.pHadir, 0);
   const hadirS = b.reduce((a, x) => a + x.hadirSiswa, 0);
+  const slot = b.reduce((a, x) => a + x.slot, 0);
   const berfoto = b.reduce((a, x) => a + x.foto, 0);
+  /* Kehadiran siswa dibandingkan dengan pesertanya: "dari" = jumlah
+     peserta tercatat pada latihan yang berjalan (hadir + sakit + izin +
+     alfa), dan peserta terdaftar = siswa aktif di kegiatan yang tampil. */
+  const rataHadir = terlaksana ? Math.round(hadirS / terlaksana) : 0;
+  const rataPeserta = terlaksana ? Math.round(slot / terlaksana) : 0;
+  const nKeg = EKSKUL.filter(e => e.aktif !== false).length;
+  const terdaftar = PESERTA
+    ? `peserta terdaftar ${PESERTA.unik} siswa di ${nKeg} kegiatan · `
+    : '';
   const belum = EKSKUL.filter(e => e.aktif !== false && !b.some(x => x.id === e.id)).length;
 
   const kategori = el('saringKategori').value;
@@ -176,7 +272,8 @@ function gambarRingkasan(dari, sampai) {
       kategori ? ` · hanya ${kategori}` : ''}</p>
     ${baris(`${total} pertemuan tercatat`, `${terlaksana} terlaksana · ${total - terlaksana} ditiadakan`)}
     ${baris(`Kehadiran pembina ${persen(pHadir, total)}%`, `${pHadir} dari ${total} pertemuan dihadiri pembina sendiri`)}
-    ${baris(`${hadirS} kehadiran siswa`, `rata-rata ${terlaksana ? Math.round(hadirS / terlaksana) : 0} siswa per latihan`)}
+    ${baris(`${hadirS} kehadiran siswa dari ${slot} peserta latihan (${persen(hadirS, slot)}%)`,
+      `${terdaftar}rata-rata ${rataHadir} dari ${rataPeserta} siswa hadir per latihan`)}
     ${baris(`${berfoto} pertemuan berfoto`, `${total - berfoto} laporan belum melampirkan foto`)}
     ${belum ? baris(`${belum} kegiatan tanpa catatan`, 'tidak ada satu pun laporan pada rentang ini') : ''}`;
 }
@@ -295,43 +392,95 @@ function tabelSiswa(t) {
 }
 
 // --------------------------------------------------------------- unduhan
-function unduh() {
+/* Penanda tangan berkas rekap. Pembina menandatangani rekapnya sendiri;
+   bila isi rekap memuat kegiatan satu pembina saja (dibuka Kesiswaan),
+   pembina itulah yang menandatangani. Rekap yang mencakup beberapa pembina
+   tidak mungkin ditandatangani satu pembina, jadi Wakasek Kesiswaan. */
+function penandaTangan() {
+  const tampil = EKSKUL.filter(e => SESI.some(s => s.ekskul_id === e.id));
+  const jabatan = tampil.length === 1 ? `Pembina ${tampil[0].nama},` : 'Pembina Ekskul,';
+  if (AKUN.peran === 'pembina') return ttdPembina(AKUN.nama, jabatan);
+  const pembina = [...new Set(tampil.map(e => e.pembina_id).filter(Boolean))];
+  if (pembina.length === 1) return ttdPembina(PEMBINA[pembina[0]] || '', jabatan);
+  return ttdKesiswaan();
+}
+
+function isiUnduhan() {
+  const nama = Object.fromEntries(EKSKUL.map(e => [e.id, e.nama]));
+  const C = 'center';
+  const jumlahKolom = (b, k) => b.reduce((a, x) => a + (x[k] || 0), 0);
+  if (tab === 'ekskul') {
+    const b = barisEkskul();
+    return {
+      judul: 'REKAP KEHADIRAN PER KEGIATAN', berkas: 'rekap_kegiatan', melintang: true,
+      kolom: [{ t: 'No.', w: 5, rata: C }, { t: 'Kegiatan', w: 24 }, { t: 'Kategori', w: 16 },
+              { t: 'Pembina', w: 24 }, { t: 'Jadwal', w: 12 }, { t: 'Pertemuan', w: 10, rata: C },
+              { t: 'Terlaksana', w: 10, rata: C }, { t: 'Pembina hadir', w: 10, rata: C },
+              { t: 'Ditiadakan', w: 10, rata: C }, { t: 'Siswa hadir', w: 10, rata: C },
+              { t: 'Rata-rata', w: 9, rata: C }, { t: 'Tingkat hadir', w: 10, rata: C },
+              { t: 'Berfoto', w: 9, rata: C }],
+      baris: b.map((x, i) => [i + 1, x.nama, x.kategori, x.pembina, x.jadwal, x.pertemuan, x.terlaksana,
+                              x.pHadir, x.pLibur, x.hadirSiswa, x.rata, x.tingkat + '%', x.foto]),
+      jumlah: ['', 'Jumlah', '', '', '', jumlahKolom(b, 'pertemuan'), jumlahKolom(b, 'terlaksana'),
+               jumlahKolom(b, 'pHadir'), jumlahKolom(b, 'pLibur'), jumlahKolom(b, 'hadirSiswa'), '—', '—',
+               jumlahKolom(b, 'foto')]
+    };
+  }
+  if (tab === 'pertemuan') {
+    return {
+      judul: 'RINCIAN TIAP PERTEMUAN', berkas: 'rincian_pertemuan', melintang: true,
+      kolom: [{ t: 'No.', w: 5, rata: C }, { t: 'Tanggal', w: 24 }, { t: 'Kegiatan', w: 22 },
+              { t: 'Status pembina', w: 14, rata: C }, { t: 'Hadir', w: 7, rata: C }, { t: 'Sakit', w: 7, rata: C },
+              { t: 'Izin', w: 7, rata: C }, { t: 'Alfa', w: 7, rata: C }, { t: 'Foto', w: 7, rata: C },
+              { t: 'Materi / alasan', w: 30, bungkus: true }, { t: 'Dicatat oleh', w: 20 }],
+      baris: SESI.map((s, i) => [i + 1, tanggalPanjang(s.tanggal), nama[s.ekskul_id] || s.ekskul_id,
+        LABEL[s.status_pembina] || s.status_pembina, s.H, s.S, s.I, s.A, s.foto ? 'Ada' : '—',
+        s.status_pembina === 'KG' ? (s.alasan_tiada || '') : (s.materi || ''), s.dicatat_oleh || ''])
+    };
+  }
+  if (tab === 'pembina') {
+    const b = barisPembina();
+    return {
+      judul: 'REKAP PERTEMUAN PER PEMBINA', berkas: 'rekap_per_pembina', melintang: false,
+      kolom: [{ t: 'No.', w: 5, rata: C }, { t: 'Kegiatan', w: 22 }, { t: 'Pembina', w: 24 },
+              { t: 'Pertemuan', w: 26 }, { t: 'Kehadiran Siswa', w: 11, rata: C },
+              { t: 'Peserta', w: 9, rata: C }, { t: '% Kehadiran', w: 11, rata: C }],
+      baris: b.map(x => [x.no, x.ekskul, x.pembina, x.pertemuan, x.hadir, x.peserta, x.persen + '%']),
+      jumlah: ['', 'Jumlah', '', `${b.length} pertemuan`, jumlahKolom(b, 'hadir'), jumlahKolom(b, 'peserta'), '—']
+    };
+  }
+  return {
+    judul: 'KEHADIRAN TIAP SISWA', berkas: 'kehadiran_siswa', melintang: false,
+    kolom: [{ t: 'No.', w: 5, rata: C }, { t: 'Nama Siswa', w: 28 }, { t: 'Kelas', w: 8, rata: C },
+            { t: 'Kegiatan', w: 20 }, { t: 'Hadir', w: 7, rata: C }, { t: 'Sakit', w: 7, rata: C },
+            { t: 'Izin', w: 7, rata: C }, { t: 'Alfa', w: 7, rata: C }, { t: 'Pertemuan', w: 10, rata: C },
+            { t: 'Kehadiran', w: 10, rata: C }],
+    baris: barisSiswa().map((x, i) => [i + 1, x.nama, x.kelas, x.ekskul, x.H, x.S, x.I, x.A, x.total, x.persen + '%'])
+  };
+}
+
+async function unduh() {
+  bersihkanPesan();
   const dari = el('dari').value, sampai = el('sampai').value;
   if (!SESI.length) { laporError('Belum ada data untuk diunduh.'); return; }
-  const nama = Object.fromEntries(EKSKUL.map(e => [e.id, e.nama]));
+  const isi = isiUnduhan();
+  if (!isi.baris.length) { laporError('Tabel ini kosong pada rentang yang dipilih.'); return; }
   // Berkas yang disaring diberi penanda kategori di namanya, supaya tidak
   // tertukar dengan berkas yang berisi semua kegiatan.
   const k = el('saringKategori').value;
   const sufiks = k ? '_' + k.toLowerCase().replace(/\s+/g, '_') : '';
-  if (tab === 'ekskul') {
-    const b = barisEkskul();
-    unduhCSV(`rekap_kegiatan${sufiks}_${dari}_sd_${sampai}.csv`, [
-      ['Kegiatan', 'Kategori', 'Pembina', 'Jadwal', 'Pertemuan', 'Terlaksana', 'Pembina hadir',
-       'Tidak hadir', 'Ditiadakan', 'Total siswa hadir', 'Rata-rata siswa',
-       'Tingkat kehadiran siswa (%)', 'Pertemuan berfoto'],
-      ...b.map(x => [x.nama, x.kategori, x.pembina, x.jadwal, x.pertemuan, x.terlaksana, x.pHadir,
-                     x.pTidak, x.pLibur, x.hadirSiswa, x.rata, x.tingkat, x.foto])
-    ]);
-  } else if (tab === 'pertemuan') {
-    unduhCSV(`rincian_pertemuan${sufiks}_${dari}_sd_${sampai}.csv`, [
-      ['Tanggal', 'Ekstrakurikuler', 'Status pembina', 'Hadir', 'Sakit', 'Izin', 'Alfa',
-       'Materi', 'Catatan', 'Foto', 'Dicatat oleh'],
-      ...SESI.map(s => [s.tanggal, nama[s.ekskul_id] || s.ekskul_id,
-        LABEL[s.status_pembina] || s.status_pembina,
-        s.H, s.S, s.I, s.A, s.materi || '', s.catatan || '',
-        s.foto || '', s.dicatat_oleh || ''])
-    ]);
-  } else if (tab === 'pembina') {
-    unduhCSV(`rekap_per_pembina${sufiks}_${dari}_sd_${sampai}.csv`, [
-      ['No.', 'Ekstrakurikuler', 'Pembina', 'Pertemuan', 'Tanggal',
-       'Kehadiran Siswa', 'Peserta terdaftar', '% Kehadiran'],
-      ...barisPembina().map((x, i) => [i + 1, x.ekskulPenuh, x.pembinaPenuh, x.pertemuan,
-        x.tanggal, x.hadir, x.peserta, x.persen])
-    ]);
-  } else {
-    unduhCSV(`kehadiran_siswa${sufiks}_${dari}_sd_${sampai}.csv`, [
-      ['Nama siswa', 'Kelas', 'Ekstrakurikuler', 'Hadir', 'Sakit', 'Izin', 'Alfa', 'Pertemuan', 'Kehadiran (%)'],
-      ...barisSiswa().map(x => [x.nama, x.kelas, x.ekskul, x.H, x.S, x.I, x.A, x.total, x.persen])
-    ]);
-  }
+  const tombol = el('unduh'), semula = tombol.textContent;
+  tombol.disabled = true;
+  tombol.textContent = 'Menyiapkan…';
+  try {
+    await unduhTabelXLSX({
+      judul: isi.judul,
+      sub: `${k || 'Semua kategori'} · ${tanggalPanjang(dari)} – ${tanggalPanjang(sampai)}`,
+      lembar: isi.judul.toLowerCase().replace(/^\w/, c => c.toUpperCase()),
+      melintang: isi.melintang, kolom: isi.kolom, baris: isi.baris, jumlah: isi.jumlah,
+      ttd: [penandaTangan()],
+      namaBerkas: `${isi.berkas}${sufiks}_${dari}_sd_${sampai}.xlsx`
+    });
+  } catch (e) { laporError(e); }
+  finally { tombol.disabled = false; tombol.textContent = semula; }
 }

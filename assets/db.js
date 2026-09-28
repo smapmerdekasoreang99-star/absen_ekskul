@@ -402,6 +402,26 @@ export async function muatPeriode(dari, sampai) {
   return { sesi, kehadiran };
 }
 
+// Peserta aktif sejumlah kegiatan, untuk Ringkasan rekap: berapa per
+// kegiatan dan berapa siswa berbeda seluruhnya (satu siswa bisa ikut dua).
+export async function jumlahPeserta(ekskulIds) {
+  const hasil = { per: {}, unik: 0 };
+  if (!ekskulIds.length) return hasil;
+  let baris;
+  if (MODE === 'contoh') {
+    baris = D.PESERTA.filter(p => p.aktif && ekskulIds.includes(p.ekskul_id));
+  } else {
+    const c = await sb();
+    baris = periksa(
+      await c.from(T.peserta).select('ekskul_id,siswa_id').eq('aktif', true).in('ekskul_id', ekskulIds),
+      'Gagal menghitung peserta'
+    );
+  }
+  baris.forEach(b => { hasil.per[b.ekskul_id] = (hasil.per[b.ekskul_id] || 0) + 1; });
+  hasil.unik = new Set(baris.map(b => b.siswa_id)).size;
+  return hasil;
+}
+
 // Nama siswa untuk sekumpulan id (dipakai rekap per siswa).
 export async function namaSiswa(ids) {
   const hasil = {};
