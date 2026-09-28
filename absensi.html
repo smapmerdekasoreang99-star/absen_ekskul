@@ -55,11 +55,38 @@
 
   <section class="kartu">
     <h2>Kehadiran pembina</h2>
-    <p class="ket">Pilih satu keadaan yang paling sesuai.</p>
-    <div class="segmen" id="statusPembina">
+    <p class="ket">Bila pembina tidak datang, kegiatan tidak berjalan: pilih <b>Ditiadakan</b> dan tulis alasannya.</p>
+    <div class="segmen" id="statusPembina" style="grid-template-columns:repeat(2,minmax(0,1fr))">
       <button type="button" data-nilai="H"  aria-pressed="true" >Hadir</button>
-      <button type="button" data-nilai="TH" aria-pressed="false">Tidak hadir</button>
       <button type="button" data-nilai="KG" aria-pressed="false">Ditiadakan</button>
+    </div>
+
+    <!-- Hanya muncul bila Ditiadakan. Alasan wajib. -->
+    <div id="kartuAlasan" class="sembunyi" style="margin-top:12px">
+      <div class="baris dua">
+        <div>
+          <label for="alasanJenis">Alasan ditiadakan</label>
+          <select id="alasanJenis">
+            <option value="">— pilih —</option>
+            <option>Pembina berhalangan</option>
+            <option>Dipindah ke tanggal lain</option>
+            <option>Libur atau kegiatan sekolah</option>
+            <option>Cuaca atau tempat tidak bisa dipakai</option>
+            <option>Lainnya</option>
+          </select>
+        </div>
+        <div id="kotakPindah" class="sembunyi">
+          <label for="tanggalPindah">Dipindah ke tanggal</label>
+          <input type="date" id="tanggalPindah">
+        </div>
+      </div>
+      <div class="baris" style="margin-bottom:0">
+        <div>
+          <label for="alasanKet">Keterangan</label>
+          <input id="alasanKet" type="text" placeholder="Contoh: pembina sakit; lapangan dipakai upacara">
+        </div>
+      </div>
+      <p class="ket" id="petunjukPindah" style="margin-bottom:0"></p>
     </div>
 
     <!-- Hanya muncul untuk kegiatan yang dibimbing lebih dari satu orang. -->
@@ -144,6 +171,6 @@
     <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
 </nav>
 
-<script type="module" src="scripts/absensi.js?v=20260923b"></script>
+<script type="module" src="scripts/absensi.js?v=20260928a"></script>
 </body>
 </html>

@@ -57,15 +57,51 @@ try { tandaiMode(); } catch (e) { console.error(e); }
         x.setAttribute('aria-pressed', String(x === b)));
       el('kartuSiswa').classList.toggle('sembunyi', statusPembina === 'KG');
       el('kartuFoto').classList.toggle('sembunyi', statusPembina === 'KG');
+      el('kartuAlasan').classList.toggle('sembunyi', statusPembina !== 'KG');
       // Pertemuan yang ditiadakan tidak punya pembimbing yang hadir.
       el('kartuPembimbing').classList.toggle(
         'sembunyi', statusPembina === 'KG' || !Object.keys(PEMBIMBING).length);
       hitung();
     });
 
+    el('alasanJenis').addEventListener('change', aturPindah);
+    el('tanggalPindah').addEventListener('change', aturPindah);
+
     await muatSesi();
   } catch (e) { laporError(e); }
 })();
+
+/* Alasan ditiadakan (28 September 2026). Disimpan sebagai satu teks di
+   ae_sesi.alasan_tiada: "<alasan>[ ke <tanggal>] — <keterangan>". Bila
+   jadwalnya dipindah, pertemuan penggantinya dicatat pada tanggal barunya
+   seperti biasa (halaman ini menandainya "di luar jadwal rutin"). */
+const ALASAN = ['Pembina berhalangan', 'Dipindah ke tanggal lain', 'Libur atau kegiatan sekolah',
+                'Cuaca atau tempat tidak bisa dipakai', 'Lainnya'];
+function aturPindah() {
+  const pindah = el('alasanJenis').value === 'Dipindah ke tanggal lain';
+  el('kotakPindah').classList.toggle('sembunyi', !pindah);
+  const t = el('tanggalPindah').value;
+  el('petunjukPindah').innerHTML = pindah
+    ? (t ? `Sesudah menyimpan, catat pertemuan penggantinya pada <b>${tanggalPanjang(t)}</b>:
+             pilih tanggal itu di atas, lalu isi kehadiran seperti biasa.`
+         : 'Isi tanggal penggantinya.')
+    : '';
+}
+function susunAlasan() {
+  const jenis = el('alasanJenis').value, ket = el('alasanKet').value.trim(), t = el('tanggalPindah').value;
+  if (!jenis) return '';
+  const pokok = jenis === 'Dipindah ke tanggal lain' && t ? `Dipindah ke ${tanggalPanjang(t)}` : jenis;
+  return ket ? `${pokok} — ${ket}` : pokok;
+}
+function isiAlasan(teks) {
+  const t = teks || '';
+  const jenis = t.startsWith('Dipindah ke') ? 'Dipindah ke tanggal lain' : ALASAN.find(a => t.startsWith(a)) || (t ? 'Lainnya' : '');
+  el('alasanJenis').value = jenis;
+  const pisah = t.indexOf(' — ');
+  el('alasanKet').value = jenis === 'Lainnya' && !t.startsWith('Lainnya') ? t : pisah >= 0 ? t.slice(pisah + 3) : '';
+  el('tanggalPindah').value = '';
+  aturPindah();
+}
 
 // Tetap diurutkan "hari ini dulu" — itu yang menolong saat melapor. Kategori
 // cukup ditempelkan pada kegiatan yang bukan ekstrakurikuler.
@@ -117,7 +153,9 @@ async function muatSesi() {
     foto = '';
 
     if (lama) {
-      statusPembina = lama.sesi.status_pembina || 'H';
+      // Catatan lama "Tidak hadir" tidak ada lagi; bila tersisa, dibaca sebagai Ditiadakan.
+      statusPembina = lama.sesi.status_pembina === 'TH' ? 'KG' : (lama.sesi.status_pembina || 'H');
+      isiAlasan(lama.sesi.alasan_tiada);
       el('tempatLatihan').value = lama.sesi.tempat || '';
       el('materiLatihan').value = lama.sesi.materi || '';
       el('catatanSesi').value = lama.sesi.catatan || '';
@@ -129,6 +167,7 @@ async function muatSesi() {
       sukses('Catatan tanggal ini sudah pernah diisi. Perubahan akan menimpa catatan lama.');
     } else {
       statusPembina = 'H';
+      isiAlasan('');
       ['materiLatihan', 'catatanSesi'].forEach(k => { el(k).value = ''; });
       el('tempatLatihan').value = e.tempat || '';
     }
@@ -149,6 +188,7 @@ async function muatSesi() {
       x.setAttribute('aria-pressed', String(x.dataset.nilai === statusPembina)));
     el('kartuSiswa').classList.toggle('sembunyi', statusPembina === 'KG');
     el('kartuFoto').classList.toggle('sembunyi', statusPembina === 'KG');
+    el('kartuAlasan').classList.toggle('sembunyi', statusPembina !== 'KG');
 
     gambarPembimbing(e);
     gambarFoto();
@@ -284,6 +324,14 @@ async function simpan() {
   const id = el('pilihEkskul').value;
   const tgl = el('pilihTanggal').value;
   if (!id || !tgl) { laporError('Ekstrakurikuler dan tanggal wajib diisi.'); return; }
+  const alasan = statusPembina === 'KG' ? susunAlasan() : null;
+  if (statusPembina === 'KG' && !alasan) { laporError('Pilih alasan kegiatan ditiadakan.'); el('alasanJenis').focus(); return; }
+  if (statusPembina === 'KG' && el('alasanJenis').value === 'Dipindah ke tanggal lain' && !el('tanggalPindah').value) {
+    laporError('Isi tanggal penggantinya.'); el('tanggalPindah').focus(); return;
+  }
+  if (statusPembina === 'KG' && el('alasanJenis').value === 'Lainnya' && !el('alasanKet').value.trim()) {
+    laporError('Tulis keterangan alasannya.'); el('alasanKet').focus(); return;
+  }
   if (statusPembina !== 'KG' && !foto) {
     if (!confirm('Belum ada foto kegiatan. Simpan tanpa foto?')) return;
   }
@@ -296,6 +344,7 @@ async function simpan() {
       tanggal: tgl,
       minggu_ke: mingguKe(tgl),
       status_pembina: statusPembina,
+      alasan_tiada: alasan,
       tempat: el('tempatLatihan').value.trim(),
       materi: el('materiLatihan').value.trim(),
       catatan: el('catatanSesi').value.trim(),
@@ -306,7 +355,7 @@ async function simpan() {
     });
     const hadir = SISWA.filter(s => STATUS[s.id] === 'H').length;
     sukses(statusPembina === 'KG'
-      ? 'Tersimpan. Pertemuan ditandai ditiadakan.'
+      ? `Tersimpan. Pertemuan ditandai ditiadakan: ${alasan}.`
       : `Tersimpan. ${hadir} siswa hadir pada ${tanggalPanjang(tgl)}.`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) {

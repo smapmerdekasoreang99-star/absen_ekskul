@@ -243,8 +243,8 @@ function tabelPertemuan(t) {
     <tbody>${SESI.map(s => `<tr>
       <td>${tanggalPendek(s.tanggal)}</td>
       <td>${nama[s.ekskul_id] || s.ekskul_id}</td>
-      <td><span class="lencana ${LKELAS[s.status_pembina] || ''}">${LABEL[s.status_pembina] || s.status_pembina}</span>
-</td>
+      <td><span class="lencana ${LKELAS[s.status_pembina] || ''}">${LABEL[s.status_pembina] || s.status_pembina}</span>${
+        s.alasan_tiada ? `<br><small style="color:var(--tinta-2)">${String(s.alasan_tiada).replace(/[<>&]/g, '')}</small>` : ''}</td>
       <td class="angka">${s.H}</td><td class="angka">${s.S}</td>
       <td class="angka">${s.I}</td><td class="angka">${s.A}</td>
       <td>${s.foto
