@@ -21,6 +21,27 @@ let foto = '';
    tempat, materi, catatan, pencatat, foto) sesaat sesudah dimuat atau disimpan.
    Meninggalkan halaman dengan perubahan yang belum disimpan ditanyakan dulu. */
 let ACUAN = null, SUDAH_TERSIMPAN = false, WAKTU_SIMPAN = null, MEMUAT = false, MENYIMPAN = false;
+/* Terkunci (28 September 2026): catatan yang sudah tersimpan dibuka dalam
+   keadaan terkunci — isian tampil tetapi tidak bisa disentuh — supaya
+   sentuhan tak sengaja saat menggulir di ponsel tidak mengubahnya. Ubah
+   membuka kunci; Batal memuat ulang yang tersimpan; Simpan perubahan
+   menyimpan lalu mengunci lagi. Catatan baru selalu terbuka. */
+let TERKUNCI = false;
+function aturKunci() {
+  const kunci = TERKUNCI && SUDAH_TERSIMPAN;
+  // Semua kartu isian kecuali kartu pertama (pilihan kegiatan dan tanggal).
+  [...document.querySelectorAll('main.wadah > section.kartu')].slice(1).forEach(sec => {
+    sec.classList.toggle('terkunci', kunci);
+    sec.querySelectorAll('input, select, textarea, button').forEach(x => {
+      if (kunci) { if (!x.disabled) { x.disabled = true; x.dataset.dikunci = '1'; } }
+      else if (x.dataset.dikunci) { x.disabled = false; delete x.dataset.dikunci; }
+    });
+  });
+  const pita = el('pitaKunci');
+  pita.hidden = !kunci;
+  if (kunci) pita.innerHTML = `<b>Tersimpan${WAKTU_SIMPAN ? ' ' + waktuTeks(WAKTU_SIMPAN) : ''}.</b>
+    Isian terkunci supaya tidak berubah tanpa sengaja — ketuk <b>Ubah</b> untuk memperbaiki.`;
+}
 const potret = () => JSON.stringify([statusPembina, statusPembina === 'KG' ? susunAlasan() : '',
   el('tempatLatihan').value.trim(), el('materiLatihan').value.trim(), el('catatanSesi').value.trim(),
   el('pencatat').value.trim(), foto, STATUS, PEMBIMBING]);
@@ -36,8 +57,13 @@ function perbaruiTombol() {
   if (MEMUAT || MENYIMPAN || ACUAN == null) return;
   const t = el('tombolSimpan'), st = el('statusSimpan');
   const berubah = adaPerubahan();
+  // Terkunci: "✓ Tersimpan" hanya penanda, di sebelahnya Ubah. Sedang mengubah: Batal + Simpan perubahan.
+  const kunci = TERKUNCI && SUDAH_TERSIMPAN;
+  el('tombolUbah').hidden = !kunci;
+  el('tombolBatal').hidden = !(SUDAH_TERSIMPAN && !TERKUNCI);
+  t.disabled = kunci;
   t.classList.toggle('tbl-tersimpan', SUDAH_TERSIMPAN && !berubah);
-  if (SUDAH_TERSIMPAN && !berubah) {
+  if (SUDAH_TERSIMPAN && (kunci || !berubah)) {
     t.textContent = '✓ Tersimpan' + (WAKTU_SIMPAN ? ' · ' + waktuTeks(WAKTU_SIMPAN) : '');
     t.title = 'Catatan tanggal ini sudah tersimpan. Ubah isian bila ada perbaikan.';
   } else {
@@ -104,6 +130,14 @@ try { tandaiMode(); } catch (e) { console.error(e); }
       hitung();
     });
 
+    el('tombolUbah').addEventListener('click', () => {
+      TERKUNCI = false; aturKunci(); perbaruiTombol();
+      bersihkanPesan();
+    });
+    el('tombolBatal').addEventListener('click', async () => {
+      if (adaPerubahan() && !confirm('Batalkan perbaikan? Isian kembali seperti yang tersimpan.')) return;
+      await muatSesi();   // memuat ulang yang tersimpan, lalu terkunci lagi
+    });
     el('alasanJenis').addEventListener('change', aturPindah);
     el('tanggalPindah').addEventListener('change', aturPindah);
 
@@ -235,7 +269,9 @@ async function muatSesi() {
     gambarFoto();
     gambarSiswa();
     MEMUAT = false;
+    TERKUNCI = !!lama;
     tandaiAcuan(!!lama, lama && lama.sesi.dibuat_pada ? new Date(lama.sesi.dibuat_pada) : null);
+    aturKunci();
   } catch (err) { laporError(err); }
   finally { MEMUAT = false; }
 }
@@ -401,7 +437,9 @@ async function simpan() {
     });
     const hadir = SISWA.filter(s => STATUS[s.id] === 'H').length;
     MENYIMPAN = false;
+    TERKUNCI = true;
     tandaiAcuan(true, new Date());
+    aturKunci();
     sukses((perbaikan ? 'Perbaikan tersimpan. ' : '') + (statusPembina === 'KG'
       ? `Tersimpan. Pertemuan ditandai ditiadakan: ${alasan}.`
       : `Tersimpan. ${hadir} siswa hadir pada ${tanggalPanjang(tgl)}.`));

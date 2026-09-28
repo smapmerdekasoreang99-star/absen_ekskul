@@ -541,3 +541,13 @@ td.kelompok{background:var(--kertas-3);font-weight:600}
 .tbl-utama.tbl-tersimpan{background:var(--hadir-muda);border-color:var(--hadir);color:var(--hadir-tua)}
 .tbl-utama.tbl-tersimpan:hover{background:var(--hadir-muda);color:var(--hadir-tua)}
 .status-simpan{display:block;color:var(--absen-tua);font-weight:600}
+
+/* Absensi terkunci sesudah tersimpan: isian redup dan tak bisa disentuh. */
+section.kartu.terkunci{opacity:.62;pointer-events:none;user-select:none;transition:opacity .15s}
+.pita-kunci{display:block;margin:0 0 var(--j3);padding:10px 14px;border-radius:var(--r2, 10px);
+  background:var(--hadir-muda);border:1px solid var(--hadir);color:var(--hadir-tua);font-size:var(--h-s);line-height:1.45}
+/* Dua tombol berdampingan di bilah bawah: hitungan mengisi sisa ruang, tombol rapat di kanan. */
+.bar-simpan .hitung{flex:1;min-width:0}
+.bar-simpan .tbl{margin-left:0}
+/* Atribut hidden harus menang atas aturan display di atas (pita, tombol bilah bawah). */
+.pita-kunci[hidden],.bar-simpan [hidden]{display:none !important}
