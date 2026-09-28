@@ -11,7 +11,7 @@
 //   2. bacaBerkasPeserta   — membaca XLSX/CSV menjadi baris {nama, kelas};
 //   3. cocokkanPeserta     — memutuskan nasib tiap baris tanpa menyentuh
 //                            jaringan, supaya mudah diuji.
-import { pustakaExcel } from './dokumen.js?v=20260928a';
+import { pustakaExcel } from './dokumen.js?v=20260928b';
 
 export const KOLOM = { nama: 'Nama siswa', kelas: 'Kelas' };
 

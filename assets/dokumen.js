@@ -160,17 +160,12 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, namaBerkas, j
   // untuk ekstrakurikuler itu Wakasek Kesiswaan — dan Kepala Sekolah
   // mengetahui. Nama pembina tidak lagi menjadi kolom tanda tangan karena
   // satu berkas kelas memuat banyak kegiatan dengan pembina berbeda-beda.
-  ws.getCell(r, 2).value = 'Mengetahui,';
-  ws.getCell(r + 1, 2).value = 'Kepala Sekolah,';
-  ws.getCell(r + 5, 2).value = ID.kepalaSekolah || '..................................................';
-  [r, r + 1].forEach(x => { ws.getCell(x, 2).font = biasa; });
-  ws.getCell(r + 5, 2).font = tebalGaris;
-
-  ws.getCell(r, 5).value = `${ID.kota}, ${tanggalCetak()}`;
-  ws.getCell(r + 1, 5).value = 'Wakasek Kesiswaan,';
-  ws.getCell(r + 5, 5).value = ID.kesiswaan || '..................................................';
-  [r, r + 1].forEach(x => { ws.getCell(x, 5).font = biasa; });
-  ws.getCell(r + 5, 5).font = tebalGaris;
+  // Proporsional terhadap lebar kop (kop-dokumen.js → ttdExcel, 28 September 2026).
+  void biasa; void tebalGaris;
+  kopBersama().ttdExcel(ws, r, { kolomAkhir: ws.columns.length, blok: [
+    { atas: ['Mengetahui,', 'Kepala Sekolah,'], nama: ID.kepalaSekolah },
+    { atas: [`${ID.kota}, ${tanggalCetak()}`, 'Wakasek Kesiswaan,'], nama: ID.kesiswaan }
+  ] });
 
   const buf = await wb.xlsx.writeBuffer();
   simpan(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
@@ -257,20 +252,30 @@ export async function unduhNilaiKelasPNG({ kelas, periode, baris, namaBerkas, ju
     y += tinggiBaris;
   });
 
-  // Blok tanda tangan
-  g.textAlign = 'left';
+  /* Blok tanda tangan: dua blok selebar sama (35 % daerah isi), menempel tepi
+     kiri dan kanan kop, tulisan dirata tengah — jaraknya ke tepi simetris. */
   const yTtd = y + 44;
-  const xKanan = lebar - padding - 300;
+  const lebarBlok = Math.round((lebar - 2 * padding) * 0.35);
+  const xKiri = padding + lebarBlok / 2, xKanan = lebar - padding - lebarBlok / 2;
+  g.textAlign = 'center';
   g.fillStyle = '#241F17';
   g.font = '14px Arial, sans-serif';
-  g.fillText('Mengetahui,', padding, yTtd);
-  g.fillText('Kepala Sekolah,', padding, yTtd + 22);
+  g.fillText('Mengetahui,', xKiri, yTtd);
+  g.fillText('Kepala Sekolah,', xKiri, yTtd + 22);
   g.fillText(`${ID.kota}, ${tanggalCetak()}`, xKanan, yTtd);
   g.fillText('Wakasek Kesiswaan,', xKanan, yTtd + 22);
   g.font = 'bold 14px Arial, sans-serif';
-  g.fillText(ID.kepalaSekolah || '..................................................', padding, yTtd + 118);
-  g.fillText(ID.kesiswaan || '..................................................', xKanan, yTtd + 118);
+  const namaKiri = ID.kepalaSekolah || '..................................................';
+  const namaKanan = ID.kesiswaan || '..................................................';
+  g.fillText(namaKiri, xKiri, yTtd + 118);
+  g.fillText(namaKanan, xKanan, yTtd + 118);
+  // Garis bawah nama, seperti pada berkas Excel.
+  [[namaKiri, xKiri], [namaKanan, xKanan]].forEach(([t, x]) => {
+    const w = g.measureText(t).width;
+    g.fillRect(x - w / 2, yTtd + 121, w, 1);
+  });
 
+  g.textAlign = 'left';
   g.fillStyle = '#6B6252';
   g.font = '11px Arial, sans-serif';
   g.fillText('Dicetak dari Aplikasi Absensi Ekstrakurikuler SMA Plus Merdeka Soreang',

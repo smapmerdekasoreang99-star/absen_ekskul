@@ -5,7 +5,7 @@ import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukse
          bersihkanPesan, tanggalPanjang, persen, unduhCSV,
          kategoriDari, perKategori } from '../assets/ui.js?v=20260923b';
 import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG, pakaiIdentitas }
-  from '../assets/dokumen.js?v=20260928a';
+  from '../assets/dokumen.js?v=20260928b';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };
