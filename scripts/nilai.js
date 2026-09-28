@@ -5,7 +5,7 @@ import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukse
          bersihkanPesan, tanggalPanjang, persen, unduhCSV,
          kategoriDari, perKategori } from '../assets/ui.js?v=20260923b';
 import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG, pakaiIdentitas }
-  from '../assets/dokumen.js?v=20260923b';
+  from '../assets/dokumen.js?v=20260928a';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };
@@ -188,8 +188,8 @@ function gambar() {
           <span class="lencana ${warna}">${h.total ? p + '%' : 'belum ada data'}</span>
         </div>
         <div class="nilai-isian">
-          <select class="predikat" ${bisa ? '' : 'disabled'} aria-label="Predikat ${s.nama}">
-            <option value="">Predikat…</option>
+          <select class="predikat" ${bisa ? '' : 'disabled'} aria-label="Nilai ${s.nama}">
+            <option value="">Nilai…</option>
             ${Object.entries(PREDIKAT).map(([k, v]) =>
               `<option value="${k}"${n.predikat === k ? ' selected' : ''}>${k} — ${v}</option>`).join('')}
           </select>
@@ -224,7 +224,7 @@ function hitung() {
 
 function terapkanMassal() {
   const nilai = el('predikatMassal').value;
-  if (!nilai) { laporError('Pilih dulu predikat yang mau diterapkan.'); return; }
+  if (!nilai) { laporError('Pilih dulu nilai yang mau diterapkan.'); return; }
   document.querySelectorAll('.nilai-siswa .predikat').forEach(s => {
     if (!s.value) s.value = nilai;
   });
@@ -257,7 +257,7 @@ function unduh() {
   const e = EKSKUL.find(x => x.id === el('pilihEkskul').value);
   const isi = Object.fromEntries(kumpulkan().map(x => [x.siswa_id, x]));
   unduhCSV(`nilai_${(e ? e.nama : 'ekskul').replace(/\s+/g, '_')}.csv`, [
-    ['Nama siswa', 'Kelas', 'Pertemuan', 'Hadir', '% Kehadiran', 'Predikat', 'Keterangan', 'Deskripsi'],
+    ['Nama siswa', 'Kelas', 'Pertemuan', 'Hadir', '% Kehadiran', 'Nilai', 'Keterangan', 'Deskripsi'],
     ...SISWA.map(s => {
       const h = HADIR[s.id] || { H: 0, total: 0 };
       const n = isi[s.id] || {};
@@ -298,7 +298,7 @@ async function unduhSemua() {
     if (!baris.length) { laporError('Belum ada peserta yang terdaftar.'); return; }
     unduhCSV(`nilai_semua_kegiatan_${aktif.tahun_ajaran.replace('/', '-')}_${aktif.semester}.csv`, [
       ['Kegiatan', 'Kategori', 'Pembina', 'Nama siswa', 'Kelas', 'Pertemuan', 'Hadir',
-       '% Kehadiran', 'Predikat', 'Keterangan', 'Deskripsi'],
+       '% Kehadiran', 'Nilai', 'Keterangan', 'Deskripsi'],
       ...baris
     ]);
     sukses(`${baris.length} baris nilai diunduh.`);
@@ -389,7 +389,7 @@ function gambarKelas() {
   }
   t.innerHTML = `
     <thead><tr><th class="angka">No.</th><th>Nama Siswa</th>
-      <th>Kegiatan</th><th class="angka">Predikat</th><th>Keterangan</th><th>Deskripsi</th></tr></thead>
+      <th>Kegiatan</th><th class="angka">Nilai</th><th>Keterangan</th><th>Deskripsi</th></tr></thead>
     <tbody>${isi.map((x, i) => `<tr>
       <td class="angka">${i + 1}</td><td>${x.nama}</td>
       <td>${x.ekskul}${kat ? '' : `<small class="ket">${x.kategori}</small>`}</td>

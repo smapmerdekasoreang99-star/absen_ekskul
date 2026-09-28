@@ -7,7 +7,7 @@
 <title>Nilai akhir · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo-kecil.png">
 <link rel="stylesheet" href="assets/dasar.css?v=2">
-<link rel="stylesheet" href="assets/style.css?v=20260923b">
+<link rel="stylesheet" href="assets/style.css?v=20260928b">
 <!-- Sambungan ke database disiapkan lebih awal, dan seluruh modul skrip
      diminta sekaligus — bukan tiga tingkat berurutan mengikuti rantai impor. -->
 <link rel="preconnect" href="https://xgtoneyvzfvfbidicotq.supabase.co" crossorigin>
@@ -17,7 +17,7 @@
 <link rel="modulepreload" href="assets/simpanan.js?v=20260923b">
 <link rel="modulepreload" href="assets/demo-data.js?v=20260923b">
 <link rel="modulepreload" href="assets/vendor/supabase-js-2.117.0.js">
-<link rel="modulepreload" href="assets/dokumen.js?v=20260923b">
+<link rel="modulepreload" href="assets/dokumen.js?v=20260928a">
 <link rel="modulepreload" href="assets/sekolah.js?v=20260923b">
 </head>
 <body class="aplikasi ada-bar">
@@ -90,9 +90,25 @@
   </section>
 
   <section class="kartu" id="kartuNilai">
-    <h2>Daftar siswa</h2>
-    <p class="ket">Persentase kehadiran dihitung otomatis dari laporan latihan
-      sepanjang semester. Predikat: A sangat baik, B baik, C cukup, D perlu bimbingan.</p>
+    <h2>Daftar Nilai Siswa</h2>
+    <!-- Penjelasan singkat, per butir (28 September 2026). -->
+    <div class="penjelasan" role="note" aria-label="Penjelasan">
+      <div class="penjelasan-judul">Penjelasan</div>
+      <dl>
+        <dt>Kehadiran</dt>
+        <dd>Persentase dihitung otomatis dari laporan latihan sepanjang semester (<b>sebagai bahan pertimbangan untuk pemberian nilai</b>) — tidak perlu diisi.</dd>
+        <dt>Nilai</dt>
+        <dd class="nilai-legenda">
+          <span><b class="nilai-a">A</b> Sangat baik</span>
+          <span><b class="nilai-b">B</b> Baik</span>
+          <span><b class="nilai-c">C</b> Cukup</span>
+          <span><b class="nilai-d">D</b> Perlu bimbingan</span>
+        </dd>
+        <dt>Isi cepat</dt>
+        <dd>Pilih nilai lalu ketuk <b>Terapkan</b>: hanya siswa yang belum bernilai yang terisi; nilai yang sudah ada tidak berubah.
+          Setelah selesai, ketuk <b>Simpan nilai</b> di bawah.</dd>
+      </dl>
+    </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="alatMassal">
       <select id="predikatMassal" style="width:auto;min-width:170px">
         <option value="">Terapkan ke yang kosong…</option>
@@ -168,6 +184,6 @@
 </nav>
 
 <script src="assets/kop-dokumen.js?v=3"></script>
-<script type="module" src="scripts/nilai.js?v=20260923b"></script>
+<script type="module" src="scripts/nilai.js?v=20260928a"></script>
 </body>
 </html>

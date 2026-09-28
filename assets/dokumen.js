@@ -141,7 +141,7 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, namaBerkas, j
   let r = await kop(ws, wb, `NILAI ${judulKategori || "EKSTRAKURIKULER"} — KELAS ${kelas}`,
                     periode, 6);
   barisJudulTabel(ws, r, ['No.', 'Nama Siswa', 'Kegiatan',
-                          'Predikat', 'Keterangan', 'Deskripsi']);
+                          'Nilai', 'Keterangan', 'Deskripsi']);
   r++;
   baris.forEach((b, i) => {
     selIsi(ws, r, 1, i + 1, { rata: 'center' });
@@ -215,7 +215,7 @@ export async function unduhNilaiKelasPNG({ kelas, periode, baris, namaBerkas, ju
     { t: 'No.', w: 44, rata: 'center' },
     { t: 'Nama Siswa', w: 250 },
     { t: 'Kegiatan', w: 190 },
-    { t: 'Predikat', w: 80, rata: 'center' },
+    { t: 'Nilai', w: 80, rata: 'center' },
     { t: 'Keterangan', w: 156 },
     { t: 'Deskripsi', w: 200 }
   ];

@@ -13,6 +13,46 @@ let PEMBIMBING = {};
 let statusPembina = 'H';
 let foto = '';
 
+/* Keadaan simpan (28 September 2026). Tombol menyesuaikan diri:
+     belum pernah disimpan           → "Simpan daftar hadir"
+     tersimpan, tak ada perubahan    → "✓ Tersimpan · 14.05" (hijau)
+     tersimpan lalu diperbaiki       → "Simpan perubahan" + "Ada perubahan yang belum disimpan"
+   Pembandingnya potret isian (status pembina, alasan, siswa, pembimbing,
+   tempat, materi, catatan, pencatat, foto) sesaat sesudah dimuat atau disimpan.
+   Meninggalkan halaman dengan perubahan yang belum disimpan ditanyakan dulu. */
+let ACUAN = null, SUDAH_TERSIMPAN = false, WAKTU_SIMPAN = null, MEMUAT = false, MENYIMPAN = false;
+const potret = () => JSON.stringify([statusPembina, statusPembina === 'KG' ? susunAlasan() : '',
+  el('tempatLatihan').value.trim(), el('materiLatihan').value.trim(), el('catatanSesi').value.trim(),
+  el('pencatat').value.trim(), foto, STATUS, PEMBIMBING]);
+const jamMenit = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
+// Hari ini: jamnya; hari lain: tanggalnya (catatan lama).
+const waktuTeks = d => d.toDateString() === new Date().toDateString() ? jamMenit(d) : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+function tandaiAcuan(tersimpan, waktu) {
+  ACUAN = potret(); SUDAH_TERSIMPAN = tersimpan; WAKTU_SIMPAN = waktu || null;
+  perbaruiTombol();
+}
+const adaPerubahan = () => ACUAN != null && potret() !== ACUAN;
+function perbaruiTombol() {
+  if (MEMUAT || MENYIMPAN || ACUAN == null) return;
+  const t = el('tombolSimpan'), st = el('statusSimpan');
+  const berubah = adaPerubahan();
+  t.classList.toggle('tbl-tersimpan', SUDAH_TERSIMPAN && !berubah);
+  if (SUDAH_TERSIMPAN && !berubah) {
+    t.textContent = '✓ Tersimpan' + (WAKTU_SIMPAN ? ' · ' + waktuTeks(WAKTU_SIMPAN) : '');
+    t.title = 'Catatan tanggal ini sudah tersimpan. Ubah isian bila ada perbaikan.';
+  } else {
+    t.textContent = SUDAH_TERSIMPAN ? 'Simpan perubahan' : 'Simpan daftar hadir';
+    t.title = '';
+  }
+  st.hidden = !(SUDAH_TERSIMPAN && berubah);
+  st.textContent = 'Ada perubahan yang belum disimpan';
+}
+// Semua isian memicu pemeriksaan; ditunda sejenak supaya penangan lain selesai lebih dulu.
+['input', 'change', 'click'].forEach(ev => document.addEventListener(ev, () => setTimeout(perbaruiTombol, 0)));
+window.addEventListener('beforeunload', e => {
+  if (!MENYIMPAN && adaPerubahan()) { e.preventDefault(); e.returnValue = ''; }
+});
+
 AKUN = wajibMasuk(false);
 try { tandaiMode(); } catch (e) { console.error(e); }
 
@@ -128,6 +168,7 @@ function masterBerubah(m) {
 // ---------------------------------------------------------------- memuat
 async function muatSesi() {
   bersihkanPesan();
+  MEMUAT = true;
   const id = el('pilihEkskul').value;
   const tgl = el('pilihTanggal').value;
   const e = EKSKUL.find(x => x.id === id);
@@ -164,7 +205,7 @@ async function muatSesi() {
       Object.entries(lama.kehadiran).forEach(([sid, st]) => {
         if (STATUS[sid] !== undefined) STATUS[sid] = st;
       });
-      sukses('Catatan tanggal ini sudah pernah diisi. Perubahan akan menimpa catatan lama.');
+      sukses('Catatan tanggal ini sudah tersimpan. Bila ada perbaikan, ubah isiannya lalu ketuk Simpan perubahan.');
     } else {
       statusPembina = 'H';
       isiAlasan('');
@@ -193,7 +234,10 @@ async function muatSesi() {
     gambarPembimbing(e);
     gambarFoto();
     gambarSiswa();
+    MEMUAT = false;
+    tandaiAcuan(!!lama, lama && lama.sesi.dibuat_pada ? new Date(lama.sesi.dibuat_pada) : null);
   } catch (err) { laporError(err); }
+  finally { MEMUAT = false; }
 }
 
 // ------------------------------------------------------------------ foto
@@ -336,7 +380,9 @@ async function simpan() {
     if (!confirm('Belum ada foto kegiatan. Simpan tanpa foto?')) return;
   }
   const tombol = el('tombolSimpan');
+  const perbaikan = SUDAH_TERSIMPAN;
   tombol.disabled = true;
+  MENYIMPAN = true;
   tombol.textContent = 'Menyimpan…';
   try {
     await simpanSesi({
@@ -354,14 +400,18 @@ async function simpan() {
       pembimbing: statusPembina === 'KG' ? {} : PEMBIMBING
     });
     const hadir = SISWA.filter(s => STATUS[s.id] === 'H').length;
-    sukses(statusPembina === 'KG'
+    MENYIMPAN = false;
+    tandaiAcuan(true, new Date());
+    sukses((perbaikan ? 'Perbaikan tersimpan. ' : '') + (statusPembina === 'KG'
       ? `Tersimpan. Pertemuan ditandai ditiadakan: ${alasan}.`
-      : `Tersimpan. ${hadir} siswa hadir pada ${tanggalPanjang(tgl)}.`);
+      : `Tersimpan. ${hadir} siswa hadir pada ${tanggalPanjang(tgl)}.`));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) {
     laporError(e);
   } finally {
     tombol.disabled = false;
-    tombol.textContent = 'Simpan daftar hadir';
+    MENYIMPAN = false;
+    if (ACUAN == null) tombol.textContent = 'Simpan daftar hadir';
+    perbaruiTombol();
   }
 }

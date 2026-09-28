@@ -520,3 +520,24 @@ td.kelompok{background:var(--kertas-3);font-weight:600}
 .pilih-satu.pilih-pj{cursor:default;border-style:dashed}
 .pilih-satu small{color:var(--tinta-2)}
 .pilih-pembimbing .kosong{margin:0;padding:var(--j2)}
+
+/* ---- Kotak Penjelasan (halaman Nilai) ---- */
+.penjelasan{border:1px solid var(--garis-2);border-left:4px solid var(--emas);background:var(--emas-kabut);
+  border-radius:var(--r2, 10px);padding:10px 14px 12px;margin:0 0 var(--j4, 16px);max-width:72ch}
+.penjelasan-judul{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--emas-teks);margin-bottom:6px}
+.penjelasan dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0;font-size:var(--h-s, 13px);line-height:1.45}
+.penjelasan dt{font-weight:600;color:var(--tinta)}
+.penjelasan dd{margin:0;color:var(--tinta-2)}
+.nilai-legenda{display:flex;flex-wrap:wrap;gap:6px 14px}
+.nilai-legenda span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.nilai-legenda b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;font-size:12px}
+.nilai-a{background:var(--hadir-muda);color:var(--hadir-tua)}
+.nilai-b{background:var(--sakit-muda);color:var(--sakit-tua)}
+.nilai-c{background:var(--emas-muda);color:var(--emas-teks)}
+.nilai-d{background:var(--absen-muda);color:var(--absen-tua)}
+@media (max-width:520px){ .penjelasan dl{grid-template-columns:1fr} .penjelasan dt{margin-top:4px} }
+
+/* Tombol simpan yang sudah tersimpan (Absensi): hijau, tetap bisa ditekan ulang. */
+.tbl-utama.tbl-tersimpan{background:var(--hadir-muda);border-color:var(--hadir);color:var(--hadir-tua)}
+.tbl-utama.tbl-tersimpan:hover{background:var(--hadir-muda);color:var(--hadir-tua)}
+.status-simpan{display:block;color:var(--absen-tua);font-weight:600}
