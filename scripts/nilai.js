@@ -3,7 +3,7 @@ import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPer
          nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
          bersihkanPesan, tanggalPanjang, persen, unduhCSV,
-         kategoriDari, perKategori } from '../assets/ui.js?v=20260928d';
+         kategoriDari, perKategori, urutKelasNama } from '../assets/ui.js?v=20260928e';
 import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG, pakaiIdentitas, unduhTabelXLSX, ttdPembina }
   from '../assets/dokumen.js?v=20260928c';
 
@@ -279,7 +279,7 @@ async function unduh() {
         { t: '% Kehadiran', w: 12, rata: 'center' }, { t: 'Nilai', w: 8, rata: 'center' },
         { t: 'Keterangan', w: 16 }, { t: 'Deskripsi', w: 44, bungkus: true }
       ],
-      baris: SISWA.map((s, i) => {
+      baris: [...SISWA].sort(urutKelasNama).map((s, i) => {
         const h = HADIR[s.id] || { H: 0, total: 0 };
         const n = isi[s.id] || {};
         return [i + 1, s.nama, s.kelas || '', h.total, h.H, h.total ? persen(h.H, h.total) + '%' : '—',

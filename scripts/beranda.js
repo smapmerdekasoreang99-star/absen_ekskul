@@ -1,6 +1,6 @@
-import { ambilMaster, muatPeriode } from '../assets/db.js?v=20260928d';
+import { ambilMaster, muatPeriode, jumlahPeserta } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, hariIni, namaHari,
-         tanggalPanjang, persen, jam } from '../assets/ui.js?v=20260928d';
+         tanggalPanjang, persen, jam } from '../assets/ui.js?v=20260928e';
 
 const AKUN = wajibMasuk(false);
 try { tandaiMode(); } catch (e) { console.error(e); }
@@ -31,7 +31,11 @@ function baris(a, b) {
     const hariNama = namaHari(hari);
 
     const awal = senin(hari);
-    const { sesi } = await muatPeriode(awal, hari);
+    // Peserta terdaftar untuk ringkasan; bila gagal, beranda tetap tampil tanpa angka itu.
+    const [{ sesi }, peserta] = await Promise.all([
+      muatPeriode(awal, hari),
+      jumlahPeserta(ekskul.map(e => e.id)).catch(e => { console.warn(e.message); return null; })
+    ]);
     const boleh = new Set(ekskul.map(e => e.id));
     const minggu = sesi.filter(s => boleh.has(s.ekskul_id));
     const sudah = new Set(minggu.filter(s => s.tanggal === hari).map(s => s.ekskul_id));
@@ -56,14 +60,19 @@ function baris(a, b) {
 
     const terlaksana = minggu.filter(s => s.status_pembina !== 'KG');
     const hadirSiswa = terlaksana.reduce((a, s) => a + s.H, 0);
+    // Sama seperti Ringkasan di Rekap: "dari" = peserta tercatat pada latihan
+    // yang berjalan (H+S+I+A); peserta terdaftar = siswa aktif berbeda.
+    const slot = terlaksana.reduce((a, s) => a + s.H + s.S + s.I + s.A, 0);
+    const n = terlaksana.length;
+    const terdaftar = peserta ? `peserta terdaftar ${peserta.unik} siswa di ${ekskul.length} kegiatan · ` : '';
     const berfoto = minggu.filter(s => s.foto).length;
     const belum = ekskul.filter(e => !minggu.some(s => s.ekskul_id === e.id)).length;
 
     document.getElementById('ringkasMinggu').innerHTML =
       baris(`${minggu.length} laporan minggu ini`,
             `${terlaksana.length} terlaksana · ${minggu.length - terlaksana.length} ditiadakan`) +
-      baris(`Rata-rata ${terlaksana.length ? Math.round(hadirSiswa / terlaksana.length) : 0} siswa per latihan`,
-            `total ${hadirSiswa} kehadiran siswa`) +
+      baris(`${hadirSiswa} kehadiran siswa dari ${slot} peserta latihan (${persen(hadirSiswa, slot)}%)`,
+            `${terdaftar}rata-rata ${n ? Math.round(hadirSiswa / n) : 0} dari ${n ? Math.round(slot / n) : 0} siswa hadir per latihan`) +
       baris(`${berfoto} laporan berfoto`,
             `${persen(berfoto, minggu.length)}% laporan melampirkan foto kegiatan`) +
       (belum ? baris(`${belum} ekstrakurikuler belum melapor`,

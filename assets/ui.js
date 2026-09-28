@@ -186,6 +186,14 @@ export function unduhCSV(namaBerkas, barisBaris) {
   a.remove();
 }
 
+/* Urutan baris siswa di setiap unduhan xlsx: kelas dulu (X-2 sebelum
+   X-10), lalu nama. Siswa tanpa kelas di akhir. */
+export function urutKelasNama(a, b) {
+  const ka = a.kelas || '￿', kb = b.kelas || '￿';
+  return ka.localeCompare(kb, 'id', { numeric: true }) ||
+         String(a.nama || '').localeCompare(String(b.nama || ''), 'id');
+}
+
 /* Isian Blanko Daftar Hadir untuk satu kegiatan. Dipakai halaman Absen
    Siswa dan Data dari satu tempat supaya berkas keduanya sama persis. */
 export function isianBlanko(e, namaPembina, peserta) {
@@ -194,7 +202,7 @@ export function isianBlanko(e, namaPembina, peserta) {
     jadwal: `${e.hari} ${jam(e.jam_mulai)}–${jam(e.jam_selesai)}`,
     tempat: e.tempat || '',
     pembina: pembimbingDari(e).map(id => namaPembina[id]).filter(Boolean),
-    peserta: peserta.map(s => ({ nama: s.nama, kelas: s.kelas || '' })),
+    peserta: peserta.map(s => ({ nama: s.nama, kelas: s.kelas || '' })).sort(urutKelasNama),
     namaBerkas: `blanko_daftar_hadir_${String(e.nama).replace(/[^\w-]+/g, '_')}.xlsx`
   };
 }

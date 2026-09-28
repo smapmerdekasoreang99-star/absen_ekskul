@@ -2,7 +2,7 @@ import { ambilMaster, muatPeriode, namaSiswa, jumlahPeserta, ambilPengaturan }
   from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, bersihkanPesan, hariIni,
          tanggalPanjang, tanggalPendek, persen, jam,
-         kategoriDari, KATEGORI } from '../assets/ui.js?v=20260928d';
+         kategoriDari, KATEGORI, urutKelasNama } from '../assets/ui.js?v=20260928e';
 import { unduhTabelXLSX, ttdPembina, ttdKesiswaan, pakaiIdentitas }
   from '../assets/dokumen.js?v=20260928c';
 
@@ -455,7 +455,8 @@ function isiUnduhan() {
             { t: 'Kegiatan', w: 20 }, { t: 'Hadir', w: 7, rata: C }, { t: 'Sakit', w: 7, rata: C },
             { t: 'Izin', w: 7, rata: C }, { t: 'Alfa', w: 7, rata: C }, { t: 'Pertemuan', w: 10, rata: C },
             { t: 'Kehadiran', w: 10, rata: C }],
-    baris: barisSiswa().map((x, i) => [i + 1, x.nama, x.kelas, x.ekskul, x.H, x.S, x.I, x.A, x.total, x.persen + '%'])
+    // Di layar diurutkan dari kehadiran terendah; berkasnya per kelas lalu nama.
+    baris: barisSiswa().sort((a, b) => urutKelasNama(a, b) || a.ekskul.localeCompare(b.ekskul, 'id')).map((x, i) => [i + 1, x.nama, x.kelas, x.ekskul, x.H, x.S, x.I, x.A, x.total, x.persen + '%'])
   };
 }
 
