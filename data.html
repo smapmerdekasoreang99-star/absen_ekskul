@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1D2A3A">
 <title>Data Peserta · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo-kecil.png">
-<link rel="stylesheet" href="assets/dasar.css?v=2">
+<link rel="stylesheet" href="assets/dasar.css?v=3">
 <link rel="stylesheet" href="assets/style.css?v=20260929g">
 <!-- Sambungan ke database disiapkan lebih awal, dan seluruh modul skrip
      diminta sekaligus — bukan tiga tingkat berurutan mengikuti rantai impor. -->
@@ -51,7 +51,7 @@
     <h2>Peserta terdaftar</h2>
     <p class="ket" id="jumlahPeserta">&nbsp;</p>
     <div id="daftarPeserta"><p class="kosong">Memuat…</p></div>
-    <button class="tbl tbl-kecil" id="unduhBlanko" type="button" style="margin-top:12px">Unduh Blanko Daftar Hadir (xlsx)</button>
+    <button class="btn-unduh" data-fmt="xlsx" id="unduhBlanko" type="button" style="margin-top:12px">Unduh blanko daftar hadir</button>
   </section>
 
   <section class="kartu">
@@ -81,7 +81,7 @@
       <small class="ket-kolom">Judul kolom di baris pertama. Kolom lain diabaikan. Berkas .xlsx atau .csv.</small>
     </div>
     <div class="deret-tombol">
-      <button class="tbl tbl-kecil" id="unduhFormat" type="button">Unduh Template Berkas (xlsx)</button>
+      <button class="btn-unduh" data-fmt="xlsx" id="unduhFormat" type="button">Unduh template berkas</button>
       <label class="tbl tbl-kecil tbl-utama" for="berkasPeserta">Pilih berkas…</label>
       <input id="berkasPeserta" type="file" accept=".xlsx,.xlsm,.csv" class="sembunyi">
     </div>

@@ -332,7 +332,7 @@ async function unduhSemua() {
     laporError(e);
   } finally {
     tombol.disabled = false;
-    tombol.textContent = 'Unduh semua kegiatan (CSV)';
+    tombol.textContent = 'Unduh semua kegiatan';
   }
 }
 
@@ -487,6 +487,6 @@ async function unduhSemuaKelas() {
     laporError(e);
   } finally {
     tombol.disabled = false;
-    tombol.textContent = 'Unduh semua kelas (XLSX)';
+    tombol.textContent = 'Unduh semua kelas';
   }
 }
