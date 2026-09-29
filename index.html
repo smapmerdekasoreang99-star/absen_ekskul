@@ -7,7 +7,7 @@
 <title>Absensi Ekstrakurikuler · SMA Plus Merdeka Soreang</title>
 <link rel="icon" href="assets/logo-kecil.png">
 <link rel="stylesheet" href="assets/dasar.css?v=2">
-<link rel="stylesheet" href="assets/style.css?v=20260929d">
+<link rel="stylesheet" href="assets/style.css?v=20260929e">
 <!-- Sambungan ke database disiapkan lebih awal, dan seluruh modul skrip
      diminta sekaligus — bukan tiga tingkat berurutan mengikuti rantai impor. -->
 <link rel="preconnect" href="https://xgtoneyvzfvfbidicotq.supabase.co" crossorigin>
@@ -66,17 +66,18 @@
         <h3 id="judulSudah"><span class="lp-angka" id="hitungSudah">0</span> Sudah laporan</h3>
         <ul class="lp-daftar" id="daftarSudah"><li class="lp-kosong">Memuat…</li></ul>
       </section>
-      <section class="lp-grup lp-belum" aria-labelledby="judulBelum">
-        <h3 id="judulBelum"><span class="lp-angka" id="hitungBelum">0</span> Belum laporan</h3>
-        <ul class="lp-daftar" id="daftarBelum"><li class="lp-kosong">Memuat…</li></ul>
-      </section>
+      <div class="lp-kanan">
+        <section class="lp-grup lp-belum" aria-labelledby="judulBelum">
+          <h3 id="judulBelum"><span class="lp-angka" id="hitungBelum">0</span> Belum laporan</h3>
+          <ul class="lp-daftar" id="daftarBelum"><li class="lp-kosong">Memuat…</li></ul>
+        </section>
+        <!-- Jadwal pekan ini yang belum tiba: bukan terlambat, dikelompokkan per hari. -->
+        <section class="lp-grup lp-menunggu" id="grupMenunggu" aria-labelledby="judulMenunggu">
+          <h3 id="judulMenunggu"><span class="lp-angka" id="hitungMenunggu">0</span> Menunggu jadwal</h3>
+          <ul class="lp-daftar" id="daftarMenunggu"></ul>
+        </section>
+      </div>
     </div>
-    <p class="ket lp-nanti" id="catatanNanti"></p>
-  </section>
-
-  <section class="kartu">
-    <h2>Latihan hari ini</h2>
-    <div id="jadwalHariIni"><p class="kosong">Memuat jadwal…</p></div>
   </section>
 
   <section class="kartu" id="kartuRingkas">
@@ -120,6 +121,6 @@
     <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
 </nav>
 
-<script type="module" src="scripts/beranda.js?v=20260929d"></script>
+<script type="module" src="scripts/beranda.js?v=20260929e"></script>
 </body>
 </html>

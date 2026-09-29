@@ -1,5 +1,5 @@
 import { ambilMaster, muatPeriode, jumlahPeserta } from '../assets/db.js?v=20260928d';
-import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, hariIni, namaHari,
+import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, hariIni,
          tanggalPanjang, persen, jam, kategoriDari } from '../assets/ui.js?v=20260929b';
 
 const AKUN = wajibMasuk(false);
@@ -45,7 +45,6 @@ function baris(a, b) {
     const m = await ambilMaster();
     const namaPembina = Object.fromEntries(m.pembina.map(p => [p.id, p.nama]));
     const ekskul = ekskulBoleh(AKUN, m.ekskul.filter(e => e.aktif !== false));
-    const hariNama = namaHari(hari);
 
     el('peranKu').innerHTML = pembina
       ? (ekskul.length
@@ -61,32 +60,11 @@ function baris(a, b) {
     ]);
     const boleh = new Set(ekskul.map(e => e.id));
     const minggu = sesi.filter(s => boleh.has(s.ekskul_id));
-    const sudah = new Set(minggu.filter(s => s.tanggal === hari).map(s => s.ekskul_id));
 
+    // Kotak "Latihan hari ini" dihapus (29 September 2026): laporan minggu
+    // ini sudah menyebut yang belum melapor beserta tombol pengisiannya.
     if (pembina) gambarLaporanKu(ekskul, minggu, peserta, awal);
     else gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina);
-
-    const kotak = el('jadwalHariIni');
-    const list = ekskul.filter(e => e.hari === hariNama);
-    if (!list.length) {
-      // Dipertegas (29 September 2026): pokoknya tebal dan gelap, sarannya di bawah.
-      kotak.innerHTML = `<div class="tanpa-latihan">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M9.5 13.5l5 5M14.5 13.5l-5 5"/></svg>
-        <div><strong>Tidak ada jadwal latihan pada hari ${hariNama}.</strong>
-          <span>Laporan susulan tetap bisa diisi lewat menu <b>Laporan Kegiatan</b>.</span></div>
-      </div>`;
-    } else {
-      kotak.innerHTML = list.map(e => `
-        <a class="jadwal-hari" style="text-decoration:none;color:inherit"
-           href="absensi.html?ekskul=${e.id}&tanggal=${hari}">
-          <span class="jam">${jam(e.jam_mulai)}</span>
-          <span class="isi"><strong>${e.nama}</strong>
-            <small>${namaPembina[e.pembina_id] || 'Pembina belum diisi'} ·
-              ${jam(e.jam_mulai)}–${jam(e.jam_selesai)}</small></span>
-          <span style="font-weight:700;color:${sudah.has(e.id) ? 'var(--hadir)' : 'var(--emas)'}">
-            ${sudah.has(e.id) ? 'Sudah' : 'Lapor'}</span>
-        </a>`).join('');
-    }
 
     // Ringkasan seluruh kegiatan untuk Kesiswaan. Pembina sudah mendapat
     // laporannya sendiri di atas, jadi kartu ini tidak diulang baginya.
@@ -128,8 +106,8 @@ const nadaPersen = p => p >= 80 ? 'baik' : p >= 60 ? 'sedang' : 'kurang';
         Pertemuan yang dilaporkan ditiadakan ikut di sini beserta alasannya.
      b. Belum laporan — kegiatan yang jadwal rutinnya pekan ini sudah lewat
         (termasuk hari ini) tetapi belum ada laporannya.
-   Kegiatan yang jadwalnya belum tiba tidak dihitung terlambat; namanya
-   disebut di baris catatan saja. */
+   Kegiatan yang jadwalnya belum tiba tidak dihitung terlambat; ia masuk
+   kotak ketiga, Menunggu jadwal, dikelompokkan per hari. */
 function gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina) {
   el('kartuLaporanSemua').classList.remove('sembunyi');
   el('ketLaporanSemua').textContent = `${tanggalPanjang(awal)} sampai hari ini.`;
@@ -186,9 +164,19 @@ function gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina) {
       </li>`).join('')
     : '<li class="lp-kosong lp-lengkap">✓ Semua kegiatan yang jadwalnya sudah lewat telah melapor.</li>';
 
-  el('catatanNanti').innerHTML = nanti.length
-    ? `Jadwalnya belum tiba minggu ini: ${nanti.map(e => `<b>${esc(e.nama)}</b> (${esc(e.hari)})`).join(', ')}.`
-    : '';
+  /* Menunggu jadwal: kotak tersendiri, dikelompokkan per hari supaya
+     terbaca sekilas hari apa saja masih ada latihan pekan ini. */
+  el('grupMenunggu').classList.toggle('sembunyi', !nanti.length);
+  el('hitungMenunggu').textContent = nanti.length;
+  const perHari = {};
+  nanti.forEach(e => { const t = tanggalJadwal(e, awal); (perHari[t] || (perHari[t] = [])).push(e); });
+  el('daftarMenunggu').innerHTML = Object.keys(perHari).sort().map(t => `
+      <li class="lp-item lp-hari">
+        <div class="lp-tanggal">${tanggalPanjang(t)}</div>
+        <div class="lp-chip">${perHari[t]
+          .sort((a, b) => String(a.jam_mulai).localeCompare(String(b.jam_mulai)) || a.nama.localeCompare(b.nama, 'id'))
+          .map(e => `<span title="${esc(namaPembina[e.pembina_id] || '')}"><b>${esc(e.nama)}</b> ${jam(e.jam_mulai)}</span>`).join('')}</div>
+      </li>`).join('');
 }
 
 /* Laporan minggu ini untuk pembina (29 September 2026): satu kotak per
