@@ -1,6 +1,6 @@
 import { ambilMaster, muatPeriode, jumlahPeserta } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, hariIni,
-         tanggalPanjang, persen, jam, kategoriDari } from '../assets/ui.js?v=20260929b';
+         tanggalPanjang, persen, jam, kategoriDari } from '../assets/ui.js?v=20260929f';
 
 const AKUN = wajibMasuk(false);
 try { tandaiMode(); } catch (e) { console.error(e); }
@@ -13,15 +13,22 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
 const hari = hariIni();
 el('tanggalHariIni').textContent = tanggalPanjang(hari);
 
-/* Sapaan (29 September 2026). Data pembina tidak menyimpan jenis kelamin,
-   jadi sapaannya "Bapak/Ibu" — lebih baik netral daripada menebak dari nama.
-   Gelar di belakang koma tidak ikut disebut. */
+/* Sapaan (29 September 2026). "Pak"/"Bu" menurut jenis kelamin pembina —
+   dari Data Induk untuk guru, dari isian Admin Kesiswaan untuk pelatih
+   eksternal (view ae_pembina_aman). Bila belum diisi, "Bapak/Ibu": lebih
+   baik netral daripada menebak dari nama. Gelar di belakang koma tidak ikut
+   disebut. Sebelum data pembina termuat, sapaannya netral dulu. */
 const jamNow = new Date().getHours();
 const salam = jamNow < 11 ? 'Selamat pagi' : jamNow < 15 ? 'Selamat siang'
   : jamNow < 18 ? 'Selamat sore' : 'Selamat malam';
 const pembina = AKUN && AKUN.peran === 'pembina';
 const namaPendek = AKUN ? String(AKUN.nama || '').split(',')[0].trim() : '';
-el('sapaan').textContent = pembina ? `${salam}, Bapak/Ibu ${namaPendek}` : `${salam}, Tim Kesiswaan`;
+// SAPA dipakai di sapaan ("Pak Ervint"), SEBUT di dalam kalimat ("Bapak sebagai Pembina…").
+let SAPA = 'Bapak/Ibu', SEBUT = 'Bapak/Ibu';
+function pasangSapaan() {
+  el('sapaan').textContent = pembina ? `${salam}, ${SAPA} ${namaPendek}` : `${salam}, Admin Kesiswaan`;
+}
+pasangSapaan();
 
 function senin(iso) {
   const d = new Date(iso + 'T00:00:00');
@@ -35,9 +42,6 @@ function tambahHari(iso, n) {
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 10);
 }
-function baris(a, b) {
-  return `<div class="jadwal-hari"><span class="isi"><strong>${a}</strong><small>${b}</small></span></div>`;
-}
 
 (async function muat() {
   if (!AKUN) return;
@@ -45,12 +49,18 @@ function baris(a, b) {
     const m = await ambilMaster();
     const namaPembina = Object.fromEntries(m.pembina.map(p => [p.id, p.nama]));
     const ekskul = ekskulBoleh(AKUN, m.ekskul.filter(e => e.aktif !== false));
+    if (pembina) {
+      const jk = (m.pembina.find(p => p.id === AKUN.pembina_id) || {}).jenis_kelamin;
+      if (jk === 'L') { SAPA = 'Pak'; SEBUT = 'Bapak'; }
+      else if (jk === 'P') { SAPA = 'Bu'; SEBUT = 'Ibu'; }
+      pasangSapaan();
+    }
 
     el('peranKu').innerHTML = pembina
       ? (ekskul.length
           ? ekskul.map(e => `<span>${esc(e.nama)}</span>`).join('')
           : '<span>Belum ada kegiatan atas nama Anda</span>')
-      : '<span>Akses Kesiswaan</span>';
+      : '<span>Admin Kesiswaan</span>';
 
     const awal = senin(hari);
     // Peserta terdaftar; bila gagal, beranda tetap tampil tanpa angka itu.
@@ -61,33 +71,11 @@ function baris(a, b) {
     const boleh = new Set(ekskul.map(e => e.id));
     const minggu = sesi.filter(s => boleh.has(s.ekskul_id));
 
-    // Kotak "Latihan hari ini" dihapus (29 September 2026): laporan minggu
-    // ini sudah menyebut yang belum melapor beserta tombol pengisiannya.
+    // Kotak "Latihan hari ini" dan "Minggu ini" dihapus (29 September 2026):
+    // laporan minggu ini sudah memuat keduanya — yang sudah dan belum
+    // melapor, beserta kehadiran siswanya. Ringkasan angka ada di Rekapitulasi.
     if (pembina) gambarLaporanKu(ekskul, minggu, peserta, awal);
     else gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina);
-
-    // Ringkasan seluruh kegiatan untuk Kesiswaan. Pembina sudah mendapat
-    // laporannya sendiri di atas, jadi kartu ini tidak diulang baginya.
-    if (pembina) { el('kartuRingkas').classList.add('sembunyi'); return; }
-    const terlaksana = minggu.filter(s => s.status_pembina !== 'KG');
-    const hadirSiswa = terlaksana.reduce((a, s) => a + s.H, 0);
-    // Sama seperti Ringkasan di Rekapitulasi: "dari" = peserta tercatat pada latihan
-    // yang berjalan (H+S+I+A); peserta terdaftar = siswa aktif berbeda.
-    const slot = terlaksana.reduce((a, s) => a + s.H + s.S + s.I + s.A, 0);
-    const n = terlaksana.length;
-    const terdaftar = peserta ? `peserta terdaftar ${peserta.unik} siswa di ${ekskul.length} kegiatan · ` : '';
-    const berfoto = minggu.filter(s => s.foto).length;
-    const belum = ekskul.filter(e => !minggu.some(s => s.ekskul_id === e.id)).length;
-
-    el('ringkasMinggu').innerHTML =
-      baris(`${minggu.length} laporan minggu ini`,
-            `${n} terlaksana · ${minggu.length - n} ditiadakan`) +
-      baris(`${hadirSiswa} kehadiran siswa dari ${slot} peserta latihan (${persen(hadirSiswa, slot)}%)`,
-            `${terdaftar}rata-rata ${n ? Math.round(hadirSiswa / n) : 0} dari ${n ? Math.round(slot / n) : 0} siswa hadir per latihan`) +
-      baris(`${berfoto} laporan berfoto`,
-            `${persen(berfoto, minggu.length)}% laporan melampirkan foto kegiatan`) +
-      (belum ? baris(`${belum} ekstrakurikuler belum melapor`,
-            'sejak Senin sampai hari ini') : '');
   } catch (e) { laporError(e); }
 })();
 
@@ -131,15 +119,20 @@ function gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina) {
     const e = namaKeg[s.ekskul_id] || { nama: s.ekskul_id };
     const kepala = `<div class="lp-kepala"><strong>${esc(e.nama)}</strong>
       <small>${esc(namaPembina[e.pembina_id] || 'Pembina belum diisi')}</small></div>`;
+    /* Tiap laporan bisa dipilih (29 September 2026): membuka laporan
+       kegiatan itu pada tanggalnya, dalam keadaan terkunci. */
+    const buka = isi => `<a class="lp-tautan" href="absensi.html?ekskul=${encodeURIComponent(s.ekskul_id)}&tanggal=${s.tanggal}"
+        aria-label="Buka laporan ${esc(e.nama)}, ${tanggalPanjang(s.tanggal)}">${isi}
+        <span class="lp-lihat" aria-hidden="true">Lihat laporan ›</span></a>`;
     if (s.status_pembina === 'KG') return `
-      <li class="lp-item lp-tiada">${kepala}
+      <li class="lp-item lp-pilih lp-tiada">${buka(`${kepala}
         <div class="lp-baris"><span><em>Hari/Tanggal</em>${tanggalPanjang(s.tanggal)}</span>
-          <span><em>Keterangan</em><b class="lencana l-libur">Ditiadakan</b> ${esc(s.alasan_tiada || '')}</span></div>
+          <span><em>Keterangan</em><b class="lencana l-libur">Ditiadakan</b> ${esc(s.alasan_tiada || '')}</span></div>`)}
       </li>`;
     const dasar = peserta ? (peserta.per[s.ekskul_id] || 0) : (s.H + s.S + s.I + s.A);
     const p = persen(s.H, dasar), nada = nadaPersen(p);
     return `
-      <li class="lp-item">${kepala}
+      <li class="lp-item lp-pilih">${buka(`${kepala}
         <div class="lp-baris">
           <span><em>Hari/Tanggal</em>${tanggalPanjang(s.tanggal)}</span>
           <span><em>Lokasi</em>${esc(s.tempat) || '<i class="redup">tidak diisi</i>'}</span>
@@ -148,7 +141,7 @@ function gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina) {
           <span><em>Siswa hadir</em><b>${s.H}</b> dari seluruh peserta <b>${dasar}</b></span>
           <span class="lap-persen ${nada}">${p}%</span>
           <span class="lap-bilah ${nada}" aria-hidden="true"><i style="width:${Math.min(100, p)}%"></i></span>
-        </div>
+        </div>`)}
       </li>`;
   }).join('') : '<li class="lp-kosong">Belum ada kegiatan yang melapor minggu ini.</li>';
 
@@ -217,7 +210,7 @@ function gambarLaporanKu(ekskul, minggu, peserta, awal) {
       return `
       <article class="lap lap-belum">
         <header><h3>${esc(e.nama)}</h3><span class="lap-status">Belum melapor</span></header>
-        <p class="lap-kalimat">Minggu ini Bapak/Ibu sebagai ${sebutan} di SMA Plus Merdeka Soreang
+        <p class="lap-kalimat">Minggu ini ${SEBUT} sebagai ${sebutan} di SMA Plus Merdeka Soreang
           <b>belum melaporkan</b> pelaksanaan kegiatan. Jadwal rutin: ${esc(jadwal)}.</p>
         <a class="tbl tbl-utama tbl-kecil" href="absensi.html?ekskul=${e.id}&tanggal=${tuju}">Isi daftar hadir</a>
       </article>`;
@@ -250,7 +243,7 @@ function gambarLaporanKu(ekskul, minggu, peserta, awal) {
     return `
       <article class="lap lap-sudah">
         <header><h3>${esc(e.nama)}</h3><span class="lap-status">✓ Sudah melapor</span></header>
-        <p class="lap-kalimat"><b>Terima kasih.</b> Minggu ini Bapak/Ibu sebagai ${sebutan} di
+        <p class="lap-kalimat"><b>Terima kasih.</b> Minggu ini ${SEBUT} sebagai ${sebutan} di
           SMA Plus Merdeka Soreang telah melaporkan pelaksanaan kegiatan pada:</p>
         ${rincian}
       </article>`;

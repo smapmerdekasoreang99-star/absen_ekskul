@@ -2,7 +2,7 @@ import { ambilMaster, muatPeriode, namaSiswa, jumlahPeserta, ambilPengaturan }
   from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, bersihkanPesan, hariIni,
          tanggalPanjang, tanggalPendek, persen, jam,
-         kategoriDari, KATEGORI, urutKelasNama } from '../assets/ui.js?v=20260929b';
+         kategoriDari, KATEGORI, urutKelasNama } from '../assets/ui.js?v=20260929f';
 import { unduhTabelXLSX, ttdPembina, ttdKesiswaan, pakaiIdentitas }
   from '../assets/dokumen.js?v=20260929b';
 

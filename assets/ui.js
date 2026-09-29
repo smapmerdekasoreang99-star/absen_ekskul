@@ -41,7 +41,7 @@ export function wajibMasuk(pengelolaSaja) {
     return null;
   }
   const nama = document.getElementById('namaPengguna');
-  if (nama) nama.textContent = s.peran === 'pengelola' ? 'Pengelola' : s.nama;
+  if (nama) nama.textContent = s.peran === 'pengelola' ? 'Admin Kesiswaan' : s.nama;
   const tombol = document.getElementById('tombolKeluar');
   if (tombol) tombol.addEventListener('click', keluar);
   document.querySelectorAll('[data-pengelola]').forEach(el => {

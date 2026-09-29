@@ -3,7 +3,7 @@ import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPer
          nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
          bersihkanPesan, tanggalPanjang, persen, unduhCSV,
-         kategoriDari, perKategori, urutKelasNama } from '../assets/ui.js?v=20260929b';
+         kategoriDari, perKategori, urutKelasNama } from '../assets/ui.js?v=20260929f';
 import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG, pakaiIdentitas, unduhTabelXLSX, ttdPembina }
   from '../assets/dokumen.js?v=20260929b';
 

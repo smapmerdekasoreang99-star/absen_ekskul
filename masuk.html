@@ -7,12 +7,12 @@
 <title>Masuk · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo-kecil.png">
 <link rel="stylesheet" href="assets/dasar.css?v=2">
-<link rel="stylesheet" href="assets/style.css?v=20260929e">
+<link rel="stylesheet" href="assets/style.css?v=20260929g">
 <!-- Sambungan ke database disiapkan lebih awal, dan seluruh modul skrip
      diminta sekaligus — bukan tiga tingkat berurutan mengikuti rantai impor. -->
 <link rel="preconnect" href="https://xgtoneyvzfvfbidicotq.supabase.co" crossorigin>
 <link rel="modulepreload" href="assets/db.js?v=20260928d">
-<link rel="modulepreload" href="assets/ui.js?v=20260929b">
+<link rel="modulepreload" href="assets/ui.js?v=20260929f">
 <link rel="modulepreload" href="assets/supabase-client.js?v=20260923b">
 <link rel="modulepreload" href="assets/simpanan.js?v=20260923b">
 <link rel="modulepreload" href="assets/demo-data.js?v=20260923b">
@@ -33,7 +33,7 @@
   <section class="kartu">
     <div class="pilih-peran" id="pilihPeran">
       <button type="button" data-peran="pembina" aria-pressed="true">Pembina / pelatih</button>
-      <button type="button" data-peran="pengelola" aria-pressed="false">Pengelola sekolah</button>
+      <button type="button" data-peran="pengelola" aria-pressed="false">Admin Kesiswaan</button>
     </div>
 
     <div id="bagianPembina">
@@ -46,8 +46,8 @@
     </div>
 
     <div id="bagianPengelola" class="sembunyi">
-      <label for="pinPengelola">PIN pengelola</label>
-      <input id="pinPengelola" type="password" autocomplete="off" placeholder="PIN kesiswaan">
+      <label for="pinPengelola">PIN Admin Kesiswaan</label>
+      <input id="pinPengelola" type="password" autocomplete="off" placeholder="PIN Admin Kesiswaan">
       <p class="ket" style="margin:8px 0 0">Untuk Wakasek Kesiswaan, staf, dan pimpinan.
         Bisa melihat semua ekstrakurikuler dan rekapitulasinya.</p>
     </div>
@@ -59,6 +59,6 @@
     Jangan bagikan PIN kepada siswa.</p>
 </main>
 
-<script type="module" src="scripts/masuk.js?v=20260929b"></script>
+<script type="module" src="scripts/masuk.js?v=20260929f"></script>
 </body>
 </html>

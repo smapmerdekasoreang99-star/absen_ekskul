@@ -1,7 +1,7 @@
 import { ambilMaster, pesertaEkskul, cariSiswaSekolah, daftarKelas, semuaSiswaSekolah,
          daftarkanPeserta, daftarkanPesertaBanyak, hapusPeserta, ambilPengaturan } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan, jam, perKategori,
-         isianBlanko } from '../assets/ui.js?v=20260929b';
+         isianBlanko } from '../assets/ui.js?v=20260929f';
 import { unduhBlankoHadirXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260929b';
 import { unduhFormatPeserta, bacaBerkasPeserta, cocokkanPeserta }
   from '../assets/unggah-peserta.js?v=20260929b';

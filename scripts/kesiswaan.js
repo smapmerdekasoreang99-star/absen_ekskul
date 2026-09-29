@@ -3,7 +3,7 @@ import { ambilMaster, simpanPembina, hapusPembina, nomorPembinaBaru, daftarGuru,
          simpanPembimbingKegiatan } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan,
          jam, kategoriDari, perKategori, KATEGORI_BAWAAN,
-         pembimbingDari, dibimbingBersama } from '../assets/ui.js?v=20260929b';
+         pembimbingDari, dibimbingBersama } from '../assets/ui.js?v=20260929f';
 
 // Halaman ini mengelola DATA INDUK ekskul: pembina dan kegiatan. Aturan tarif
 // transport, daftar pembayarannya, dan identitas dokumen sudah pindah —
@@ -144,6 +144,26 @@ function saatPilihGuru() {
   } else {
     el('pNama').readOnly = false;
   }
+  aturJenisKelamin();
+}
+
+/* Jenis kelamin (29 September 2026). Untuk guru yang jenis kelaminnya
+   sudah diisi di Data Induk, isian itulah yang berlaku — diturunkan oleh
+   view ae_pembina_aman — jadi di sini ditampilkan terkunci. Selain itu
+   (pelatih eksternal, atau guru yang di Data Induk belum diisi) diisi di
+   sini. Yang dikunci hanya bila guru yang terpilih masih guru yang sama
+   dengan yang tersimpan; memilih guru lain membuka isiannya lagi. */
+function aturJenisKelamin() {
+  const p = sedangUbah ? PEMBINA.find(x => x.id === sedangUbah) : null;
+  const dariInduk = p && p.jenis_kelamin_induk && el('pGuru').value === (p.id_guru || '')
+    ? p.jenis_kelamin_induk : '';
+  el('pJk').disabled = !!dariInduk;
+  if (dariInduk) el('pJk').value = dariInduk;
+  el('ketJk').textContent = dariInduk
+    ? 'Diambil dari Data Induk. Bila keliru, perbaiki di Data Induk → Data Guru.'
+    : el('pGuru').value
+      ? 'Bila jenis kelamin guru ini sudah diisi di Data Induk, isian Data Induk yang dipakai.'
+      : 'Dipakai untuk sapaan di Beranda pembina.';
 }
 
 function isiFormPembina(id) {
@@ -155,6 +175,7 @@ function isiFormPembina(id) {
   el('pGuru').value = p.id_guru || '';
   el('pNama').value = p.nama;
   el('pHp').value = p.no_hp || '';
+  el('pJk').value = p.jenis_kelamin || '';
   /* PIN tidak diisikan kembali: kolomnya memang tidak lagi terbaca dari
      peramban. Isian dibiarkan kosong dan artinya "biarkan seperti semula";
      yang perlu diketahui pengelola hanyalah sudah ada PIN-nya atau belum. */
@@ -177,6 +198,7 @@ function kosongkanFormPembina() {
   el('ketPin').textContent = 'Wajib diisi supaya pembina bisa melapor.';
   el('ketPin').classList.remove('perlu-pin');
   el('pAktif').value = 'Aktif';
+  el('pJk').value = '';
   isiPilihanGuru('');
   el('pGuru').value = '';
   saatPilihGuru();
@@ -213,6 +235,8 @@ async function simpanFormPembina() {
     no_hp: el('pHp').value.trim(),
     status: el('pAktif').value
   };
+  // Yang terkunci berasal dari Data Induk; isian sendiri tidak disentuh.
+  if (!el('pJk').disabled) baris.jenis_kelamin = el('pJk').value || null;
   /* PIN hanya disertakan bila memang diisi. Kalau kolomnya dikirim kosong,
      PIN yang sudah ada akan terhapus — dan pembinanya tidak bisa melapor
      lagi tanpa ada yang menyadari penyebabnya. */

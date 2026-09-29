@@ -1,6 +1,6 @@
 // Identitas bawaan untuk kop dokumen XLSX dan PNG.
 // Nilai ini hanya dipakai bila pengaturan di database belum terisi;
-// yang berlaku sehari-hari adalah isian di menu Kesiswaan > Aturan transport.
+// yang berlaku sehari-hari adalah isian di Data Induk → Profil Dokumen.
 export const SEKOLAH = {
   nama: 'SMA Plus "Merdeka" Soreang',
   alamat: 'Jl. Citaliktik-Sindang Wargi Soreang Kab. Bandung',

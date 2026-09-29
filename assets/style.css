@@ -470,6 +470,22 @@ td.kelompok{background:var(--kertas-3);font-weight:600}
 .lp-item .redup{color:var(--tinta-3)}
 .lp-kosong{padding:var(--j4);text-align:center;color:var(--tinta-2);font-size:var(--h-s)}
 .lp-lengkap{color:var(--hadir-tua);font-weight:700;background:var(--hadir-muda)}
+/* Laporan yang bisa dipilih: seluruh baris menjadi tautan ke laporannya.
+   Tanda "Lihat laporan ›" dan latar yang menyala saat disentuh memberi tahu
+   bahwa baris ini bisa diketuk. */
+.lp-item.lp-pilih{padding:0}
+.lp-tautan{
+  display:block;padding:var(--j3) var(--j4);color:inherit;text-decoration:none;
+  transition:background-color .15s;
+}
+.lp-tautan:hover,.lp-tautan:focus-visible{background:var(--hadir-muda)}
+.lp-tautan:focus-visible{outline:2px solid var(--hadir);outline-offset:-2px}
+.lp-lihat{
+  display:block;margin-top:8px;text-align:right;
+  font-size:var(--h-xs);font-weight:700;color:var(--hadir);
+}
+.lp-tautan:hover .lp-lihat{text-decoration:underline}
+
 /* Kolom kanan: Belum laporan di atas, Menunggu jadwal di bawahnya. */
 .lp-kanan{display:grid;gap:var(--j4);align-content:start}
 

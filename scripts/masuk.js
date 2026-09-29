@@ -1,6 +1,6 @@
 import { ambilMaster, cekPembina } from '../assets/db.js?v=20260928d';
 import { masukSebagai, tandaiMode, laporError, bersihkanPesan, PIN_PENGELOLA, pembimbingDari }
-  from '../assets/ui.js?v=20260929b';
+  from '../assets/ui.js?v=20260929f';
 
 const el = id => document.getElementById(id);
 let peran = 'pembina';
@@ -68,8 +68,8 @@ async function masuk() {
   try {
     if (peran === 'pengelola') {
       if (el('pinPengelola').value.trim() !== PIN_PENGELOLA)
-        throw new Error('PIN pengelola salah.');
-      masukSebagai({ peran: 'pengelola', nama: 'Pengelola' });
+        throw new Error('PIN Admin Kesiswaan salah.');
+      masukSebagai({ peran: 'pengelola', nama: 'Admin Kesiswaan' });
     } else {
       const id = el('pilihNama').value;
       if (!id) throw new Error('Pilih nama Anda dulu.');
