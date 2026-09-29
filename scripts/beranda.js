@@ -64,6 +64,7 @@ function baris(a, b) {
     const sudah = new Set(minggu.filter(s => s.tanggal === hari).map(s => s.ekskul_id));
 
     if (pembina) gambarLaporanKu(ekskul, minggu, peserta, awal);
+    else gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina);
 
     const kotak = el('jadwalHariIni');
     const list = ekskul.filter(e => e.hari === hariNama);
@@ -111,6 +112,84 @@ function baris(a, b) {
             'sejak Senin sampai hari ini') : '');
   } catch (e) { laporError(e); }
 })();
+
+/* Tanggal jadwal rutin sebuah kegiatan pada pekan yang dimulai `awal`. */
+const URUT_HARI = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+function tanggalJadwal(e, awal) {
+  const i = URUT_HARI.indexOf(e.hari);
+  return i >= 0 ? tambahHari(awal, i) : null;
+}
+const nadaPersen = p => p >= 80 ? 'baik' : p >= 60 ? 'sedang' : 'kurang';
+
+/* Laporan minggu ini untuk Kesiswaan (29 September 2026), kotak kedua
+   dari atas. Dua daftar:
+     a. Sudah laporan — tiap pertemuan yang dilaporkan pekan ini: hari/
+        tanggal, lokasi, dan siswa hadir dibanding seluruh peserta terdaftar.
+        Pertemuan yang dilaporkan ditiadakan ikut di sini beserta alasannya.
+     b. Belum laporan — kegiatan yang jadwal rutinnya pekan ini sudah lewat
+        (termasuk hari ini) tetapi belum ada laporannya.
+   Kegiatan yang jadwalnya belum tiba tidak dihitung terlambat; namanya
+   disebut di baris catatan saja. */
+function gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina) {
+  el('kartuLaporanSemua').classList.remove('sembunyi');
+  el('ketLaporanSemua').textContent = `${tanggalPanjang(awal)} sampai hari ini.`;
+  const namaKeg = Object.fromEntries(ekskul.map(e => [e.id, e]));
+
+  const sudah = [...minggu].sort((a, b) => a.tanggal.localeCompare(b.tanggal) ||
+    String((namaKeg[a.ekskul_id] || {}).nama).localeCompare(String((namaKeg[b.ekskul_id] || {}).nama), 'id'));
+  const melapor = new Set(minggu.map(s => s.ekskul_id));
+  const belum = [], nanti = [];
+  ekskul.forEach(e => {
+    if (melapor.has(e.id)) return;
+    const t = tanggalJadwal(e, awal);
+    if (t && t > hari) nanti.push(e); else belum.push({ e, t });
+  });
+  belum.sort((a, b) => String(a.t).localeCompare(String(b.t)) || a.e.nama.localeCompare(b.e.nama, 'id'));
+
+  el('hitungSudah').textContent = sudah.length;
+  el('hitungBelum').textContent = belum.length;
+
+  el('daftarSudah').innerHTML = sudah.length ? sudah.map(s => {
+    const e = namaKeg[s.ekskul_id] || { nama: s.ekskul_id };
+    const kepala = `<div class="lp-kepala"><strong>${esc(e.nama)}</strong>
+      <small>${esc(namaPembina[e.pembina_id] || 'Pembina belum diisi')}</small></div>`;
+    if (s.status_pembina === 'KG') return `
+      <li class="lp-item lp-tiada">${kepala}
+        <div class="lp-baris"><span><em>Hari/Tanggal</em>${tanggalPanjang(s.tanggal)}</span>
+          <span><em>Keterangan</em><b class="lencana l-libur">Ditiadakan</b> ${esc(s.alasan_tiada || '')}</span></div>
+      </li>`;
+    const dasar = peserta ? (peserta.per[s.ekskul_id] || 0) : (s.H + s.S + s.I + s.A);
+    const p = persen(s.H, dasar), nada = nadaPersen(p);
+    return `
+      <li class="lp-item">${kepala}
+        <div class="lp-baris">
+          <span><em>Hari/Tanggal</em>${tanggalPanjang(s.tanggal)}</span>
+          <span><em>Lokasi</em>${esc(s.tempat) || '<i class="redup">tidak diisi</i>'}</span>
+        </div>
+        <div class="lp-hadir">
+          <span><em>Siswa hadir</em><b>${s.H}</b> dari seluruh peserta <b>${dasar}</b></span>
+          <span class="lap-persen ${nada}">${p}%</span>
+          <span class="lap-bilah ${nada}" aria-hidden="true"><i style="width:${Math.min(100, p)}%"></i></span>
+        </div>
+      </li>`;
+  }).join('') : '<li class="lp-kosong">Belum ada kegiatan yang melapor minggu ini.</li>';
+
+  el('daftarBelum').innerHTML = belum.length ? belum.map(({ e, t }) => `
+      <li class="lp-item">
+        <div class="lp-kepala"><strong>${esc(e.nama)}</strong>
+          <small>${esc(namaPembina[e.pembina_id] || 'Pembina belum diisi')}</small></div>
+        <div class="lp-baris">
+          <span><em>Jadwal</em>${t ? tanggalPanjang(t) : esc(e.hari || '—')}${t === hari ? ' <b class="lencana l-ganti">hari ini</b>' : ''}
+            · ${jam(e.jam_mulai)}–${jam(e.jam_selesai)}</span>
+          <a class="tbl tbl-kecil" href="absensi.html?ekskul=${e.id}&tanggal=${t && t <= hari ? t : hari}">Isi laporan</a>
+        </div>
+      </li>`).join('')
+    : '<li class="lp-kosong lp-lengkap">✓ Semua kegiatan yang jadwalnya sudah lewat telah melapor.</li>';
+
+  el('catatanNanti').innerHTML = nanti.length
+    ? `Jadwalnya belum tiba minggu ini: ${nanti.map(e => `<b>${esc(e.nama)}</b> (${esc(e.hari)})`).join(', ')}.`
+    : '';
+}
 
 /* Laporan minggu ini untuk pembina (29 September 2026): satu kotak per
    kegiatan yang dibimbingnya. Yang sudah melapor mendapat ucapan terima

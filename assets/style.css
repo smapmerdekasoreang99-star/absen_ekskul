@@ -428,6 +428,51 @@ td.kelompok{background:var(--kertas-3);font-weight:600}
   color:#FFF6D2;border-radius:var(--r-bulat);padding:3px 10px;
 }
 
+/* ---- Beranda Kesiswaan: laporan kegiatan minggu ini ----
+   Dua kelompok berdampingan (bertumpuk di ponsel): hijau untuk yang sudah
+   laporan, emas untuk yang belum. Kepala kelompok berwarna penuh dengan
+   angka besar supaya jumlahnya terbaca sekilas; isinya tetap di atas putih. */
+.lp-kolom{display:grid;gap:var(--j4)}
+@media(min-width:900px){ .lp-kolom{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start} }
+.lp-grup{border:1px solid var(--garis);border-radius:var(--r3);overflow:hidden;background:var(--kertas-2)}
+.lp-grup h3{
+  display:flex;align-items:center;gap:var(--j3);margin:0;
+  padding:var(--j3) var(--j4);font-size:var(--h-n);font-weight:700;color:#fff;
+}
+.lp-sudah h3{background:linear-gradient(120deg,var(--hadir-tua),var(--hadir))}
+.lp-belum h3{background:linear-gradient(120deg,var(--emas-tua),var(--emas));color:#2A2114}
+.lp-angka{
+  font-family:'Fraunces',serif;font-size:26px;line-height:1;min-width:40px;text-align:center;
+  background:rgba(255,255,255,.18);border-radius:var(--r2);padding:4px 8px;
+}
+.lp-belum .lp-angka{background:rgba(255,255,255,.35)}
+.lp-daftar{list-style:none;margin:0;padding:0}
+.lp-item{padding:var(--j3) var(--j4);border-bottom:1px solid var(--garis)}
+.lp-item:last-child{border-bottom:0}
+.lp-sudah .lp-item{border-left:4px solid var(--hadir-muda)}
+.lp-belum .lp-item{border-left:4px solid var(--emas-muda);background:linear-gradient(90deg,var(--emas-kabut),var(--kertas-2) 60%)}
+.lp-item.lp-tiada{border-left-color:var(--netral-muda)}
+.lp-kepala{display:flex;align-items:baseline;justify-content:space-between;gap:var(--j2);flex-wrap:wrap;margin-bottom:6px}
+.lp-kepala strong{font-family:'Fraunces',serif;font-size:var(--h-b)}
+.lp-sudah .lp-kepala strong{color:var(--hadir-tua)}
+.lp-belum .lp-kepala strong{color:var(--emas-teks)}
+.lp-kepala small{font-size:var(--h-xs);color:var(--tinta-2)}
+.lp-baris{display:flex;flex-wrap:wrap;align-items:center;gap:6px var(--j4);font-size:var(--h-s)}
+.lp-baris .tbl{margin-left:auto;text-decoration:none}
+.lp-item em{
+  font-style:normal;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+  color:var(--tinta-3);margin-right:6px;
+}
+.lp-hadir{display:flex;flex-wrap:wrap;align-items:center;gap:6px var(--j2);margin-top:6px;font-size:var(--h-s)}
+.lp-hadir b{font-size:var(--h-n)}
+.lp-hadir .lap-persen{margin-left:0}
+.lp-hadir .lap-bilah{flex:1 0 100%;margin-top:0}
+.lp-item .redup{color:var(--tinta-3)}
+.lp-kosong{padding:var(--j4);text-align:center;color:var(--tinta-2);font-size:var(--h-s)}
+.lp-lengkap{color:var(--hadir-tua);font-weight:700;background:var(--hadir-muda)}
+.lp-nanti{margin:var(--j3) 0 0}
+.lp-nanti:empty{display:none}
+
 /* ---- Beranda: tidak ada latihan hari ini ----
    Bukan tulisan kosong abu-abu kecil, melainkan kotak biru muda dengan
    kalimat pokok tebal berwarna gelap — mudah terbaca sekilas. */
