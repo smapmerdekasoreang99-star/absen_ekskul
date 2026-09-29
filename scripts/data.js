@@ -1,10 +1,10 @@
 import { ambilMaster, pesertaEkskul, cariSiswaSekolah, daftarKelas, semuaSiswaSekolah,
          daftarkanPeserta, daftarkanPesertaBanyak, hapusPeserta, ambilPengaturan } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan, jam, perKategori,
-         isianBlanko } from '../assets/ui.js?v=20260928e';
-import { unduhBlankoHadirXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260928c';
+         isianBlanko } from '../assets/ui.js?v=20260929b';
+import { unduhBlankoHadirXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260929b';
 import { unduhFormatPeserta, bacaBerkasPeserta, cocokkanPeserta }
-  from '../assets/unggah-peserta.js?v=20260928d';
+  from '../assets/unggah-peserta.js?v=20260929b';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, PESERTA = [], HASIL = [], jeda = null;
@@ -262,7 +262,7 @@ function tutupUnggahan() {
   el('berkasPeserta').value = '';   // supaya berkas yang sama bisa dipilih lagi
 }
 
-// Blanko yang sama persis dengan di halaman Absen Siswa.
+// Blanko yang sama persis dengan di halaman Laporan Kegiatan.
 async function unduhBlanko() {
   bersihkanPesan();
   const e = ekskulTerpilih();

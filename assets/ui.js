@@ -194,8 +194,8 @@ export function urutKelasNama(a, b) {
          String(a.nama || '').localeCompare(String(b.nama || ''), 'id');
 }
 
-/* Isian Blanko Daftar Hadir untuk satu kegiatan. Dipakai halaman Absen
-   Siswa dan Data dari satu tempat supaya berkas keduanya sama persis. */
+/* Isian Blanko Daftar Hadir untuk satu kegiatan. Dipakai halaman Laporan
+   Kegiatan dan Data Peserta dari satu tempat supaya berkas keduanya sama persis. */
 export function isianBlanko(e, namaPembina, peserta) {
   return {
     kegiatan: e.nama, kategori: kategoriDari(e),

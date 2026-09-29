@@ -1,4 +1,4 @@
-// Unggah daftar peserta dari berkas XLSX atau CSV — halaman Data peserta.
+// Unggah daftar peserta dari berkas XLSX atau CSV — halaman Data Peserta.
 //
 // Prinsip halaman itu — tidak ada nama yang diketik ulang — tetap berlaku.
 // Berkas dari luar hanyalah cara memilih banyak siswa sekaligus: setiap
@@ -11,7 +11,7 @@
 //   2. bacaBerkasPeserta   — membaca XLSX/CSV menjadi baris {nama, kelas};
 //   3. cocokkanPeserta     — memutuskan nasib tiap baris tanpa menyentuh
 //                            jaringan, supaya mudah diuji.
-import { pustakaExcel } from './dokumen.js?v=20260928c';
+import { pustakaExcel } from './dokumen.js?v=20260929b';
 
 export const KOLOM = { nama: 'Nama siswa', kelas: 'Kelas' };
 

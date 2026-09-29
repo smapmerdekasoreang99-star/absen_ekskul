@@ -204,7 +204,7 @@ export async function cariSiswaSekolah(kata, kelas) {
   return periksa(await permintaan, 'Gagal mencari siswa').map(rapikan);
 }
 
-// Seluruh siswa aktif, untuk mencocokkan berkas unggahan di halaman Data.
+// Seluruh siswa aktif, untuk mencocokkan berkas unggahan di halaman Data Peserta.
 // Diminta per 1000 baris karena PostgREST membatasi satu jawaban sebesar itu;
 // sekolah ini punya beberapa ratus siswa, jadi biasanya cukup satu kali.
 export async function semuaSiswaSekolah() {

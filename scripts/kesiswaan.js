@@ -3,7 +3,7 @@ import { ambilMaster, simpanPembina, hapusPembina, nomorPembinaBaru, daftarGuru,
          simpanPembimbingKegiatan } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, tandaiMode, laporError, sukses, bersihkanPesan,
          jam, kategoriDari, perKategori, KATEGORI_BAWAAN,
-         pembimbingDari, dibimbingBersama } from '../assets/ui.js?v=20260928e';
+         pembimbingDari, dibimbingBersama } from '../assets/ui.js?v=20260929b';
 
 // Halaman ini mengelola DATA INDUK ekskul: pembina dan kegiatan. Aturan tarif
 // transport, daftar pembayarannya, dan identitas dokumen sudah pindah —
@@ -237,7 +237,7 @@ async function hapus(id) {
   const dipakai = EKSKUL.filter(e => pembimbingDari(e).includes(id));
   if (dipakai.length) {
     laporError(`${p.nama} masih memegang ${dipakai.map(e => e.nama).join(', ')}. ` +
-               'Pindahkan pembinanya dulu lewat menu Data.');
+               'Pindahkan pembinanya dulu lewat tab Data ekskul.');
     return;
   }
   if (!confirm(`Hapus ${p.nama} dari data induk? Riwayat laporan yang lalu tetap tersimpan.`)) return;

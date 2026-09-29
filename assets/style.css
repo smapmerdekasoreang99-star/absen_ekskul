@@ -83,6 +83,9 @@ img{max-width:100%}
   font-size:10.5px;font-weight:600;
   min-height:var(--tinggi-nav);text-align:center;line-height:1.15;overflow:hidden;
 }
+/* Label dua kata ("Laporan Kegiatan") boleh dua baris; "Rekapi&shy;tulasi"
+   diberi titik penggal di HTML, jadi hanya dipenggal bila tidak muat. */
+@media(max-width:400px){ .nav-bawah a{font-size:10px;padding-left:1px;padding-right:1px} }
 .nav-bawah a svg{
   width:20px;height:20px;stroke:currentColor;fill:none;
   stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
@@ -201,13 +204,15 @@ textarea{min-height:80px;resize:vertical;line-height:1.5}
    sedang berlaku berwarna emas; rentang isian sendiri membuat semuanya polos. */
 .rentang-cepat{display:grid;gap:var(--j2);margin-bottom:var(--j3)}
 .rentang-jenis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--j2)}
-.rentang-geser{display:grid;grid-template-columns:48px minmax(0,1fr) 48px;gap:var(--j2)}
-.rentang-cepat button{
+/* Tampilkan rekap sejajar di ujung kanan penggeser; ia tetap bergaya .tbl. */
+.rentang-geser{display:grid;grid-template-columns:48px minmax(0,1fr) 48px auto;gap:var(--j2)}
+.rentang-geser .tbl{min-height:40px;white-space:nowrap}
+.rentang-cepat button:not(.tbl){
   font-family:inherit;font-size:var(--h-s);font-weight:600;cursor:pointer;
   border:1px solid var(--garis-2);background:var(--emas-kabut);color:var(--tinta-2);
   border-radius:var(--r2);padding:var(--j2) var(--j2);min-height:40px;
 }
-.rentang-cepat button:hover{border-color:var(--emas);background:var(--emas-muda);color:var(--tinta)}
+.rentang-cepat button:not(.tbl):hover{border-color:var(--emas);background:var(--emas-muda);color:var(--tinta)}
 .rentang-cepat button[aria-pressed="true"],
 .rentang-cepat #rentangLabel.aktif{
   background:var(--emas);border-color:var(--emas-tua);color:#2A2114;font-weight:700;box-shadow:var(--bayang-1);
@@ -375,6 +380,121 @@ td.kelompok{background:var(--kertas-3);font-weight:600}
 .jadwal-hari .isi{flex:1;min-width:0}
 .jadwal-hari .isi strong{display:block;font-size:var(--h-n)}
 .jadwal-hari .isi small{color:var(--tinta-2);font-size:var(--h-xs)}
+
+/* ---- Beranda: sapaan (29 September 2026) ----
+   Satu bidang biru tua dengan garis emas di bawah — warna topbar dan tombol
+   utama aplikasi ini, jadi berwarna tanpa keluar dari rupa sekolah. Lambang
+   sekolah samar di kanan sebagai tanda air. */
+.sambut{
+  position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#1D2A3A 0%,#26405A 58%,#2F5D7C 100%);
+  color:var(--tinta-terang);
+  border-radius:var(--r3);
+  border-bottom:4px solid var(--emas);
+  padding:var(--j5) var(--j5) var(--j4);
+  margin-bottom:var(--j4);
+  box-shadow:var(--bayang-2);
+}
+.sambut-lambang{
+  position:absolute;right:-18px;top:50%;transform:translateY(-50%);
+  width:150px;height:150px;opacity:.12;pointer-events:none;
+  /* Berkas lambangnya berlatar persegi; tepinya dipudarkan supaya tidak tampak kotak. */
+  -webkit-mask-image:radial-gradient(circle,#000 48%,transparent 66%);
+          mask-image:radial-gradient(circle,#000 48%,transparent 66%);
+}
+.sambut > :not(.sambut-lambang){position:relative}
+.lap a.tbl{text-decoration:none}
+.sambut-sekolah{
+  margin:0 0 var(--j1);font-size:var(--h-xs);font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:#E9C977;
+}
+.sambut h1{
+  font-family:'Fraunces',serif;font-size:var(--h-judul-b);line-height:1.2;
+  margin:0 0 var(--j2);color:#FFFFFF;
+}
+.sambut-tanggal{
+  display:flex;align-items:center;gap:var(--j2);margin:0 0 var(--j3);
+  font-size:var(--h-m);color:var(--tinta-terang);
+}
+.sambut-tanggal svg{
+  width:18px;height:18px;flex:none;fill:none;stroke:#E9C977;
+  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+}
+.sambut-peran{display:flex;flex-wrap:wrap;gap:var(--j2)}
+.sambut-peran:empty{display:none}
+.sambut-peran span{
+  font-size:var(--h-xs);font-weight:600;
+  background:rgba(255,255,255,.12);border:1px solid rgba(233,201,119,.45);
+  color:#FFF6D2;border-radius:var(--r-bulat);padding:3px 10px;
+}
+
+/* ---- Beranda: tidak ada latihan hari ini ----
+   Bukan tulisan kosong abu-abu kecil, melainkan kotak biru muda dengan
+   kalimat pokok tebal berwarna gelap — mudah terbaca sekilas. */
+.tanpa-latihan{
+  display:flex;align-items:center;gap:var(--j3);
+  background:var(--sakit-muda);border:1px solid #C9DAE6;border-left:5px solid var(--sakit);
+  border-radius:var(--r2);padding:var(--j3) var(--j4);
+}
+.tanpa-latihan svg{
+  width:30px;height:30px;flex:none;fill:none;stroke:var(--sakit);
+  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+}
+.tanpa-latihan strong{display:block;font-size:var(--h-n);color:var(--sakit-tua);line-height:1.35}
+.tanpa-latihan span{display:block;font-size:var(--h-s);color:var(--tinta);margin-top:2px}
+
+/* ---- Beranda: laporan minggu ini untuk pembina ----
+   Warna menyatakan keadaan: hijau sudah melapor, emas belum melapor
+   (perlu tindakan), biru menunggu jadwal. Warnanya di garis kiri dan
+   lencana, isi tetap di atas putih supaya mudah dibaca. */
+.laporan-ku #laporanKu{display:grid;gap:var(--j3)}
+.lap{
+  border:1px solid var(--garis);border-left:5px solid var(--garis-2);
+  border-radius:var(--r2);padding:var(--j3) var(--j4) var(--j4);background:var(--kertas-2);
+}
+.lap header{display:flex;align-items:center;justify-content:space-between;gap:var(--j2);margin-bottom:var(--j2)}
+.lap h3{font-family:'Fraunces',serif;font-size:var(--h-judul-s);margin:0}
+.lap-status{
+  flex:none;font-size:var(--h-xs);font-weight:700;border-radius:var(--r-bulat);padding:3px 10px;
+}
+.lap-kalimat{margin:0 0 var(--j3);font-size:var(--h-m);line-height:1.55;color:var(--tinta)}
+.lap-sudah{border-left-color:var(--hadir);background:linear-gradient(90deg,var(--hadir-muda) 0,var(--kertas-2) 55%)}
+.lap-sudah .lap-status{background:var(--hadir);color:#fff}
+.lap-sudah h3{color:var(--hadir-tua)}
+.lap-belum{border-left-color:var(--emas);background:linear-gradient(90deg,var(--emas-muda) 0,var(--kertas-2) 55%)}
+.lap-belum .lap-status{background:var(--emas);color:#2A2114}
+.lap-belum h3{color:var(--emas-teks)}
+.lap-nanti{border-left-color:var(--sakit);background:linear-gradient(90deg,var(--sakit-muda) 0,var(--kertas-2) 55%)}
+.lap-nanti .lap-status{background:var(--sakit);color:#fff}
+.lap-nanti h3{color:var(--sakit-tua)}
+.lap-nanti .lap-kalimat{margin:0}
+
+/* Rincian laporan: label di kiri, isi di kanan; di ponsel bertumpuk. */
+.lap-rinci{
+  margin:0 0 var(--j2);background:var(--kertas-2);
+  border:1px solid var(--garis);border-radius:var(--r2);
+}
+.lap-rinci:last-child{margin-bottom:0}
+.lap-rinci > div{display:grid;grid-template-columns:140px minmax(0,1fr);gap:var(--j3);
+  padding:var(--j2) var(--j3);border-bottom:1px solid var(--garis)}
+.lap-rinci > div:last-child{border-bottom:0}
+.lap-rinci dt{font-size:var(--h-s);font-weight:600;color:var(--tinta-2)}
+.lap-rinci dd{margin:0;font-size:var(--h-m);min-width:0;overflow-wrap:anywhere}
+.lap-rinci dd small{display:block;color:var(--tinta-2);font-size:var(--h-xs);margin-top:2px}
+.lap-rinci .redup{color:var(--tinta-3);font-style:italic}
+@media(max-width:480px){
+  .lap-rinci > div{grid-template-columns:1fr;gap:2px}
+}
+.lap-angka{font-size:var(--h-judul-s);font-family:'Fraunces',serif}
+.lap-persen{
+  display:inline-block;margin-left:6px;font-size:var(--h-xs);font-weight:700;
+  border-radius:var(--r-bulat);padding:1px 8px;vertical-align:2px;
+}
+.lap-bilah{display:block;height:6px;border-radius:var(--r-bulat);background:var(--netral-muda);margin-top:6px;overflow:hidden}
+.lap-bilah i{display:block;height:100%;border-radius:inherit}
+.lap-persen.baik{background:var(--hadir-muda);color:var(--hadir-tua)}   .lap-bilah.baik i{background:var(--hadir)}
+.lap-persen.sedang{background:var(--emas-muda);color:var(--emas-teks)}  .lap-bilah.sedang i{background:var(--emas)}
+.lap-persen.kurang{background:var(--absen-muda);color:var(--absen-tua)} .lap-bilah.kurang i{background:var(--absen)}
 
 /* ---- Foto latihan ---- */
 .foto-kotak{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--j3)}

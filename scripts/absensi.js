@@ -3,8 +3,8 @@ import { ambilMaster, pesertaEkskul, ambilSesi, simpanSesi, unggahFoto, ambilPen
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan,
          kompresGambar, hariIni, namaHari, tanggalPanjang, mingguKe, jam, kategoriDari,
          pembimbingDari, dibimbingBersama, isianBlanko }
-  from '../assets/ui.js?v=20260928e';
-import { unduhBlankoHadirXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260928c';
+  from '../assets/ui.js?v=20260929b';
+import { unduhBlankoHadirXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260929b';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, SISWA = [], STATUS = {};
@@ -359,7 +359,7 @@ function gambarSiswa() {
 
   if (!SISWA.length) {
     kotak.innerHTML = '<p class="kosong">Belum ada siswa terdaftar di ekstrakurikuler ini. ' +
-      'Pengelola dapat mendaftarkannya lewat menu Data.</p>';
+      'Pengelola dapat mendaftarkannya lewat menu Data Peserta.</p>';
     hitung(); return;
   }
   if (!tampil.length) { kotak.innerHTML = '<p class="kosong">Tidak ada nama yang cocok.</p>'; return; }

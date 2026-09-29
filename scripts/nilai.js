@@ -3,9 +3,9 @@ import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPer
          nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
          bersihkanPesan, tanggalPanjang, persen, unduhCSV,
-         kategoriDari, perKategori, urutKelasNama } from '../assets/ui.js?v=20260928e';
+         kategoriDari, perKategori, urutKelasNama } from '../assets/ui.js?v=20260929b';
 import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG, pakaiIdentitas, unduhTabelXLSX, ttdPembina }
-  from '../assets/dokumen.js?v=20260928c';
+  from '../assets/dokumen.js?v=20260929b';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };

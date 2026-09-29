@@ -2,9 +2,9 @@ import { ambilMaster, muatPeriode, namaSiswa, jumlahPeserta, ambilPengaturan }
   from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, bersihkanPesan, hariIni,
          tanggalPanjang, tanggalPendek, persen, jam,
-         kategoriDari, KATEGORI, urutKelasNama } from '../assets/ui.js?v=20260928e';
+         kategoriDari, KATEGORI, urutKelasNama } from '../assets/ui.js?v=20260929b';
 import { unduhTabelXLSX, ttdPembina, ttdKesiswaan, pakaiIdentitas }
-  from '../assets/dokumen.js?v=20260928c';
+  from '../assets/dokumen.js?v=20260929b';
 
 const el = id => document.getElementById(id);
 const LABEL = { H: 'Hadir', TH: 'Tidak hadir', KG: 'Ditiadakan' };

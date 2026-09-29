@@ -68,7 +68,7 @@ EKSKUL.forEach((e, idx) => {
 });
 
 
-// Beberapa sesi contoh 4 minggu terakhir supaya halaman Rekap tidak kosong.
+// Beberapa sesi contoh 4 minggu terakhir supaya halaman Rekapitulasi tidak kosong.
 export const SESI = [];
 export const KEHADIRAN = [];
 const HARI_KE = { Senin: 1, Selasa: 2, Rabu: 3, Kamis: 4, Jumat: 5, Sabtu: 6 };

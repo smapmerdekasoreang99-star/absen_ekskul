@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1D2A3A">
-<title>Isi daftar hadir · Absensi Ekstrakurikuler</title>
+<title>Laporan Kegiatan · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo-kecil.png">
 <link rel="stylesheet" href="assets/dasar.css?v=2">
-<link rel="stylesheet" href="assets/style.css?v=20260928d">
+<link rel="stylesheet" href="assets/style.css?v=20260929c">
 <!-- Sambungan ke database disiapkan lebih awal, dan seluruh modul skrip
      diminta sekaligus — bukan tiga tingkat berurutan mengikuti rantai impor. -->
 <link rel="preconnect" href="https://xgtoneyvzfvfbidicotq.supabase.co" crossorigin>
 <link rel="modulepreload" href="assets/db.js?v=20260928d">
-<link rel="modulepreload" href="assets/ui.js?v=20260928e">
+<link rel="modulepreload" href="assets/ui.js?v=20260929b">
 <link rel="modulepreload" href="assets/supabase-client.js?v=20260923b">
 <link rel="modulepreload" href="assets/simpanan.js?v=20260923b">
 <link rel="modulepreload" href="assets/demo-data.js?v=20260923b">
 <link rel="modulepreload" href="assets/vendor/supabase-js-2.117.0.js">
-<link rel="modulepreload" href="assets/dokumen.js?v=20260928c">
+<link rel="modulepreload" href="assets/dokumen.js?v=20260929b">
 <link rel="modulepreload" href="assets/sekolah.js?v=20260923b">
 </head>
 <body class="aplikasi ada-bar">
@@ -25,7 +25,7 @@
 <header class="topbar">
   <img src="assets/logo-kecil.png" width="34" height="34" alt="Lambang SMA Plus Merdeka Soreang">
   <div>
-    <div class="judul">Isi daftar hadir</div>
+    <div class="judul">Laporan Kegiatan</div>
     <div class="sub">SMA Plus Merdeka Soreang</div>
   </div>
   <div class="kanan">
@@ -53,7 +53,7 @@
       </div>
     </div>
     <p class="ket" id="infoJadwal">&nbsp;</p>
-    <!-- Lembar cetak untuk diparaf peserta; sama persis dengan yang di halaman Data. -->
+    <!-- Lembar cetak untuk diparaf peserta; sama persis dengan yang di halaman Data Peserta. -->
     <button class="tbl tbl-kecil" id="unduhBlanko" type="button">Unduh Blanko Daftar Hadir (xlsx)</button>
   </section>
 
@@ -169,18 +169,18 @@
   <a href="index.html">
     <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Beranda</a>
   <a href="absensi.html" aria-current="page">
-    <svg viewBox="0 0 24 24"><path d="M9 4h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3z"/><path d="M8.5 13l2 2 4.5-4.5"/></svg>Absen Siswa</a>
+    <svg viewBox="0 0 24 24"><path d="M9 4h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3z"/><path d="M8.5 13l2 2 4.5-4.5"/></svg>Laporan Kegiatan</a>
   <a href="rekap.html">
-    <svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>Rekap</a>
+    <svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>Rekapi&shy;tulasi</a>
   <a href="nilai.html">
-    <svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>Nilai</a>
+    <svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>Nilai Siswa</a>
   <a href="data.html">
-    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16.5 11.5a3 3 0 1 0-1.8-5.4"/><path d="M17 20a5.4 5.4 0 0 0-1.2-3.4"/></svg>Data</a>
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16.5 11.5a3 3 0 1 0-1.8-5.4"/><path d="M17 20a5.4 5.4 0 0 0-1.2-3.4"/></svg>Data Peserta</a>
   <a href="kesiswaan.html" data-pengelola>
     <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18.5" cy="18" r="2.5"/></svg>Kesiswaan</a>
 </nav>
 
 <script src="assets/kop-dokumen.js?v=5"></script>
-<script type="module" src="scripts/absensi.js?v=20260928e"></script>
+<script type="module" src="scripts/absensi.js?v=20260929b"></script>
 </body>
 </html>

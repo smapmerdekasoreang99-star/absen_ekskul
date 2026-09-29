@@ -174,7 +174,7 @@ export async function unduhNilaiKelasXLSX({ kelas, periode, baris, namaBerkas, j
 
 // =====================================================================
 // C. TABEL BERKOP (28 September 2026)
-// Satu penulis untuk unduhan tabel di Rekap, Daftar Nilai, dan Blanko
+// Satu penulis untuk unduhan tabel di Rekapitulasi, Nilai Siswa, dan Blanko
 // Daftar Hadir, mengikuti standar Profil Dokumen di Data Induk:
 // kop → keterangan → tabel → catatan kaki → tanda tangan.
 //
@@ -271,7 +271,7 @@ export function ttdKesiswaan() {
 // Satu lembar untuk satu pertemuan: tanggal, tempat, dan materi dikosongkan
 // untuk ditulis tangan; tiap peserta mendapat kotak tanda tangan berselang
 // kiri-kanan (1 di kiri, 2 di kanan, …) supaya paraf tidak bertumpuk.
-// Dipakai halaman Absen Siswa dan Data — berkasnya sama persis.
+// Dipakai halaman Laporan Kegiatan dan Data Peserta — berkasnya sama persis.
 //
 //   pembina   daftar nama pembimbing (paling banyak tiga yang bertanda tangan)
 //   peserta   [{ nama, kelas }]
