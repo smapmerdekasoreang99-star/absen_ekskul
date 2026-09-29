@@ -4,7 +4,7 @@ import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, bersihkanPesan, hariIn
          tanggalPanjang, tanggalPendek, persen, jam,
          kategoriDari, KATEGORI, urutKelasNama } from '../assets/ui.js?v=20260929f';
 import { unduhTabelXLSX, ttdPembina, ttdKesiswaan, pakaiIdentitas }
-  from '../assets/dokumen.js?v=20260929b';
+  from '../assets/dokumen.js?v=20260929c';
 
 const el = id => document.getElementById(id);
 const LABEL = { H: 'Hadir', TH: 'Tidak hadir', KG: 'Ditiadakan' };

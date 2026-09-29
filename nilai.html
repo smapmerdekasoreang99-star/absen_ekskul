@@ -7,7 +7,7 @@
 <title>Nilai Siswa · Absensi Ekstrakurikuler</title>
 <link rel="icon" href="assets/logo-kecil.png">
 <link rel="stylesheet" href="assets/dasar.css?v=3">
-<link rel="stylesheet" href="assets/style.css?v=20260929g">
+<link rel="stylesheet" href="assets/style.css?v=20260929h">
 <!-- Sambungan ke database disiapkan lebih awal, dan seluruh modul skrip
      diminta sekaligus — bukan tiga tingkat berurutan mengikuti rantai impor. -->
 <link rel="preconnect" href="https://xgtoneyvzfvfbidicotq.supabase.co" crossorigin>
@@ -17,7 +17,7 @@
 <link rel="modulepreload" href="assets/simpanan.js?v=20260923b">
 <link rel="modulepreload" href="assets/demo-data.js?v=20260923b">
 <link rel="modulepreload" href="assets/vendor/supabase-js-2.117.0.js">
-<link rel="modulepreload" href="assets/dokumen.js?v=20260929b">
+<link rel="modulepreload" href="assets/dokumen.js?v=20260929c">
 <link rel="modulepreload" href="assets/sekolah.js?v=20260923b">
 </head>
 <body class="aplikasi ada-bar">
@@ -118,7 +118,6 @@
       </select>
       <button class="tbl tbl-kecil" id="terapkan" type="button">Terapkan</button>
       <button class="btn-unduh utama" data-fmt="xlsx" id="unduhNilai" type="button">Unduh daftar nilai</button>
-      <button class="btn-unduh" data-fmt="csv" id="unduhSemua" type="button" data-pengelola>Unduh semua kegiatan</button>
     </div>
     <div id="daftarNilai"><p class="kosong">Memuat…</p></div>
   </section>
@@ -145,12 +144,36 @@
           </select>
         </div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn-unduh utama" data-fmt="xlsx" id="unduhKelasXlsx" type="button">Unduh daftar kelas</button>
-        <button class="btn-unduh" data-fmt="png" id="unduhKelasPng" type="button">Unduh gambar</button>
-        <button class="btn-unduh" data-fmt="xlsx" id="unduhSemuaKelas" type="button">Unduh semua kelas</button>
+      <!-- Dua kelompok: berkas Excel untuk arsip (kiri) dan kiriman gambar ke
+           wali kelas (kanan). Unduh gambar ada di dalam panel kirim, supaya
+           tidak ada dua tombol yang menghasilkan gambar yang sama. -->
+      <div class="aksi-kelas">
+        <div class="aksi-kelompok" role="group" aria-label="Unduh berkas Excel">
+          <button class="btn-unduh utama" data-fmt="xlsx" id="unduhKelasXlsx" type="button">Unduh daftar kelas</button>
+          <button class="btn-unduh" data-fmt="xlsx" id="unduhSemuaKelas" type="button">Unduh semua kelas</button>
+        </div>
+        <button class="btn-wa" id="kirimWali" type="button">Kirim ke Wali Kelas</button>
       </div>
     </section>
+
+    <!-- Panel kirim ke wali kelas lewat WhatsApp. -->
+    <dialog id="dialogWA" class="dialog-wa" aria-labelledby="judulWA">
+      <div class="dialog-kepala">
+        <div>
+          <h2 id="judulWA">Kirim ke Wali Kelas</h2>
+          <p class="dialog-info" id="infoWA">&nbsp;</p>
+        </div>
+        <button class="dialog-tutup" id="tutupWA" type="button" aria-label="Tutup">&times;</button>
+      </div>
+      <div class="pratinjau-wa"><canvas id="kanvasWA" aria-label="Pratinjau gambar nilai"></canvas></div>
+      <button class="btn-wa besar" id="waBagikan" type="button">Bagikan gambar ke WhatsApp</button>
+      <div class="aksi-wa-lain">
+        <button class="btn-unduh" data-fmt="png" id="unduhKelasPng" type="button">Unduh gambar</button>
+        <button class="tbl tbl-kecil" id="waSalin" type="button">Salin teks</button>
+        <button class="tbl tbl-kecil" id="waTeks" type="button">Kirim sebagai teks</button>
+      </div>
+      <p class="dialog-info" id="catatanWA" hidden></p>
+    </dialog>
 
     <section class="kartu">
       <h2 id="judulKelas">Daftar</h2>
@@ -184,6 +207,6 @@
 </nav>
 
 <script src="assets/kop-dokumen.js?v=5"></script>
-<script type="module" src="scripts/nilai.js?v=20260929g"></script>
+<script type="module" src="scripts/nilai.js?v=20260929h"></script>
 </body>
 </html>

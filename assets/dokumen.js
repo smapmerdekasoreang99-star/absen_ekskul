@@ -317,7 +317,10 @@ export async function unduhBlankoHadirXLSX({ kegiatan, kategori, jadwal, tempat,
 }
 
 // ---- PNG: digambar langsung di canvas, tanpa pustaka luar ------------
-export async function unduhNilaiKelasPNG({ kelas, periode, baris, namaBerkas, judulKategori }) {
+/* Gambar nilai satu kelas di atas kanvas. Dipakai untuk unduhan PNG dan
+   pratinjau "Kirim ke Wali Kelas". Tanpa blok tanda tangan: cukup catatan
+   bahwa gambar dicetak oleh Admin Kesiswaan (29 September 2026). */
+export async function gambarNilaiKelas({ kelas, periode, baris, judulKategori }) {
   const skala = 2;                    // supaya tajam di layar HP
   const lebar = 1000;
   const padding = 40;
@@ -326,7 +329,7 @@ export async function unduhNilaiKelasPNG({ kelas, periode, baris, namaBerkas, ju
   const tinggiKop = kopBersama().tinggiKopKanvas(profilKop(), judulKop, periode);
   const tinggiJudul = 44;
   const tinggiBaris = 40;
-  const tinggi = tinggiKop + tinggiJudul + baris.length * tinggiBaris + 230;
+  const tinggi = tinggiKop + tinggiJudul + baris.length * tinggiBaris + 64;
 
   const kanvas = document.createElement('canvas');
   kanvas.width = lebar * skala;
@@ -396,37 +399,32 @@ export async function unduhNilaiKelasPNG({ kelas, periode, baris, namaBerkas, ju
     y += tinggiBaris;
   });
 
-  /* Blok tanda tangan: dua blok selebar sama (35 % daerah isi), menempel tepi
-     kiri dan kanan kop, tulisan dirata tengah — jaraknya ke tepi simetris. */
-  const yTtd = y + 44;
-  const lebarBlok = Math.round((lebar - 2 * padding) * 0.35);
-  const xKiri = padding + lebarBlok / 2, xKanan = lebar - padding - lebarBlok / 2;
-  g.textAlign = 'center';
-  g.fillStyle = '#241F17';
-  g.font = '14px Arial, sans-serif';
-  g.fillText('Mengetahui,', xKiri, yTtd);
-  g.fillText('Kepala Sekolah,', xKiri, yTtd + 22);
-  g.fillText(`${ID.kota}, ${tanggalCetak()}`, xKanan, yTtd);
-  g.fillText('Wakasek Kesiswaan,', xKanan, yTtd + 22);
-  g.font = 'bold 14px Arial, sans-serif';
-  const namaKiri = ID.kepalaSekolah || '..................................................';
-  const namaKanan = ID.kesiswaan || '..................................................';
-  g.fillText(namaKiri, xKiri, yTtd + 118);
-  g.fillText(namaKanan, xKanan, yTtd + 118);
-  // Garis bawah nama, seperti pada berkas Excel.
-  [[namaKiri, xKiri], [namaKanan, xKanan]].forEach(([t, x]) => {
-    const w = g.measureText(t).width;
-    g.fillRect(x - w / 2, yTtd + 121, w, 1);
-  });
-
+  // Catatan pengesahan, rata kiri di bawah tabel.
+  const yCatatan = y + 34;
   g.textAlign = 'left';
-  g.fillStyle = '#6B6252';
-  g.font = '11px Arial, sans-serif';
-  g.fillText('Dicetak dari Aplikasi Absensi Ekstrakurikuler SMA Plus Merdeka Soreang',
-             padding, yTtd + 152);
+  g.fillStyle = '#241F17';
+  g.font = 'bold 13px Arial, sans-serif';
+  const label = 'Catatan : ';
+  g.fillText(label, padding, yCatatan);
+  const xIsi = padding + g.measureText(label).width + 4;
+  g.font = 'italic 13px Arial, sans-serif';
+  g.fillStyle = '#4A4335';
+  g.fillText('Gambar ini dicetak oleh Admin Kesiswaan, sehingga sah untuk digunakan sebagai nilai rapor.',
+             xIsi, yCatatan);
 
-  const blob = await new Promise(r => kanvas.toBlob(r, 'image/png'));
-  simpan(blob, namaBerkas);
+  return kanvas;
+}
+
+export function kanvasKeBlob(kanvas) {
+  return new Promise(r => kanvas.toBlob(r, 'image/png'));
+}
+
+export async function simpanKanvasPNG(kanvas, namaBerkas) {
+  simpan(await kanvasKeBlob(kanvas), namaBerkas);
+}
+
+export async function unduhNilaiKelasPNG({ namaBerkas, ...arg }) {
+  await simpanKanvasPNG(await gambarNilaiKelas(arg), namaBerkas);
 }
 
 function potong(g, teks, maks) {

@@ -1,11 +1,11 @@
 import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPeriode,
-         ambilNilai, simpanNilai, kehadiranPerSiswa, kehadiranSemua,
+         ambilNilai, simpanNilai, kehadiranPerSiswa,
          nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
-         bersihkanPesan, tanggalPanjang, persen, unduhCSV,
+         bersihkanPesan, tanggalPanjang, persen,
          kategoriDari, perKategori, urutKelasNama } from '../assets/ui.js?v=20260929f';
-import { unduhNilaiKelasXLSX, unduhNilaiKelasPNG, pakaiIdentitas, unduhTabelXLSX, ttdPembina }
-  from '../assets/dokumen.js?v=20260929b';
+import { unduhNilaiKelasXLSX, gambarNilaiKelas, kanvasKeBlob, simpanKanvasPNG,
+         pakaiIdentitas, unduhTabelXLSX, ttdPembina } from '../assets/dokumen.js?v=20260929c';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };
@@ -36,13 +36,12 @@ try { tandaiMode(); } catch (e) { console.error(e); }
     el('terapkan').addEventListener('click', terapkanMassal);
     el('unduhNilai').addEventListener('click', unduh);
     if (adalahPengelola()) {
-      el('unduhSemua').addEventListener('click', unduhSemua);
       el('tabNilai').classList.remove('sembunyi');
       el('tabNilai').addEventListener('click', gantiTab);
       el('pilihKelas').addEventListener('change', gambarKelas);
       el('kategoriKelas').addEventListener('change', gambarKelas);
-      el('unduhKelasXlsx').addEventListener('click', () => unduhKelas('xlsx'));
-      el('unduhKelasPng').addEventListener('click', () => unduhKelas('png'));
+      el('unduhKelasXlsx').addEventListener('click', unduhKelas);
+      pasangKirimWali();
       el('unduhSemuaKelas').addEventListener('click', unduhSemuaKelas);
     }
 
@@ -104,7 +103,7 @@ function gambarInfoPeriode() {
   const bisa = !!aktif && aktif.dibuka;
   el('barSimpan').style.display = bisa ? 'flex' : 'none';
   el('alatMassal').querySelectorAll('select,button').forEach(x => {
-    if (x.id !== 'unduhNilai' && x.id !== 'unduhSemua') x.disabled = !bisa;
+    if (x.id !== 'unduhNilai') x.disabled = !bisa;
   });
   document.body.classList.toggle('ada-bar', bisa);
 }
@@ -293,50 +292,6 @@ async function unduh() {
   finally { tombol.disabled = false; tombol.textContent = semula; }
 }
 
-// Rekap nilai seluruh ekstrakurikuler dalam satu berkas, untuk kesiswaan.
-async function unduhSemua() {
-  bersihkanPesan();
-  if (!aktif) { laporError('Belum ada periode penilaian.'); return; }
-  const tombol = el('unduhSemua');
-  tombol.disabled = true;
-  tombol.textContent = 'Menyiapkan…';
-  try {
-    const [hadirSemua, nilaiSemua] = await Promise.all([
-      kehadiranSemua(aktif.tanggal_mulai, aktif.tanggal_selesai),
-      nilaiSeluruhPeriode(aktif.id)
-    ]);
-    const baris = [];
-    // Peserta seluruh kegiatan diminta serentak — dulu satu per satu,
-    // enam belas perjalanan bergiliran untuk enam belas kegiatan.
-    const pesertaPer = await Promise.all(EKSKUL.map(e => pesertaEkskul(e.id, { cepat: true })));
-    for (const [i, e] of EKSKUL.entries()) {
-      const peserta = pesertaPer[i];
-      const hadir = hadirSemua[e.id] || {};
-      const nilai = nilaiSemua[e.id] || {};
-      peserta.forEach(s => {
-        const h = hadir[s.id] || { H: 0, total: 0 };
-        const n = nilai[s.id] || {};
-        baris.push([e.nama, kategoriDari(e), PEMBINA_NAMA[e.pembina_id] || '', s.nama, s.kelas || '',
-                    h.total, h.H, persen(h.H, h.total), n.predikat || '',
-                    PREDIKAT[n.predikat] || '', n.deskripsi || '']);
-      });
-    }
-    if (!baris.length) { laporError('Belum ada peserta yang terdaftar.'); return; }
-    unduhCSV(`nilai_semua_kegiatan_${aktif.tahun_ajaran.replace('/', '-')}_${aktif.semester}.csv`, [
-      ['Kegiatan', 'Kategori', 'Pembina', 'Nama siswa', 'Kelas', 'Pertemuan', 'Hadir',
-       '% Kehadiran', 'Nilai', 'Keterangan', 'Deskripsi'],
-      ...baris
-    ]);
-    sukses(`${baris.length} baris nilai diunduh.`);
-  } catch (e) {
-    laporError(e);
-  } finally {
-    tombol.disabled = false;
-    tombol.textContent = 'Unduh semua kegiatan';
-  }
-}
-
-
 // ================================================= REKAP NILAI PER KELAS
 let KELAS = {};          // { kelas: [ {nama,ekskul,predikat,keterangan,deskripsi} ] }
 let kelasSiap = false;
@@ -429,14 +384,14 @@ function labelPeriode() {
   return `${aktif.tahun_ajaran} · Semester ${aktif.semester}`;
 }
 
-async function unduhKelas(bentuk) {
+async function unduhKelas() {
   bersihkanPesan();
   const k = el('pilihKelas').value;
   const isi = barisKelas();
   if (!isi.length) { laporError('Belum ada data pada kelas ini.'); return; }
   const judulKategori = (kategoriKelas() || 'Kegiatan').toUpperCase();
   const berkas = 'nilai_' + (kategoriKelas() || 'kegiatan').toLowerCase().replace(/\s+/g, '_');
-  const tombol = el(bentuk === 'png' ? 'unduhKelasPng' : 'unduhKelasXlsx');
+  const tombol = el('unduhKelasXlsx');
   const semula = tombol.textContent;
   tombol.disabled = true;
   tombol.textContent = 'Menyiapkan…';
@@ -444,11 +399,7 @@ async function unduhKelas(bentuk) {
     const pembina = [...new Set(isi.map(x => x.pembina).filter(Boolean))];
     const arg = { kelas: k, periode: labelPeriode(), baris: isi, judulKategori,
                   pembina: pembina.length === 1 ? pembina[0] : '' };
-    if (bentuk === 'png') {
-      await unduhNilaiKelasPNG({ ...arg, namaBerkas: `${berkas}_${k}.png` });
-    } else {
-      await unduhNilaiKelasXLSX({ ...arg, namaBerkas: `${berkas}_${k}.xlsx` });
-    }
+    await unduhNilaiKelasXLSX({ ...arg, namaBerkas: `${berkas}_${k}.xlsx` });
     sukses('Berkas diunduh.');
   } catch (e) {
     laporError(e);
@@ -489,4 +440,105 @@ async function unduhSemuaKelas() {
     tombol.disabled = false;
     tombol.textContent = 'Unduh semua kelas';
   }
+}
+
+// ============================================ KIRIM KE WALI KELAS (WhatsApp)
+// Mengikuti "Bagikan ke WhatsApp" di Kehadiran Guru: pratinjau gambar, lalu
+// dibagikan langsung (HP) atau diunduh (komputer). Kelas dan kategorinya
+// sama dengan pilihan di atas tabel.
+let WA = { kanvas: null, teks: '', berkas: '' };
+
+function pasangKirimWali() {
+  const d = el('dialogWA');
+  el('kirimWali').addEventListener('click', bukaKirimWali);
+  el('tutupWA').addEventListener('click', () => d.close());
+  // Ketuk di luar panel menutupnya.
+  d.addEventListener('click', ev => { if (ev.target === d) d.close(); });
+  el('waBagikan').addEventListener('click', bagikanGambar);
+  el('unduhKelasPng').addEventListener('click', async () => {
+    try { await simpanKanvasPNG(WA.kanvas, WA.berkas); catatanWA('Gambar diunduh.'); }
+    catch (e) { catatanWA('Gagal mengunduh gambar: ' + (e.message || e), true); }
+  });
+  el('waSalin').addEventListener('click', async ev => {
+    const b = ev.currentTarget;
+    try {
+      await navigator.clipboard.writeText(WA.teks);
+      b.textContent = 'Teks tersalin ✓';
+      setTimeout(() => (b.textContent = 'Salin teks'), 1800);
+    } catch (e) { catatanWA('Teks tidak bisa disalin di peramban ini.', true); }
+  });
+  el('waTeks').addEventListener('click', () =>
+    window.open('https://wa.me/?text=' + encodeURIComponent(WA.teks), '_blank'));
+}
+
+async function bukaKirimWali() {
+  bersihkanPesan();
+  const k = el('pilihKelas').value;
+  const isi = barisKelas();
+  if (!k || !isi.length) { laporError('Belum ada data pada kelas ini.'); return; }
+  const kat = kategoriKelas();
+  const belum = isi.filter(x => !x.predikat).length;
+  el('judulWA').textContent = `Kirim ke Wali Kelas ${k}`;
+  const info = el('infoWA');
+  info.textContent = `${kat || 'Semua kategori'} · ${isi.length} baris nilai` +
+    (belum ? ` · ${belum} belum diisi pembina` : ' · seluruhnya sudah diisi');
+  info.classList.toggle('peringatan', belum > 0);
+  el('catatanWA').hidden = true;
+  WA = { kanvas: null, teks: teksWA(k, kat, isi),
+         berkas: `nilai_${(kat || 'kegiatan').toLowerCase().replace(/\s+/g, '_')}_${k}.png` };
+
+  const tombol = el('kirimWali'), semula = tombol.textContent;
+  tombol.disabled = true;
+  tombol.textContent = 'Menyiapkan…';
+  try {
+    WA.kanvas = await gambarNilaiKelas({ kelas: k, periode: labelPeriode(), baris: isi,
+                                         judulKategori: (kat || 'Kegiatan').toUpperCase() });
+    const v = el('kanvasWA');
+    v.width = WA.kanvas.width; v.height = WA.kanvas.height;
+    v.getContext('2d').drawImage(WA.kanvas, 0, 0);
+    el('dialogWA').showModal();
+  } catch (e) {
+    laporError(e);
+  } finally {
+    tombol.disabled = false;
+    tombol.textContent = semula;
+  }
+}
+
+// Teks cadangan bila gambar tidak bisa dilampirkan: per siswa, kegiatannya
+// berderet di bawah namanya.
+function teksWA(kelas, kat, isi) {
+  const baris = [`*NILAI ${(kat || 'Kegiatan').toUpperCase()} — KELAS ${kelas}*`,
+                 `Tahun Pelajaran ${labelPeriode()}`, ''];
+  let no = 0, nama = null;
+  isi.forEach(x => {
+    if (x.nama !== nama) { nama = x.nama; baris.push(`${++no}. ${x.nama}`); }
+    baris.push(`    ${x.ekskul}: ${x.predikat ? `*${x.predikat}*` + (x.keterangan ? ` (${x.keterangan})` : '') : 'belum dinilai'}`);
+  });
+  baris.push('', '_Dikirim oleh Admin Kesiswaan, sah untuk digunakan sebagai nilai rapor._');
+  return baris.join('\n');
+}
+
+async function bagikanGambar() {
+  try {
+    const berkas = new File([await kanvasKeBlob(WA.kanvas)], WA.berkas, { type: 'image/png' });
+    const bisa = typeof navigator.share === 'function' && typeof navigator.canShare === 'function'
+      && navigator.canShare({ files: [berkas] });
+    if (bisa) {
+      await navigator.share({ files: [berkas], title: el('judulWA').textContent });
+    } else {
+      await simpanKanvasPNG(WA.kanvas, WA.berkas);
+      catatanWA('Peramban ini belum bisa membagikan gambar langsung, jadi gambarnya diunduh. ' +
+        'Lampirkan berkas tersebut di chat wali kelas. (Di HP, tombol ini biasanya langsung membuka WhatsApp.)');
+    }
+  } catch (e) {
+    if (e && e.name !== 'AbortError') catatanWA('Gagal membagikan gambar: ' + (e.message || e), true);
+  }
+}
+
+function catatanWA(teks, salah = false) {
+  const c = el('catatanWA');
+  c.textContent = teks;
+  c.classList.toggle('peringatan', salah);
+  c.hidden = false;
 }
