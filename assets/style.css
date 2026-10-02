@@ -452,6 +452,9 @@ td.kelompok{background:var(--kertas-3);font-weight:600}
 .lp-sudah .lp-item{border-left:4px solid var(--hadir-muda)}
 .lp-belum .lp-item{border-left:4px solid var(--emas-muda);background:linear-gradient(90deg,var(--emas-kabut),var(--kertas-2) 60%)}
 .lp-item.lp-tiada{border-left-color:var(--netral-muda)}
+/* Tunggakan 3 minggu atau lebih: garis kiri merah (3 Oktober 2026). */
+.lp-belum .lp-item.lp-parah{border-left-color:var(--absen);background:linear-gradient(90deg,var(--absen-muda),var(--kertas-2) 60%)}
+.lp-tunggak{margin:0 0 6px}
 .lp-kepala{display:flex;align-items:baseline;justify-content:space-between;gap:var(--j2);flex-wrap:wrap;margin-bottom:6px}
 .lp-kepala strong{font-family:'Fraunces',serif;font-size:var(--h-b)}
 .lp-sudah .lp-kepala strong{color:var(--hadir-tua)}

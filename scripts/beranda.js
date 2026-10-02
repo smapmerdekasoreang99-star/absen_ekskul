@@ -63,19 +63,23 @@ function tambahHari(iso, n) {
       : '<span>Admin Kesiswaan</span>';
 
     const awal = senin(hari);
+    // Kesiswaan memuat beberapa pekan ke belakang untuk menghitung tunggakan
+    // berturut-turut; pembina cukup pekan ini.
+    const dari = pembina ? awal : tambahHari(awal, -7 * (PEKAN_TUNGGAKAN - 1));
     // Peserta terdaftar; bila gagal, beranda tetap tampil tanpa angka itu.
     const [{ sesi }, peserta] = await Promise.all([
-      muatPeriode(awal, hari),
+      muatPeriode(dari, hari),
       jumlahPeserta(ekskul.map(e => e.id)).catch(e => { console.warn(e.message); return null; })
     ]);
     const boleh = new Set(ekskul.map(e => e.id));
-    const minggu = sesi.filter(s => boleh.has(s.ekskul_id));
+    const semua = sesi.filter(s => boleh.has(s.ekskul_id));
+    const minggu = semua.filter(s => s.tanggal >= awal);
 
     // Kotak "Latihan hari ini" dan "Minggu ini" dihapus (29 September 2026):
     // laporan minggu ini sudah memuat keduanya — yang sudah dan belum
     // melapor, beserta kehadiran siswanya. Ringkasan angka ada di Rekapitulasi.
     if (pembina) gambarLaporanKu(ekskul, minggu, peserta, awal);
-    else gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina);
+    else gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina, semua);
   } catch (e) { laporError(e); }
 })();
 
@@ -87,6 +91,35 @@ function tanggalJadwal(e, awal) {
 }
 const nadaPersen = p => p >= 80 ? 'baik' : p >= 60 ? 'sedang' : 'kurang';
 
+/* Tunggakan laporan berturut-turut (3 Oktober 2026). Kotak Belum laporan
+   semula hanya melihat pekan ini, sehingga pembina yang tidak melapor tiga
+   minggu tampak sama dengan yang baru terlambat sehari, dan tunggakannya
+   hilang tiap Senin. Kini dihitung mundur dari pekan ini sampai
+   PEKAN_TUNGGAKAN pekan (pekan ini ikut dihitung):
+     - pekan yang ada laporannya memutus hitungan;
+     - pekan ini yang jadwalnya belum tiba dilewati, tidak memutus;
+     - pekan lalu yang sama sekali tanpa laporan dari kegiatan mana pun
+       (libur sekolah, atau sebelum aplikasi dipakai) juga dilewati, supaya
+       tidak semua kegiatan mendadak tampak menunggak.
+   Hasilnya { n, tanggal }: jumlah pekan terlewat dan tanggal jadwal yang
+   paling baru terlewat (tujuan tombol Isi laporan). */
+const PEKAN_TUNGGAKAN = 4;
+function hitungTunggakan(e, semua, awal) {
+  const pekanDipakai = new Set(semua.map(s => senin(s.tanggal)));
+  const lapor = new Set(semua.filter(s => s.ekskul_id === e.id).map(s => senin(s.tanggal)));
+  let n = 0, tanggal = null;
+  for (let k = 0; k < PEKAN_TUNGGAKAN; k++) {
+    const pekan = tambahHari(awal, -7 * k);
+    if (lapor.has(pekan)) break;
+    const t = tanggalJadwal(e, pekan);
+    if (k === 0 && t && t > hari) continue;
+    if (k > 0 && !pekanDipakai.has(pekan)) continue;
+    n++;
+    if (!tanggal) tanggal = t || pekan;
+  }
+  return { n, tanggal };
+}
+
 /* Laporan minggu ini untuk Kesiswaan (29 September 2026), kotak kedua
    dari atas. Dua daftar:
      a. Sudah laporan — tiap pertemuan yang dilaporkan pekan ini: hari/
@@ -96,7 +129,7 @@ const nadaPersen = p => p >= 80 ? 'baik' : p >= 60 ? 'sedang' : 'kurang';
         (termasuk hari ini) tetapi belum ada laporannya.
    Kegiatan yang jadwalnya belum tiba tidak dihitung terlambat; ia masuk
    kotak ketiga, Menunggu jadwal, dikelompokkan per hari. */
-function gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina) {
+function gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina, semua) {
   el('kartuLaporanSemua').classList.remove('sembunyi');
   el('ketLaporanSemua').textContent = `${tanggalPanjang(awal)} sampai hari ini.`;
   const namaKeg = Object.fromEntries(ekskul.map(e => [e.id, e]));
@@ -108,9 +141,16 @@ function gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina) {
   ekskul.forEach(e => {
     if (melapor.has(e.id)) return;
     const t = tanggalJadwal(e, awal);
-    if (t && t > hari) nanti.push(e); else belum.push({ e, t });
+    const tunggak = hitungTunggakan(e, semua, awal);
+    // Jadwal pekan ini belum tiba tetapi pekan lalu sudah menunggak: tetap
+    // masuk Belum laporan (dan tetap tampil di Menunggu jadwal).
+    if (t && t > hari) nanti.push(e);
+    if (!(t && t > hari) || tunggak.n) belum.push({ e, t, tunggak, lalu: !!(t && t > hari) });
   });
-  belum.sort((a, b) => String(a.t).localeCompare(String(b.t)) || a.e.nama.localeCompare(b.e.nama, 'id'));
+  // Tunggakan terpanjang di atas, lalu menurut tanggal jadwal dan nama.
+  belum.sort((a, b) => b.tunggak.n - a.tunggak.n ||
+    String(a.tunggak.tanggal || a.t).localeCompare(String(b.tunggak.tanggal || b.t)) ||
+    a.e.nama.localeCompare(b.e.nama, 'id'));
 
   el('hitungSudah').textContent = sudah.length;
   el('hitungBelum').textContent = belum.length;
@@ -145,16 +185,29 @@ function gambarLaporanSemua(ekskul, minggu, peserta, awal, namaPembina) {
       </li>`;
   }).join('') : '<li class="lp-kosong">Belum ada kegiatan yang melapor minggu ini.</li>';
 
-  el('daftarBelum').innerHTML = belum.length ? belum.map(({ e, t }) => `
-      <li class="lp-item">
+  /* Lencana tunggakan: 2 pekan berturut-turut kuning, 3 pekan atau lebih
+     merah dan kartunya ikut bergaris merah. Satu pekan tanpa lencana —
+     itu keadaan Belum laporan yang biasa. */
+  const lencanaTunggak = n => n < 2 ? ''
+    : `<b class="lencana ${n >= 3 ? 'l-tidak' : 'l-ganti'}">${n >= PEKAN_TUNGGAKAN ? `${n} minggu atau lebih` : `${n} minggu`} berturut-turut</b>`;
+  el('daftarBelum').innerHTML = belum.length ? belum.map(({ e, t, tunggak, lalu }) => {
+    const tuju = tunggak.tanggal || (t && t <= hari ? t : hari);
+    const jadwal = lalu
+      ? `<span><em>Terlewat</em>${tanggalPanjang(tunggak.tanggal)}</span>
+         <span><em>Pekan ini</em>${tanggalPanjang(t)}</span>`
+      : `<span><em>Jadwal</em>${t ? tanggalPanjang(t) : esc(e.hari || '—')}${t === hari ? ' <b class="lencana l-ganti">hari ini</b>' : ''}
+            · ${jam(e.jam_mulai)}–${jam(e.jam_selesai)}</span>`;
+    return `
+      <li class="lp-item${tunggak.n >= 3 ? ' lp-parah' : ''}">
         <div class="lp-kepala"><strong>${esc(e.nama)}</strong>
           <small>${esc(namaPembina[e.pembina_id] || 'Pembina belum diisi')}</small></div>
+        ${tunggak.n >= 2 ? `<div class="lp-tunggak">${lencanaTunggak(tunggak.n)}</div>` : ''}
         <div class="lp-baris">
-          <span><em>Jadwal</em>${t ? tanggalPanjang(t) : esc(e.hari || '—')}${t === hari ? ' <b class="lencana l-ganti">hari ini</b>' : ''}
-            · ${jam(e.jam_mulai)}–${jam(e.jam_selesai)}</span>
-          <a class="tbl tbl-kecil" href="absensi.html?ekskul=${e.id}&tanggal=${t && t <= hari ? t : hari}">Isi laporan</a>
+          ${jadwal}
+          <a class="tbl tbl-kecil" href="absensi.html?ekskul=${e.id}&tanggal=${tuju}">Isi laporan</a>
         </div>
-      </li>`).join('')
+      </li>`;
+  }).join('')
     : '<li class="lp-kosong lp-lengkap">✓ Semua kegiatan yang jadwalnya sudah lewat telah melapor.</li>';
 
   /* Menunggu jadwal: kotak tersendiri, dikelompokkan per hari supaya
