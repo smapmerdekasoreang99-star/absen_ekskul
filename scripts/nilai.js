@@ -5,7 +5,7 @@ import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukse
          bersihkanPesan, tanggalPanjang, persen,
          kategoriDari, perKategori, urutKelasNama } from '../assets/ui.js?v=20260929f';
 import { unduhNilaiKelasXLSX, gambarNilaiKelas, kanvasKeBlob, simpanKanvasPNG,
-         pakaiIdentitas, unduhTabelXLSX, ttdPembina } from '../assets/dokumen.js?v=20260929c';
+         pakaiIdentitas, unduhTabelXLSX, ttdPembina } from '../assets/dokumen.js?v=20261004a';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };

@@ -11,7 +11,7 @@
 //   2. bacaBerkasPeserta   — membaca XLSX/CSV menjadi baris {nama, kelas};
 //   3. cocokkanPeserta     — memutuskan nasib tiap baris tanpa menyentuh
 //                            jaringan, supaya mudah diuji.
-import { pustakaExcel } from './dokumen.js?v=20260929c';
+import { pustakaExcel } from './dokumen.js?v=20261004a';
 
 export const KOLOM = { nama: 'Nama siswa', kelas: 'Kelas' };
 
@@ -29,6 +29,8 @@ export async function unduhFormatPeserta(daftarKelas, namaEkskul) {
   judul.font = { bold: true, color: { argb: 'FF241F17' } };
   judul.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F2EA' } };
   judul.border = { bottom: { style: 'thin', color: { argb: 'FFBFB8A8' } } };
+  // Kepala tabel: kata tidak terpotong di tengah (pasKepalaExcel, 4 Oktober 2026).
+  if (window.pasKepalaExcel) window.pasKepalaExcel(ws, 1, 1, { kolomAkhir: 2 });
 
   // Kelas dipilih dari daftar supaya ejaannya sama dengan data sekolah.
   // Daftarnya ditaruh di lembar sendiri agar lembar isian tetap bersih.
@@ -36,6 +38,7 @@ export async function unduhFormatPeserta(daftarKelas, namaEkskul) {
     const wk = wb.addWorksheet('Daftar kelas');
     wk.columns = [{ header: 'Kelas', width: 14 }];
     wk.getRow(1).font = { bold: true };
+    if (window.pasKepalaExcel) window.pasKepalaExcel(wk, 1, 1, { kolomAkhir: 1 });
     daftarKelas.forEach(k => wk.addRow([k]));
     ws.dataValidations.add('B2:B1000', {
       type: 'list', allowBlank: true, showErrorMessage: false,

@@ -4,7 +4,7 @@ import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, sukses, bersihkanPesan
          kompresGambar, hariIni, namaHari, tanggalPanjang, mingguKe, jam, kategoriDari,
          pembimbingDari, dibimbingBersama, isianBlanko }
   from '../assets/ui.js?v=20260929f';
-import { unduhBlankoHadirXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20260929c';
+import { unduhBlankoHadirXLSX, pakaiIdentitas } from '../assets/dokumen.js?v=20261004a';
 
 const el = id => document.getElementById(id);
 let AKUN = null, EKSKUL = [], PEMBINA = {}, SISWA = [], STATUS = {};

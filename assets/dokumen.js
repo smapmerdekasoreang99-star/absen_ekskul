@@ -111,6 +111,9 @@ function barisJudulTabel(ws, baris, judulKolom) {
     sel.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
   });
   ws.getRow(baris).height = 28;
+  // Kepala tabel: kata tidak terpotong di tengah (pasKepalaExcel, 4 Oktober 2026).
+  // Lebar kolom sudah dipasang pemanggil sebelum kop, jadi aman dipanggil di sini.
+  if (window.pasKepalaExcel) window.pasKepalaExcel(ws, baris, baris, { kolomAkhir: judulKolom.length });
 }
 
 function selIsi(ws, r, k, nilai, opsi = {}) {
