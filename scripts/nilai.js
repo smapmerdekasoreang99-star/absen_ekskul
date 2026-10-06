@@ -3,9 +3,9 @@ import { ambilMaster, pesertaEkskul, daftarPeriode, simpanPeriode, ubahStatusPer
          nilaiSeluruhPeriode, ambilPengaturan } from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, adalahPengelola, tandaiMode, laporError, sukses,
          bersihkanPesan, tanggalPanjang, persen,
-         kategoriDari, perKategori, urutKelasNama } from '../assets/ui.js?v=20260929f';
+         kategoriDari, perKategori, urutKelasNama, pembimbingDari } from '../assets/ui.js?v=20260929f';
 import { unduhNilaiKelasXLSX, gambarNilaiKelas, kanvasKeBlob, simpanKanvasPNG,
-         pakaiIdentitas, unduhTabelXLSX, ttdPembina } from '../assets/dokumen.js?v=20261004a';
+         pakaiIdentitas, unduhTabelXLSX, ttdKegiatan } from '../assets/dokumen.js?v=20261006a';
 
 const el = id => document.getElementById(id);
 const PREDIKAT = { A: 'Sangat Baik', B: 'Baik', C: 'Cukup', D: 'Perlu Bimbingan' };
@@ -259,7 +259,11 @@ async function unduh() {
   const e = EKSKUL.find(x => x.id === el('pilihEkskul').value);
   if (!e) return;
   const isi = Object.fromEntries(kumpulkan().map(x => [x.siswa_id, x]));
-  const pembina = AKUN.peran === 'pembina' ? AKUN.nama : (PEMBINA_NAMA[e.pembina_id] || '');
+  // Semua pembimbing kegiatan (kegiatan bersama bisa lebih dari satu); nama
+  // akun dipakai bila daftar namanya tidak termuat.
+  const daftarPembina = pembimbingDari(e).map(id => PEMBINA_NAMA[id]).filter(Boolean);
+  if (!daftarPembina.length && AKUN.peran === 'pembina') daftarPembina.push(AKUN.nama);
+  const pembina = daftarPembina.join(', ');
   const periode = aktif ? `Tahun Pelajaran ${aktif.tahun_ajaran} · Semester ${aktif.semester}` : '';
   const tombol = el('unduhNilai'), semula = tombol.textContent;
   tombol.disabled = true;
@@ -284,7 +288,7 @@ async function unduh() {
         return [i + 1, s.nama, s.kelas || '', h.total, h.H, h.total ? persen(h.H, h.total) + '%' : '—',
                 n.predikat || '', PREDIKAT[n.predikat] || '', n.deskripsi || ''];
       }),
-      ttd: [ttdPembina(pembina, `Pembina ${e.nama},`)],
+      ttd: ttdKegiatan(e.nama, daftarPembina, { jabatan: `Pembina ${e.nama},` }),
       namaBerkas: `daftar_nilai_${String(e.nama).replace(/[^\w-]+/g, '_')}${
         aktif ? '_' + aktif.tahun_ajaran.replace('/', '-') + '_' + aktif.semester : ''}.xlsx`
     });

@@ -2,9 +2,10 @@ import { ambilMaster, muatPeriode, namaSiswa, jumlahPeserta, ambilPengaturan }
   from '../assets/db.js?v=20260928d';
 import { wajibMasuk, ekskulBoleh, tandaiMode, laporError, bersihkanPesan, hariIni,
          tanggalPanjang, tanggalPendek, persen, jam,
-         kategoriDari, KATEGORI, urutKelasNama } from '../assets/ui.js?v=20260929f';
-import { unduhTabelXLSX, ttdPembina, ttdKesiswaan, pakaiIdentitas }
-  from '../assets/dokumen.js?v=20261004a';
+         kategoriDari, KATEGORI, urutKelasNama, pembimbingDari } from '../assets/ui.js?v=20260929f';
+import { unduhTabelXLSX, ttdPembina, ttdKesiswaan, ttdKegiatan, ttdKoordinatorTahfidz,
+         kegiatanTahfidz, pakaiIdentitas }
+  from '../assets/dokumen.js?v=20261006a';
 
 const el = id => document.getElementById(id);
 const LABEL = { H: 'Hadir', TH: 'Tidak hadir', KG: 'Ditiadakan' };
@@ -395,14 +396,18 @@ function tabelSiswa(t) {
 /* Penanda tangan berkas rekap. Pembina menandatangani rekapnya sendiri;
    bila isi rekap memuat kegiatan satu pembina saja (dibuka Kesiswaan),
    pembina itulah yang menandatangani. Rekap yang mencakup beberapa pembina
-   tidak mungkin ditandatangani satu pembina, jadi Wakasek Kesiswaan. */
+   tidak mungkin ditandatangani satu pembina, jadi Wakasek Kesiswaan.
+   Rekap yang isinya hanya Tahfidz ditandatangani Koordinator Tahfidz
+   (6 Oktober 2026). Mengembalikan daftar blok tanda tangan. */
 function penandaTangan() {
   const tampil = EKSKUL.filter(e => SESI.some(s => s.ekskul_id === e.id));
-  const jabatan = tampil.length === 1 ? `Pembina ${tampil[0].nama},` : 'Pembina Ekskul,';
-  if (AKUN.peran === 'pembina') return ttdPembina(AKUN.nama, jabatan);
-  const pembina = [...new Set(tampil.map(e => e.pembina_id).filter(Boolean))];
-  if (pembina.length === 1) return ttdPembina(PEMBINA[pembina[0]] || '', jabatan);
-  return ttdKesiswaan();
+  if (tampil.length && tampil.every(e => kegiatanTahfidz(e.nama))) return [ttdKoordinatorTahfidz()];
+  if (tampil.length === 1) return ttdKegiatan(tampil[0].nama,
+    pembimbingDari(tampil[0]).map(id => PEMBINA[id]), { jabatan: `Pembina ${tampil[0].nama},` });
+  if (AKUN.peran === 'pembina') return [ttdPembina(AKUN.nama, 'Pembina Ekskul,')];
+  const pembina = [...new Set(tampil.flatMap(e => pembimbingDari(e)))];
+  if (pembina.length === 1) return [ttdPembina(PEMBINA[pembina[0]] || '', 'Pembina Ekskul,')];
+  return [ttdKesiswaan()];
 }
 
 function isiUnduhan() {
@@ -479,7 +484,7 @@ async function unduh() {
       sub: `${k || 'Semua kategori'} · ${tanggalPanjang(dari)} – ${tanggalPanjang(sampai)}`,
       lembar: isi.judul.toLowerCase().replace(/^\w/, c => c.toUpperCase()),
       melintang: isi.melintang, kolom: isi.kolom, baris: isi.baris, jumlah: isi.jumlah,
-      ttd: [penandaTangan()],
+      ttd: penandaTangan(),
       namaBerkas: `${isi.berkas}${sufiks}_${dari}_sd_${sampai}.xlsx`
     });
   } catch (e) { laporError(e); }

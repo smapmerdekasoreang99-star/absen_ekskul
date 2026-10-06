@@ -244,8 +244,26 @@ async function tulisTabel(wb, o) {
     o.catatanBawah.forEach(t => barisPenuh(t, biasa));
   }
 
-  r = kopBersama().kakiExcel(ws, r + 1, { profil: profilKop(), kolomAkhir: K });
-  if ((o.ttd || []).length) kopBersama().ttdExcel(ws, r + 1, { kolomAkhir: K, blok: o.ttd });
+  // Satu penanda tangan: catatan kaki ("Dicetak dari …") ditulis sebaris
+  // dengan tempat, tanggal, rata kiri dari tepi tabel, supaya tidak memakan
+  // baris sendiri (6 Oktober 2026). Dua blok atau lebih memenuhi lebar
+  // halaman, jadi catatan kakinya tetap di baris sendiri seperti dulu.
+  if ((o.ttd || []).length === 1) {
+    const rTtd = r + 2;
+    kopBersama().ttdExcel(ws, rTtd, { kolomAkhir: K, blok: o.ttd });
+    const profil = profilKop(), kaki = kopBersama().tataLetak(profil.tata_letak).kaki;
+    const t = ws.getCell(rTtd, K), sampai = (t.isMerged ? t.master.col : K) - 1;
+    if (kaki.tampil && profil.catatan_kaki && sampai >= 1) {
+      if (sampai > 1) ws.mergeCells(rTtd, 1, rTtd, sampai);
+      const c = ws.getCell(rTtd, 1);
+      c.value = profil.catatan_kaki;
+      c.font = { name: 'Calibri', size: 8, italic: true, color: { argb: 'FF808080' } };
+      c.alignment = { horizontal: 'left', vertical: 'middle' };
+    }
+  } else {
+    r = kopBersama().kakiExcel(ws, r + 1, { profil: profilKop(), kolomAkhir: K });
+    if ((o.ttd || []).length) kopBersama().ttdExcel(ws, r + 1, { kolomAkhir: K, blok: o.ttd });
+  }
   ws.pageSetup.printTitlesRow = `${rKepala}:${rKepala}`;
   return ws;
 }
@@ -264,6 +282,21 @@ export async function unduhTabelXLSX(o) {
    Kesiswaan. `tanggal: false` untuk blanko yang tanggalnya ditulis tangan. */
 export function ttdPembina(nama, jabatan = 'Pembina Ekskul,', { tanggal = true } = {}) {
   return { atas: [`${ID.kota}, ${tanggal ? tanggalCetak() : '......................'}`, jabatan], nama };
+}
+/* Kegiatan Tahfidz ditandatangani Koordinator Tahfidz, bukan pembimbing
+   halaqahnya; namanya belum tercatat, jadi ditulis tangan (6 Oktober 2026). */
+export const kegiatanTahfidz = nama => /tah?fi[dz]/i.test(String(nama || ''));
+export function ttdKoordinatorTahfidz({ tanggal = true } = {}) {
+  return ttdPembina('', 'Koordinator Tahfidz,', { tanggal });
+}
+/* Penanda tangan berkas satu kegiatan: Koordinator Tahfidz untuk Tahfidz;
+   selainnya para pembimbingnya (paling banyak tiga) dengan nama terisi —
+   yang paling kanan memuat tempat, tanggal. */
+export function ttdKegiatan(kegiatan, pembina, { tanggal = true, jabatan = 'Pembina,' } = {}) {
+  if (kegiatanTahfidz(kegiatan)) return [ttdKoordinatorTahfidz({ tanggal })];
+  const nama = (pembina || []).filter(Boolean);
+  return (nama.length ? nama : ['']).slice(0, 3).map((n, i, semua) =>
+    i === semua.length - 1 ? ttdPembina(n, jabatan, { tanggal }) : { atas: ['', jabatan], nama: n });
 }
 export function ttdKesiswaan() {
   return { atas: [`${ID.kota}, ${tanggalCetak()}`, 'Wakasek Kesiswaan,'], nama: ID.kesiswaan };
@@ -289,9 +322,7 @@ export async function unduhBlankoHadirXLSX({ kegiatan, kategori, jadwal, tempat,
               { v: `${no}.`, rata: 'left', indent: no % 2 ? 0 : 11 }, ''];
     });
   const nama = pembina.filter(Boolean);
-  const ttd = (nama.length ? nama : ['']).slice(0, 3).map((n, i, semua) =>
-    i === semua.length - 1 ? ttdPembina(n, 'Pembina,', { tanggal: false })
-                           : { atas: ['', 'Pembina,'], nama: n });
+  const ttd = ttdKegiatan(kegiatan, nama, { tanggal: false });
   await unduhTabelXLSX({
     judul: `DAFTAR HADIR ${(kategori || 'Ekstrakurikuler').toUpperCase()}`,
     sub: `${kegiatan}${ID.tahunAjaran ? ` · Tahun Pelajaran ${ID.tahunAjaran}` : ''}`,
