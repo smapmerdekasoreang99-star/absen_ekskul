@@ -13,8 +13,8 @@
 // =====================================================================
 
 // --- Project Kehadiran_Guru (tempat tabel ekskul) --------------------
-export const SUPABASE_URL = 'https://xgtoneyvzfvfbidicotq.supabase.co';
-export const SUPABASE_ANON_KEY = 'sb_publishable_rjHVGT0ULc03TC2ljIytSA_2X54xzR1';
+export const SUPABASE_URL = 'https://dcakhvbfuhedebnbjndr.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_j_1jJEBNhjfhhKYXja1FLw_RkFs_Fsx';
 
 // --- Project Tryout_guru (sumber data siswa) -------------------------
 export const SUMBER_SISWA = {
